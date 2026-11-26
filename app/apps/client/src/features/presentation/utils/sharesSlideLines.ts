@@ -1,7 +1,9 @@
+import { contentFamily } from './contentFamily'
 import { diffSlideLines } from './diffSlideLines'
+import { resolveScreenBackground } from './resolveScreenBackground'
 import type { ContentData } from '../components/rendering/types'
 import { normalizeText } from '../components/rendering/utils/normalizeText'
-import type { ContentType } from '../types'
+import type { ContentType, ScreenWithConfigs } from '../types'
 
 export interface ShownSlide {
   type: ContentType
@@ -14,16 +16,34 @@ const linesOf = (html: string | undefined) =>
 const sameValue = (a: unknown, b: unknown) =>
   JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
+const backgroundOf = (
+  slide: ShownSlide,
+  screen: ScreenWithConfigs | null | undefined,
+) =>
+  screen
+    ? resolveScreenBackground({
+        screen,
+        contentType: slide.type,
+        contentData: slide.data,
+      })
+    : slide.data.songBackground
+
 /**
- * Whether the next slide can change only the lines it doesn't share with the
- * previous one: same layout (content type), same background, same slide
- * template (style overrides), and at least one line of main text in common.
- * Otherwise the whole slide transitions.
+ * Whether the next slide can change only what differs from the previous one:
+ * the same kind of content (a song's first, middle and last slides are one
+ * kind), the same background on this screen, the same slide template (style
+ * overrides), and main text that keeps or changes in place at least one line.
+ * Otherwise the whole slide transitions. The renderer still checks that the
+ * text keeps its box, style and size (canMorphText, useLineMorph).
  */
-export function sharesSlideLines(prev: ShownSlide, next: ShownSlide): boolean {
+export function sharesSlideLines(
+  prev: ShownSlide,
+  next: ShownSlide,
+  screen: ScreenWithConfigs | null | undefined,
+): boolean {
   return (
-    prev.type === next.type &&
-    sameValue(prev.data.songBackground, next.data.songBackground) &&
+    contentFamily(prev.type) === contentFamily(next.type) &&
+    sameValue(backgroundOf(prev, screen), backgroundOf(next, screen)) &&
     sameValue(prev.data.styleOverrides, next.data.styleOverrides) &&
     diffSlideLines(linesOf(prev.data.mainText), linesOf(next.data.mainText))
       .shared > 0

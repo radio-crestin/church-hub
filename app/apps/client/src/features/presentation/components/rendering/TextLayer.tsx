@@ -194,8 +194,10 @@ export function TextLayer({
       >
         <SlideLines
           lines={lines}
-          keys={lineMorph.keys}
-          lineRef={lineMorph.lineRef}
+          lineKeys={lineMorph.lineKeys}
+          tokenKeys={lineMorph.tokenKeys}
+          underline={style.underline}
+          unitRef={lineMorph.unitRef}
         />
       </div>
       {lineMorph.leaving.map((data) => (
@@ -203,6 +205,7 @@ export function TextLayer({
           key={data.id}
           data={data}
           textStyle={textStyles}
+          underline={style.underline}
           exit={lineTransitions.exit}
         />
       ))}

@@ -1,50 +1,70 @@
+import { matchSequences } from './matchSequences'
+import { tokenizeLine } from './tokenizeLine'
+
 export interface SlideLineDiff {
   /**
-   * For each line of the next slide, the index of the same line in the
-   * previous slide, or null when the line is new there.
+   * For each line of the next slide, the line of the previous slide it
+   * continues: the same line, or one it changes only some words of. Null for
+   * a new line.
    */
   matchOf: (number | null)[]
-  /** How many non-blank lines the two slides share. */
+  /** How many non-blank lines the two slides keep or change in place. */
   shared: number
 }
 
+const isWord = (token: string) => token.trim() !== ''
+
 /**
- * Pairs the lines two slides have in common, in reading order: the longest
- * run of identical lines both slides keep in the same order (an LCS). A chorus
- * repeated with one line changed shares every other line; a line added on top
- * still leaves the lines under it shared. Blank lines can pair up but don't
- * count as shared, so two slides that only have blank lines in common share
+ * Whether `next` is `prev` with some words changed rather than another line:
+ * at least half the words of the longer one are kept, in order.
+ */
+function changesWordsOf(prev: string, next: string): boolean {
+  const prevWords = tokenizeLine(prev).filter(isWord)
+  const nextWords = tokenizeLine(next).filter(isWord)
+  const kept = matchSequences(prevWords, nextWords).filter(
+    (match) => match !== null,
+  ).length
+  return kept > 0 && kept * 2 >= Math.max(prevWords.length, nextWords.length)
+}
+
+/**
+ * Pairs the lines of two slides in reading order. Identical lines pair first
+ * (the longest run both keep in order); then, between two such lines, the
+ * remaining lines pair up one by one where the new line only changes some
+ * words of the old one ("… slide 1" → "… slide 2"). Blank lines can pair but
+ * don't count as shared, so slides with only blank lines in common share
  * nothing.
  */
 export function diffSlideLines(prev: string[], next: string[]): SlideLineDiff {
-  // lengths[i][j]: the longest common run of prev[i..] and next[j..]
-  const lengths = Array.from({ length: prev.length + 1 }, () =>
-    new Array<number>(next.length + 1).fill(0),
-  )
-  for (let i = prev.length - 1; i >= 0; i--) {
-    for (let j = next.length - 1; j >= 0; j--) {
-      lengths[i][j] =
-        prev[i] === next[j]
-          ? lengths[i + 1][j + 1] + 1
-          : Math.max(lengths[i + 1][j], lengths[i][j + 1])
-    }
-  }
+  const matchOf = matchSequences(prev, next)
 
-  const matchOf = new Array<number | null>(next.length).fill(null)
-  let shared = 0
-  let i = 0
-  let j = 0
-  while (i < prev.length && j < next.length) {
-    if (prev[i] === next[j]) {
-      matchOf[j] = i
-      if (next[j].trim()) shared++
-      i++
-      j++
-    } else if (lengths[i + 1][j] >= lengths[i][j + 1]) {
-      i++
-    } else {
-      j++
-    }
+  // Between two identical lines (or an end), old and new lines pair in order.
+  let prevStart = 0
+  let gap: number[] = []
+  const pairGap = (prevEnd: number) => {
+    gap.forEach((nextIndex, offset) => {
+      const prevIndex = prevStart + offset
+      if (
+        prevIndex < prevEnd &&
+        changesWordsOf(prev[prevIndex], next[nextIndex])
+      ) {
+        matchOf[nextIndex] = prevIndex
+      }
+    })
+    gap = []
   }
+  matchOf.forEach((match, nextIndex) => {
+    if (match === null) {
+      gap.push(nextIndex)
+      return
+    }
+    pairGap(match)
+    prevStart = match + 1
+  })
+  pairGap(prev.length)
+
+  const shared = matchOf.filter(
+    (match, nextIndex) => match !== null && next[nextIndex].trim(),
+  ).length
   return { matchOf, shared }
 }

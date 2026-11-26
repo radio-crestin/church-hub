@@ -1,44 +1,58 @@
-import type { SlideLine } from './utils/splitSlideLines'
+import { useCallback } from 'react'
 
-const HIDDEN: React.CSSProperties = { visibility: 'hidden' }
+import { SlideWord } from './SlideWord'
+import type { SlideLine } from './utils/splitSlideLines'
 
 interface SlideLinesProps {
   lines: SlideLine[]
-  /** A React key per line (keySlideLines), so a shared line keeps its node */
-  keys: string[]
-  /** Lines laid out but not drawn (the lines a leaving copy doesn't animate) */
-  hidden?: boolean[]
-  /** Collects each line's element by its key */
-  lineRef?: (key: string, line: HTMLDivElement | null) => void
+  /** React keys (keySlideLines), so a kept line or word keeps its node */
+  lineKeys: string[]
+  tokenKeys: string[][]
+  /** Words laid out but not drawn (what a leaving copy doesn't animate) */
+  hidden?: boolean[][]
+  /** Whether the text is underlined */
+  underline?: boolean
+  /** Collects each line's and word's element by its key */
+  unitRef?: (key: string, element: HTMLElement | null) => void
 }
 
 /**
- * A slide's text, one block per line, so each line can animate on its own
- * when only some lines change. Lays out exactly like the text as one block:
- * every line keeps its line break and the text wraps with `pre-wrap`.
+ * A slide's text, one block per line and one box per word, so a slide change
+ * can animate single lines and words. Lays out like the text as one block:
+ * the spaces stay inline between the words, every line keeps its line break,
+ * and the text wraps with `pre-wrap`.
  */
-export function SlideLines({ lines, keys, hidden, lineRef }: SlideLinesProps) {
+export function SlideLines({
+  lines,
+  lineKeys,
+  tokenKeys,
+  hidden,
+  underline,
+  unitRef,
+}: SlideLinesProps) {
+  const lineRef = useCallback(
+    (key: string) => (element: HTMLElement | null) => unitRef?.(key, element),
+    [unitRef],
+  )
   return (
     <div>
-      {lines.map((line, index) => {
-        const key = keys[index]
-        const props = {
-          ref: lineRef ? (el: HTMLDivElement | null) => lineRef(key, el) : null,
-          'data-line': '',
-          style: hidden?.[index] ? HIDDEN : undefined,
-        }
-        return line.html === null ? (
-          <div key={key} {...props}>
-            {line.shown}
-          </div>
-        ) : (
-          <div
-            key={key}
-            {...props}
-            dangerouslySetInnerHTML={{ __html: line.html }}
-          />
-        )
-      })}
+      {lines.map((line, index) => (
+        <div key={lineKeys[index]} ref={lineRef(lineKeys[index])} data-line="">
+          {line.tokens.map((token, i) => (
+            <SlideWord
+              key={tokenKeys[index][i]}
+              unitKey={tokenKeys[index][i]}
+              unitRef={unitRef}
+              text={token.text}
+              html={token.html}
+              isWord={token.isWord}
+              hidden={hidden?.[index]?.[i]}
+              underline={underline}
+            />
+          ))}
+          {line.breaks ? '\n' : null}
+        </div>
+      ))}
     </div>
   )
 }

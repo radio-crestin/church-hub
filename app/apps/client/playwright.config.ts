@@ -179,11 +179,12 @@ export default defineConfig({
     // differently from Chromium before (a preview box taller than its frame,
     // cutting the lyrics off). The specs that hold the previews to the
     // projection run there too, and so does the one for stacked panels, whose
-    // stage canvas is sized by a container query.
+    // stage canvas is sized by a container query, and the one for word-level
+    // slide transitions, whose frame rate WebKit must hold on the projector.
     {
       name: 'webkit',
       testMatch:
-        /(live-preview-aspect|preview-matches-projection|stacked-layout)\.spec\.ts/,
+        /(live-preview-aspect|preview-matches-projection|stacked-layout|slide-line-morph)\.spec\.ts/,
       use: {
         ...devices['Desktop Safari'],
         storageState: SERVER.webkitStorageState,

@@ -89,9 +89,10 @@ interface UsePresentationContentResult {
   isVisible: boolean
   isExitAnimating: boolean
   /**
-   * The slide keeps the previous slide's layout, background and template and
-   * shares lines with it, so the renderer animates only the lines that
-   * changed (see sharesSlideLines). False means the whole slide transitions.
+   * The slide keeps the previous slide's kind of content, background and
+   * template and keeps or changes in place some of its lines, so the renderer
+   * animates only the lines and words that changed (see sharesSlideLines).
+   * False means the whole slide transitions.
    */
   morphLines: boolean
   nextSlideData: NextSlideData | undefined
@@ -348,7 +349,7 @@ export function usePresentationContent({
       key = '',
     ): void => {
       const slide = { type, data }
-      setMorphLines(sharesSlideLines(shownSlideRef.current, slide))
+      setMorphLines(sharesSlideLines(shownSlideRef.current, slide, screen))
       shownSlideRef.current = slide
       setContentType(type)
       setContentData(data)
