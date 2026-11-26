@@ -24,9 +24,9 @@ export function RepickButton({ scheduleId }: RepickButtonProps) {
           showToast(t('messages.error'), 'error'),
         )
       }
-      className="flex items-center gap-1.5 self-start rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+      className="flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs text-fg-label hover:bg-hover hover:text-fg"
     >
-      <Shuffle size={12} />
+      <Shuffle size={12} strokeWidth={2} />
       {t('mediaItems.pickAgain')}
     </button>
   )

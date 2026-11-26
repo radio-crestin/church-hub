@@ -4,10 +4,9 @@ import type { PptxImportResult } from '../types'
 import { noteMessageKey } from '../utils/noteMessageKey'
 
 const OUTCOME_CLASS = {
-  picture: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
-  skipped: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
-  changed:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  picture: 'bg-field text-fg-label',
+  skipped: 'bg-field text-red-600 dark:text-red-400',
+  changed: 'bg-field text-amber-700 dark:text-amber-300',
 }
 
 /**
@@ -22,23 +21,23 @@ export function PptxImportSummary({ result }: { result: PptxImportResult }) {
   )
   return (
     <div data-testid="pptx-import-summary" className="space-y-3">
-      <p className="font-medium text-gray-900 dark:text-white">
+      <p className="text-[13px] font-medium text-fg">
         {t('slidesImport.imported', { count: result.deck.slides.length })}
       </p>
-      <p className="text-sm text-gray-600 dark:text-gray-300">
+      <p className="text-[13px] text-fg-label tabular-nums">
         {t('slidesImport.pictures', { count: result.pictures })} ·{' '}
         {t('slidesImport.videos', { count: result.videos })}
       </p>
       {notes.length === 0 ? (
-        <p className="text-sm text-green-700 dark:text-green-400">
+        <p className="text-[13px] text-fg-body">
           {t('slidesImport.allImported')}
         </p>
       ) : (
         <>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-[13px] font-semibold text-fg">
             {t('slidesImport.differences')}
           </h3>
-          <ul className="max-h-[50vh] space-y-2 overflow-y-auto text-sm">
+          <ul className="max-h-[50vh] space-y-2 overflow-y-auto text-[13px]">
             {notes.map((note, index) => (
               <li
                 // Notes have no id; their order is fixed for the dialog's life.
@@ -49,7 +48,7 @@ export function PptxImportSummary({ result }: { result: PptxImportResult }) {
                 data-outcome={note.outcome}
                 className="flex flex-wrap items-baseline gap-x-2 gap-y-1"
               >
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-medium text-fg-hint tabular-nums">
                   {note.slide
                     ? t('slidesImport.slide', { number: note.slide })
                     : t('slidesImport.wholeFile')}
@@ -59,7 +58,7 @@ export function PptxImportSummary({ result }: { result: PptxImportResult }) {
                 >
                   {t(`slidesImport.outcomes.${note.outcome}`)}
                 </span>
-                <span className="min-w-0 text-gray-800 dark:text-gray-200">
+                <span className="min-w-0 text-fg-body">
                   {t(`slidesImport.reasons.${noteMessageKey(note)}`, {
                     name: note.detail,
                     count: note.count,

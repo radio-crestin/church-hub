@@ -50,10 +50,10 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
           event.preventDefault()
           if (!working) pptx.close()
         }}
-        className="m-auto w-[min(36rem,95vw)] rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-900"
+        className="m-auto w-[min(36rem,95vw)] rounded-xl border border-line bg-panel p-0 shadow-popover backdrop:bg-black/50"
       >
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-          <h2 className="font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <h2 className="text-base font-semibold text-fg">
             {t('slidesImport.title')}
           </h2>
           <button
@@ -62,9 +62,9 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
             onClick={pptx.close}
             disabled={working}
             aria-label={t('slidesImport.close')}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-gray-800"
+            className="rounded-lg p-1.5 text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40"
           >
-            <X size={18} />
+            <X size={16} strokeWidth={1.5} />
           </button>
         </div>
         <div className="p-4">
@@ -74,8 +74,8 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
               data-phase={progress.phase}
               className="space-y-3"
             >
-              <p className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                <Loader2 size={16} className="animate-spin" />
+              <p className="flex items-center gap-2 text-[13px] text-fg-body tabular-nums">
+                <Loader2 size={16} strokeWidth={1.5} className="animate-spin" />
                 {progress.phase === 'uploading'
                   ? t('slidesImport.uploading', {
                       done: progress.done,
@@ -84,9 +84,9 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
                   : t(`slidesImport.${progress.phase}`)}
               </p>
               {progress.phase === 'uploading' && progress.total > 0 && (
-                <div className="h-2 overflow-hidden rounded bg-gray-200 dark:bg-gray-700">
+                <div className="h-2 overflow-hidden rounded bg-field">
                   <div
-                    className="h-full bg-indigo-600 transition-[width]"
+                    className="h-full bg-primary transition-[width]"
                     style={{
                       width: `${(progress.done / progress.total) * 100}%`,
                     }}
@@ -101,7 +101,7 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
           {state.status === 'error' && (
             <p
               data-testid="pptx-import-error"
-              className="text-sm text-red-600 dark:text-red-400"
+              className="text-[13px] text-red-600 dark:text-red-400"
             >
               {t(
                 state.failed === 'read'
@@ -112,12 +112,12 @@ export function PptxImportDialog({ pptx }: { pptx: PptxImport }) {
           )}
         </div>
         {!working && (
-          <div className="flex justify-end border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+          <div className="flex justify-end border-t border-line px-4 py-3">
             <button
               type="button"
               data-testid="pptx-import-done"
               onClick={pptx.close}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="h-9 rounded-lg bg-primary px-4 text-[13px] font-medium text-white hover:bg-indigo-700"
             >
               {t('slidesImport.close')}
             </button>

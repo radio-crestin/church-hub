@@ -39,7 +39,7 @@ export function DeckSlideRows({
   const steps = deckSteps(deck)
   if (deck.slides.length === 0) {
     return (
-      <p className="px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+      <p className="px-3 py-2 text-[13px] text-amber-700 dark:text-amber-300">
         {t('slidesDeck.noSlides')}
       </p>
     )
@@ -65,8 +65,8 @@ export function DeckSlideRows({
               onDoubleClick={() => onEdit?.(slideIndex)}
               className={`flex w-full items-center gap-3 rounded-lg py-2 pr-10 pl-3 text-left transition-colors ${
                 isPresented
-                  ? 'bg-green-100 ring-2 ring-green-500 ring-inset dark:bg-green-900/50'
-                  : 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-900/50 dark:hover:bg-gray-700'
+                  ? 'bg-live-tint ring-1 ring-inset ring-live'
+                  : 'hover:bg-hover'
               }`}
             >
               <DeckSlideThumbnail
@@ -75,10 +75,18 @@ export function DeckSlideRows({
                 height={deck.height}
                 boxWidth={THUMBNAIL_WIDTH}
               />
-              <span className="w-5 shrink-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+              <span
+                className={`w-5 shrink-0 text-xs font-semibold tabular-nums ${
+                  isPresented ? 'text-live' : 'text-fg-hint'
+                }`}
+              >
                 {slideIndex + 1}
               </span>
-              <span className="line-clamp-2 min-w-0 text-sm text-gray-700 dark:text-gray-300">
+              <span
+                className={`line-clamp-2 min-w-0 text-[13px] ${
+                  isPresented ? 'text-fg' : 'text-fg-body'
+                }`}
+              >
                 {deckSlideText(slide) || t('slidesDeck.untitledSlide')}
               </span>
             </button>
@@ -89,9 +97,9 @@ export function DeckSlideRows({
                 title={t('slidesDeck.editSlide')}
                 aria-label={t('slidesDeck.editSlide')}
                 onClick={() => onEdit(slideIndex)}
-                className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1.5 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600"
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded-lg p-1.5 text-fg-hint hover:bg-hover hover:text-fg"
               >
-                <MoreVertical size={16} />
+                <MoreVertical size={16} strokeWidth={1.5} />
               </button>
             )}
           </div>

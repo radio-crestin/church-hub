@@ -25,7 +25,7 @@ export function VideoStepRow({
   const { t } = useTranslation('schedules')
   if (!item.video) {
     return (
-      <p className="px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+      <p className="px-3 py-2 text-[13px] text-amber-700 dark:text-amber-300">
         {t('mediaItems.video.noVideos')}
       </p>
     )
@@ -42,8 +42,8 @@ export function VideoStepRow({
       onClick={() => onVideoClick?.(item)}
       className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-3 ${
         isPresented
-          ? 'bg-sky-100 dark:bg-sky-900/50 ring-2 ring-inset ring-sky-500'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
+          ? 'bg-live-tint ring-1 ring-inset ring-live'
+          : 'hover:bg-hover'
       }`}
     >
       <span className="h-10 w-16 shrink-0 overflow-hidden rounded bg-black">
@@ -58,8 +58,14 @@ export function VideoStepRow({
           }}
         />
       </span>
-      <Film size={16} className="shrink-0 text-sky-500" />
-      <span className="text-sm text-gray-700 dark:text-gray-300">
+      <Film
+        size={16}
+        strokeWidth={1.5}
+        className={`shrink-0 ${isPresented ? 'text-fg-label' : 'text-fg-hint'}`}
+      />
+      <span
+        className={`text-[13px] ${isPresented ? 'text-fg' : 'text-fg-body'}`}
+      >
         {t('mediaItems.video.playFullScreen')}
       </span>
     </button>

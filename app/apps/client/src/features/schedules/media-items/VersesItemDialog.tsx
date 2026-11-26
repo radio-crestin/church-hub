@@ -22,7 +22,7 @@ interface VersesItemDialogProps {
 }
 
 const FIELD_CLASS =
-  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white'
+  'w-full h-9 px-3 text-[13px] bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus'
 
 /**
  * A verses item's settings: random verses from a book, or a topic's passages
@@ -83,7 +83,7 @@ export function VersesItemDialog({
   return (
     <ItemDialog
       title={t('mediaItems.verses.title')}
-      icon={<BookOpen size={20} className="text-emerald-500" />}
+      icon={<BookOpen size={16} strokeWidth={1.5} className="text-fg-label" />}
       testId="verses-item-dialog"
       canSave={config !== null}
       isSaving={isSaving}
@@ -100,7 +100,7 @@ export function VersesItemDialog({
         ]}
       />
 
-      <label className="block space-y-1 text-sm text-gray-700 dark:text-gray-300">
+      <label className="block space-y-1 text-[13px] text-fg-label">
         <span>{t('mediaItems.verses.translation')}</span>
         <select
           value={shownTranslationId ?? ''}
@@ -116,7 +116,7 @@ export function VersesItemDialog({
       </label>
 
       {source === 'book' ? (
-        <label className="block space-y-1 text-sm text-gray-700 dark:text-gray-300">
+        <label className="block space-y-1 text-[13px] text-fg-label">
           <span>{t('mediaItems.verses.book')}</span>
           <select
             value={bookCode}
@@ -144,7 +144,7 @@ export function VersesItemDialog({
             className={FIELD_CLASS}
           />
           {pickedTopic && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-[13px] text-fg-label">
               {t('mediaItems.verses.pickedTopic', {
                 title: titleOf(pickedTopic),
                 count: pickedTopic.referenceCount,
@@ -159,14 +159,14 @@ export function VersesItemDialog({
                 role="radio"
                 aria-checked={topic.key === topicKey}
                 onClick={() => setTopicKey(topic.key)}
-                className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm ${
+                className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-[13px] ${
                   topic.key === topicKey
-                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                    ? 'bg-selected text-fg'
+                    : 'text-fg-body hover:bg-hover'
                 }`}
               >
                 <span className="truncate">{titleOf(topic)}</span>
-                <span className="shrink-0 text-xs text-gray-500">
+                <span className="shrink-0 text-xs text-fg-hint tabular-nums">
                   {topic.referenceCount}
                 </span>
               </button>

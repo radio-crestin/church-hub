@@ -21,7 +21,7 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
   }, [open])
 
   const button =
-    'flex w-full items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 dark:border-gray-700 dark:text-white dark:hover:bg-gray-800'
+    'flex w-full items-center gap-3 rounded-lg border border-line px-4 py-3 text-left text-[13px] font-medium text-fg hover:bg-hover'
   return (
     <>
       <span hidden data-testid="pptx-drop-target" data-ready={choice.ready} />
@@ -32,14 +32,14 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
           event.preventDefault()
           choice.cancel()
         }}
-        className="m-auto w-[min(26rem,95vw)] rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-900"
+        className="m-auto w-[min(26rem,95vw)] rounded-xl border border-line bg-panel p-0 shadow-popover backdrop:bg-black/50"
       >
         <div className="space-y-4 p-5">
           <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-base font-semibold text-fg">
               {t('slidesImport.dropTitle')}
             </h2>
-            <p className="mt-1 break-all text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 break-all text-xs text-fg-hint">
               {choice.pending?.file.name}
             </p>
           </div>
@@ -49,7 +49,11 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
             onClick={choice.asSlides}
             className={button}
           >
-            <Presentation size={18} className="shrink-0 text-amber-600" />
+            <Presentation
+              size={16}
+              strokeWidth={1.5}
+              className="shrink-0 text-fg-label"
+            />
             {t('slidesImport.asSlides')}
           </button>
           <button
@@ -58,7 +62,11 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
             onClick={choice.asSong}
             className={button}
           >
-            <FileText size={18} className="shrink-0 text-indigo-600" />
+            <FileText
+              size={16}
+              strokeWidth={1.5}
+              className="shrink-0 text-fg-label"
+            />
             {t('slidesImport.asSong')}
           </button>
           <div className="flex justify-end">
@@ -66,7 +74,7 @@ export function PptxDropChoiceDialog({ choice }: { choice: PptxDropChoice }) {
               type="button"
               data-testid="pptx-drop-cancel"
               onClick={choice.cancel}
-              className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              className="h-9 rounded-lg bg-field px-4 text-[13px] font-medium text-fg hover:bg-hover"
             >
               {t('slidesImport.cancel')}
             </button>

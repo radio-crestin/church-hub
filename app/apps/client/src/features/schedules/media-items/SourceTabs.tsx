@@ -16,7 +16,7 @@ export function SourceTabs<T extends string>({
     <div
       role="radiogroup"
       data-testid={testId}
-      className="flex rounded-lg bg-gray-100 dark:bg-gray-900 p-1 gap-1"
+      className="flex rounded-lg bg-field p-1 gap-1"
     >
       {options.map((option) => (
         <button
@@ -25,10 +25,10 @@ export function SourceTabs<T extends string>({
           role="radio"
           aria-checked={option.value === value}
           onClick={() => onChange(option.value)}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
             option.value === value
-              ? 'bg-white text-gray-900 shadow dark:bg-gray-700 dark:text-white'
-              : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+              ? 'bg-selected text-fg'
+              : 'text-fg-label hover:text-fg'
           }`}
         >
           {option.label}
