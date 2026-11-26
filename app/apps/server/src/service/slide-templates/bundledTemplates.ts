@@ -81,6 +81,34 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
         italic: false,
       }),
   },
+  // The verses type themselves in, letter by letter (the typewriter text
+  // animation), on a sheet of paper or a quiet night.
+  {
+    key: 'typewriter_paper',
+    name: 'Typewriter · Paper',
+    design: () =>
+      getPaletteDesign({
+        background: '#f3ede1',
+        text: '#2a2621',
+        accent: '#8c5a2b',
+        fontFamily: 'Fira Sans',
+        italic: false,
+        typewriter: true,
+      }),
+  },
+  {
+    key: 'typewriter_night',
+    name: 'Typewriter · Night',
+    design: () =>
+      getPaletteDesign({
+        background: '#14171c',
+        text: '#ece7dc',
+        accent: '#d8b874',
+        fontFamily: 'Fira Sans',
+        italic: false,
+        typewriter: true,
+      }),
+  },
   // Worship themes on a photo or a looping video, like a projection
   // program's: white words, bold with a soft shadow, the accent from the
   // picture (backgrounds: tauri/resources/theme-backgrounds, see CREDITS.md).
