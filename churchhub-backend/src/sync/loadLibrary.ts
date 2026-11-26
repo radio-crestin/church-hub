@@ -3,7 +3,12 @@ import { churchPrefix } from './churchPrefix'
 import type { Bucket } from './createBucket'
 import { gunzipJson } from './gzipJson'
 import type { ChurchState } from './state/ChurchState'
-import { COLLECTION_BY_TYPE, type Segment, type Snapshot } from './types'
+import {
+  COLLECTION_BY_TYPE,
+  type CollectionName,
+  type Segment,
+  type Snapshot,
+} from './types'
 
 /** Tombstones older than this leave the snapshot (the app prunes them too). */
 const TOMBSTONE_RETENTION_SECONDS = 90 * 24 * 3600
@@ -56,10 +61,12 @@ export async function loadLibrary(
     schemaVersion: 1,
     updatedByDevice: 'Church Hub sync',
     seq: state.seq,
-    categories: [...state.collections.categories.values()],
-    groups: [...state.collections.groups.values()],
-    songs: [...state.collections.songs.values()],
-    schedules: [...state.collections.schedules.values()],
+    ...(Object.fromEntries(
+      Object.entries(state.collections).map(([name, rows]) => [
+        name,
+        [...rows.values()],
+      ])
+    ) as Record<CollectionName, Record<string, unknown>[]>),
     tombstones: [...state.tombstones.values()].filter(
       (tomb) => tomb.deletedAt > cutoff
     ),

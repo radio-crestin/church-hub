@@ -7,15 +7,13 @@ import type { SyncCaller } from './types'
 /**
  * Finds the device behind a `Bearer` token in the church's state. A revoked
  * device, another church's token, an unknown church or no token at all are
- * refused alike (401). The church server (the PC) may name the user a
- * change was made by (`actingUserId`): it already logged that user in, and
- * the check then applies to them.
+ * refused alike (401). The church server (the PC) has no user of its own:
+ * each change it sends names its author (checkChanges).
  */
 export async function authenticate(
   store: SyncStore,
   church: ChurchVersion | null,
-  authorization: string | undefined,
-  actingUserId?: string | null
+  authorization: string | undefined
 ): Promise<SyncCaller> {
   const token = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1]
   if (!token) throw new SyncError(401, 'unauthorized', 'Missing token')
@@ -32,6 +30,6 @@ export async function authenticate(
     churchId: church.state.id,
     deviceId: device.id,
     isServer: device.isServer,
-    userId: device.isServer ? (actingUserId ?? null) : device.userId,
+    userId: device.isServer ? null : device.userId,
   }
 }

@@ -1,23 +1,22 @@
-import type { ChurchState } from './state/ChurchState'
-import type { SyncCaller } from './types'
+import type { Access } from './applyAccessChange'
 
 /** Everything is allowed: the church server itself, or a super admin. */
 export const ALL_PERMISSIONS = 'all'
 
 /**
- * What the caller may do: the church server acting for nobody and super
- * admins may do anything; any other user has their role's permissions plus
- * their own; an unknown or deactivated user has none.
+ * What a user may do: the church server acting for nobody and super admins
+ * may do anything; any other active user has their role's permissions plus
+ * their own; an unknown or deactivated user nothing at all (null).
  */
 export function loadPermissions(
-  state: ChurchState,
-  caller: SyncCaller
-): Set<string> | typeof ALL_PERMISSIONS {
-  if (caller.isServer && !caller.userId) return ALL_PERMISSIONS
-  const user = state.users.find((candidate) => candidate.id === caller.userId)
-  if (!user?.isActive) return new Set()
+  access: Access,
+  who: { isServer: boolean; userId: string | null }
+): Set<string> | typeof ALL_PERMISSIONS | null {
+  if (who.isServer && !who.userId) return ALL_PERMISSIONS
+  const user = access.users.find((candidate) => candidate.id === who.userId)
+  if (!user?.isActive) return null
   if (user.isSuperAdmin) return ALL_PERMISSIONS
 
-  const role = state.roles.find((candidate) => candidate.id === user.roleId)
+  const role = access.roles.find((candidate) => candidate.id === user.roleId)
   return new Set([...user.permissions, ...(role?.permissions ?? [])])
 }

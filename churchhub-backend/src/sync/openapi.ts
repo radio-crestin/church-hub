@@ -3,6 +3,7 @@
  * /sync/openapi.json, rendered by Scalar at /sync/docs).
  */
 import { installationHeaders, ownerOpenApiPaths } from './owner/ownerOpenApi'
+import { ENTITY_TYPES } from './types'
 
 const error = (description: string) => ({
   description,
@@ -94,16 +95,18 @@ export const syncOpenApi = {
       Change: {
         type: 'object',
         properties: {
-          type: {
-            type: 'string',
-            enum: ['song', 'song_category', 'song_group', 'schedule'],
-          },
+          type: { type: 'string', enum: [...ENTITY_TYPES] },
           uuid: { type: 'string', pattern: '^[A-Za-z0-9_-]{1,64}$' },
           op: { type: 'string', enum: ['upsert', 'delete'] },
           baseVersion: {
             type: 'integer',
             minimum: 0,
             description: 'The version the client last saw; 0 for a new row.',
+          },
+          author: {
+            type: ['string', 'null'],
+            description:
+              'The church server’s only: the user (uuid) who made the change; null: the server itself. A phone’s changes are its own user’s.',
           },
           data: {
             type: 'object',
@@ -189,103 +192,6 @@ export const syncOpenApi = {
           },
           '401': unauthorized,
           '409': error('Another PC holds the server token (server_in_use)'),
-        },
-      },
-    },
-    '/sync/churches/{churchId}/access': {
-      put: {
-        summary: 'Replace the church’s roles and users',
-        description:
-          'The PC mirrors its roles, users and permissions here; every write is then checked against them. A row’s version rises only when it changed; missing rows are removed. With revokeDevicesWithUser (sent by every newer PC, and remembered from then on), each device of a deactivated or removed user is revoked and the path secret rotates in the same write, so those devices neither write nor read again; reactivating the user does not bring them back. Without it (older PCs), their devices stay and only their writes are refused. Needs users.edit.',
-        security: [{ deviceToken: [] }],
-        parameters: [churchId],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  roles: {
-                    type: 'array',
-                    maxItems: 100,
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string' },
-                        name: { type: 'string' },
-                        permissions: {
-                          type: 'array',
-                          items: { type: 'string', example: 'songs.edit' },
-                        },
-                      },
-                      required: ['id', 'name'],
-                    },
-                  },
-                  users: {
-                    type: 'array',
-                    maxItems: 500,
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string' },
-                        name: { type: 'string' },
-                        roleId: { type: ['string', 'null'] },
-                        isSuperAdmin: { type: 'boolean' },
-                        isActive: { type: 'boolean' },
-                        permissions: {
-                          type: 'array',
-                          items: { type: 'string' },
-                        },
-                      },
-                      required: ['id', 'name'],
-                    },
-                  },
-                  revokeDevicesWithUser: {
-                    type: 'boolean',
-                    description:
-                      'Revoke every device of a user who is inactive or missing, now and on every later update.',
-                  },
-                },
-                required: ['roles', 'users'],
-              },
-            },
-          },
-        },
-        responses: {
-          '200': {
-            description:
-              'How many rows changed, how many devices were revoked, and where the church is read from now',
-            content: {
-              'application/json': {
-                schema: {
-                  allOf: [
-                    { $ref: '#/components/schemas/Location' },
-                    {
-                      type: 'object',
-                      properties: {
-                        changed: {
-                          type: 'object',
-                          properties: {
-                            roles: { type: 'integer' },
-                            users: { type: 'integer' },
-                          },
-                        },
-                        revokedDevices: {
-                          type: 'integer',
-                          description:
-                            'Devices revoked because their user was deactivated or removed (a new pathSecret then).',
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          },
-          '400': error('Invalid roles or users'),
-          '401': unauthorized,
-          '403': forbidden,
         },
       },
     },
@@ -414,7 +320,7 @@ export const syncOpenApi = {
       post: {
         summary: 'Write changes',
         description:
-          'Authorizes every change against the user’s permissions (songs.create/edit/delete, programs.create/edit/delete), checks each baseVersion against the central version, then publishes them as one segment (log/<seq>-<nonce>.json.gz) and points head.json at it. All or nothing. Every 40 segments (SYNC_COMPACT_AFTER) a snapshot is written. The church server may name the user a change was made by (actingUserId); their permissions then apply.',
+          'Authorizes every change against its author’s permissions, with the keys the app checks (songs.*, programs.*, users.*, settings.edit; bookmarks songs.view or bible.view; playlists any active user; a super admin only by a super admin), checks each baseVersion against the central version, then publishes them as one segment (log/<seq>-<nonce>.json.gz) and points head.json at it. All or nothing: 403 lists each refused change and the permission it needs, 409 the current versions. A phone’s changes are its own user’s; the church server names each change’s author (null: the server itself). Changes are checked in order, so a user or role changed earlier in the batch applies to the later ones; a user a change deactivates or removes has every device revoked and the path secret moves. Every 40 segments (SYNC_COMPACT_AFTER) a snapshot is written.',
         security: [{ deviceToken: [] }],
         parameters: [churchId],
         requestBody: {
@@ -430,7 +336,6 @@ export const syncOpenApi = {
                     maxItems: 1000,
                     items: { $ref: '#/components/schemas/Change' },
                   },
-                  actingUserId: { type: ['string', 'null'] },
                 },
                 required: ['changes'],
               },

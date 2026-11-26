@@ -22,10 +22,17 @@ function parseChange(raw: unknown, where: string): ChangeInput {
   if (!Number.isInteger(baseVersion) || (baseVersion as number) < 0) {
     invalid(`${where}.baseVersion must be a non-negative integer`)
   }
+  if (
+    change.author != null &&
+    (typeof change.author !== 'string' || !UUID_PATTERN.test(change.author))
+  ) {
+    invalid(`${where}.author must be a user's uuid or null`)
+  }
   const common = {
     type: change.type as EntityType,
     uuid: change.uuid,
     baseVersion: baseVersion as number,
+    author: (change.author as string | null | undefined) ?? null,
   }
 
   if (change.op === 'upsert') {
@@ -44,21 +51,15 @@ function parseChange(raw: unknown, where: string): ChangeInput {
   return invalid(`${where}.op must be upsert or delete`)
 }
 
-/** Validates `POST changes`' body: `{ changes: ChangeInput[], actingUserId? }`. */
-export function parseChanges(body: unknown): {
-  changes: ChangeInput[]
-  actingUserId: string | null
-} {
+/** Validates `POST changes`' body: `{ changes: ChangeInput[] }`. */
+export function parseChanges(body: unknown): ChangeInput[] {
   if (!body || typeof body !== 'object') invalid('Body must be a JSON object')
-  const { changes, actingUserId } = body as Record<string, unknown>
+  const { changes } = body as Record<string, unknown>
   if (!Array.isArray(changes) || changes.length === 0) {
     invalid('changes must be a non-empty array')
   }
   if (changes.length > MAX_CHANGES_PER_REQUEST) {
     invalid(`At most ${MAX_CHANGES_PER_REQUEST} changes per request`)
-  }
-  if (actingUserId != null && typeof actingUserId !== 'string') {
-    invalid('actingUserId must be a string')
   }
 
   const seen = new Set<string>()
@@ -69,5 +70,5 @@ export function parseChanges(body: unknown): {
     seen.add(key)
     return change
   })
-  return { changes: parsed, actingUserId: (actingUserId as string) ?? null }
+  return parsed
 }
