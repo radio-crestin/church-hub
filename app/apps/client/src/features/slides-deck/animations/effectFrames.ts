@@ -1,5 +1,6 @@
 import { type DeckFrame, deckFrame } from './deckFrame'
 import type { DeckAnimation, DeckDirection, DeckTargetState } from '../types'
+import { animationDirection } from '../utils/animationDirection'
 
 /** Where a part sits on its slide, for the effects that come from off it. */
 export interface DeckBox {
@@ -48,14 +49,15 @@ function hiddenPose(
   shown: DeckFrame,
   box: DeckBox,
 ): DeckFrame {
-  const direction = animation.direction
+  const direction =
+    animationDirection(animation.effect, animation.direction) ?? 'down'
   switch (animation.effect) {
     case 'appear':
       return { ...shown, visible: false }
     case 'fly':
-      return { ...shown, ...offSlide(direction ?? 'down', box) }
+      return { ...shown, ...offSlide(direction, box) }
     case 'wipe':
-      return { ...shown, clip: wipedFrom(direction ?? 'down') }
+      return { ...shown, clip: wipedFrom(direction) }
     case 'split':
       return {
         ...shown,

@@ -1,4 +1,5 @@
 import type { DeckDirection, DeckTransition } from '../types'
+import { transitionDirection } from '../utils/transitionDirection'
 
 /** The incoming slide's and, for a push, the outgoing one's keyframes. */
 export interface DeckTransitionKeyframes {
@@ -42,12 +43,14 @@ const IN_PLACE = 'translate(0, 0)'
  * How a slide comes in over the one before it, PowerPoint's transitions:
  * Fade, Push (the old slide pushed out the other side), Wipe and Split
  * (uncovered from a side or from the centre), Cover (slides in over it) and
- * Zoom. `direction` is the side it comes from (bottom when not given).
+ * Zoom. `direction` is the side it comes from (its default when not given,
+ * transitionDirection).
  */
 export function transitionKeyframes(
   transition: DeckTransition,
 ): DeckTransitionKeyframes | null {
-  const direction = transition.direction ?? 'down'
+  const direction =
+    transitionDirection(transition.effect, transition.direction) ?? 'down'
   switch (transition.effect) {
     case 'fade':
       return { incoming: [{ opacity: 0 }, { opacity: 1 }], outgoing: null }

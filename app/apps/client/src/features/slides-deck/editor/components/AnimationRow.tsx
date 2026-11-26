@@ -11,12 +11,13 @@ import {
   DECK_TRIGGERS,
   type DeckAnimation,
 } from '../../types'
+import {
+  ANIMATION_DEFAULT_DIRECTIONS,
+  animationDirection,
+} from '../../utils/animationDirection'
 
 const SELECT =
   'w-full rounded-md border border-gray-300 bg-white px-1.5 py-1 text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white'
-
-/** The effects that come from a side. */
-const DIRECTED = ['fly', 'wipe', 'split']
 
 interface AnimationRowProps {
   animation: DeckAnimation
@@ -44,15 +45,30 @@ export function AnimationRow({
     useSortable({
       id: animation.id,
     })
+  const direction = animationDirection(animation.effect, animation.direction)
   const select = <T extends string>(
     field: keyof DeckAnimation,
     values: readonly T[],
     label: (value: T) => string,
+    value = animation[field] as T,
   ) => (
     <select
       data-testid={`deck-editor-animation-${field}`}
-      value={animation[field] as T}
-      onChange={(e) => update({ [field]: e.target.value })}
+      value={value}
+      onChange={(e) =>
+        update(
+          field === 'effect'
+            ? {
+                // A side of its own from the start: what it plays is what shows.
+                effect: e.target.value as DeckAnimation['effect'],
+                direction: animationDirection(
+                  e.target.value as DeckAnimation['effect'],
+                  direction,
+                ),
+              }
+            : { [field]: e.target.value },
+        )
+      }
       className={SELECT}
       aria-label={t(`deckEditor.animations.${field}`)}
     >
@@ -113,9 +129,12 @@ export function AnimationRow({
         {select('trigger', DECK_TRIGGERS, (v) =>
           t(`deckEditor.animations.triggers.${v}`),
         )}
-        {DIRECTED.includes(animation.effect) &&
-          select('direction', DECK_DIRECTIONS, (v) =>
-            t(`deckEditor.directions.${v}`),
+        {animation.effect in ANIMATION_DEFAULT_DIRECTIONS &&
+          select(
+            'direction',
+            DECK_DIRECTIONS,
+            (v) => t(`deckEditor.directions.${v}`),
+            direction,
           )}
       </div>
       <div className="grid grid-cols-2 gap-1.5">

@@ -8,6 +8,10 @@ import {
   type DeckSlide,
   type DeckTransition,
 } from '../../types'
+import {
+  TRANSITION_DEFAULT_DIRECTIONS,
+  transitionDirection,
+} from '../../utils/transitionDirection'
 import type { DeckAction } from '../types'
 
 const SELECT =
@@ -29,9 +33,8 @@ export function TransitionTab({ slide, change }: TransitionTabProps) {
     change({ type: 'slide/update', slideId: slide.id, patch }, merge)
   const setTransition = (patch: Partial<DeckTransition>, merge?: string) =>
     set({ transition: { ...transition, ...patch } }, merge)
-  const hasDirection = ['push', 'wipe', 'cover', 'split'].includes(
-    transition.effect,
-  )
+  const direction = transitionDirection(transition.effect, transition.direction)
+  const hasDirection = transition.effect in TRANSITION_DEFAULT_DIRECTIONS
 
   return (
     <div className="space-y-3">
@@ -42,6 +45,11 @@ export function TransitionTab({ slide, change }: TransitionTabProps) {
           onChange={(e) =>
             setTransition({
               effect: e.target.value as DeckTransition['effect'],
+              // A side of its own from the start: what it plays is what shows.
+              direction: transitionDirection(
+                e.target.value as DeckTransition['effect'],
+                direction,
+              ),
             })
           }
           className={SELECT}
@@ -57,7 +65,7 @@ export function TransitionTab({ slide, change }: TransitionTabProps) {
         <PanelField label={t('deckEditor.direction')}>
           <select
             data-testid="deck-editor-transition-direction"
-            value={transition.direction ?? 'down'}
+            value={direction}
             onChange={(e) =>
               setTransition({
                 direction: e.target.value as DeckTransition['direction'],
