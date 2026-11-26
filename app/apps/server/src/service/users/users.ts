@@ -188,7 +188,7 @@ export function getUserPermissions(userId: number): Permission[] {
  * Converts database user record to API format
  */
 function toUserWithPermissions(
-  user: typeof users.$inferSelect & { roleName: string | null },
+  user: Omit<typeof users.$inferSelect, 'uuid'> & { roleName: string | null },
   permissions: Permission[],
 ): UserWithPermissions {
   return {

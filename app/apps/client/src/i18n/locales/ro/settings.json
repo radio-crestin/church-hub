@@ -1269,13 +1269,28 @@
           "added": "Adăugat",
           "updated": "Modificat",
           "removed": "Șters",
-          "conflict": "Conflict"
+          "conflict": "Conflict",
+          "rejected": "Nepermis"
         },
         "entity": {
           "song": "Cântare",
           "song_category": "Categorie",
           "song_group": "Grup",
-          "schedule": "Prezentare"
+          "schedule": "Prezentare",
+          "song_tag": "Etichetă",
+          "song_bookmark": "Marcaj de cântare",
+          "song_bookmark_note": "Notă între marcaje de cântări",
+          "bible_bookmark": "Marcaj biblic",
+          "bible_bookmark_note": "Notă între marcaje biblice",
+          "music_playlist": "Playlist",
+          "setting": "Setare",
+          "role": "Rol",
+          "user": "Utilizator"
+        },
+        "needs": "Necesită: {{permission}}",
+        "needsSpecial": {
+          "super_admin": "un super-administrator",
+          "active_user": "un cont activ"
         }
       }
     },

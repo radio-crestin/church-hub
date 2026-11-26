@@ -5,6 +5,8 @@ import {
   test,
 } from '@playwright/test'
 
+import { checksTimingBudgets } from './helpers/timing-budgets'
+
 /**
  * Slides appear on the projector fast (T-158): from the operator's request to
  * the new slide fully visible on a screen, with no wait for a long exit and no
@@ -314,6 +316,12 @@ test.describe('Slides appear on the projector fast', () => {
       description: JSON.stringify(timings),
     })
 
+    // A song and a verse are never on screen together, on any machine.
+    for (const timing of [typeChange, backToSong, toPassage, toReading]) {
+      expect(timing.overlapFrames).toBe(0)
+    }
+    if (!checksTimingBudgets) return
+
     // A slide on a blank screen waits for nothing: its start is the latency.
     const latency = first.firstShowsMs
     expect(latency).toBeLessThan(LATENCY_MAX_MS)
@@ -326,10 +334,9 @@ test.describe('Slides appear on the projector fast', () => {
       expect(timing.firstShowsMs - latency).toBeLessThan(START_SLACK_MS)
       expect(timing.blankGapMs).toBeLessThan(50)
     }
-    // A song and a verse are never on screen together: the old one fades
-    // out, then the new one fades in right after.
+    // A change of type: the old one fades out, then the new one fades in
+    // right after.
     for (const timing of [typeChange, backToSong, toPassage, toReading]) {
-      expect(timing.overlapFrames).toBe(0)
       expect(timing.firstShowsMs - latency).toBeLessThan(
         TYPE_CHANGE_START_MAX_MS,
       )

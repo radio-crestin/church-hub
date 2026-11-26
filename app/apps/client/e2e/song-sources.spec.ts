@@ -1,11 +1,7 @@
-import {
-  type APIRequestContext,
-  expect,
-  type Page,
-  test,
-} from '@playwright/test'
+import { type APIRequestContext, expect, test } from '@playwright/test'
 import JSZip from 'jszip'
 
+import { dropFile } from './helpers/drop-file'
 import { FakeS3 } from './helpers/fake-s3'
 import {
   clearNotifications,
@@ -40,25 +36,6 @@ async function createSong(
   })
   expect(res.ok()).toBeTruthy()
   return (await res.json()).data.id
-}
-
-/** Drops a file on the page the way a user drags one in. */
-async function dropFile(page: Page, bytes: Buffer, name: string) {
-  await page.evaluate(
-    ({ base64, fileName }) => {
-      const data = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-      const transfer = new DataTransfer()
-      transfer.items.add(new File([data], fileName))
-      document.dispatchEvent(
-        new DragEvent('drop', {
-          bubbles: true,
-          cancelable: true,
-          dataTransfer: transfer,
-        }),
-      )
-    },
-    { base64: bytes.toString('base64'), fileName: name },
-  )
 }
 
 test.describe('Song sources', () => {

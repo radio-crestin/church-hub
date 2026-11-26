@@ -8,8 +8,9 @@ import {
   useState,
 } from 'react'
 
-import { getApiUrl, getWsUrl } from '~/config'
+import { getWsUrl } from '~/config'
 import { createLogger } from '~/utils/logger'
+import { serverFetch } from '~/utils/serverFetch'
 import {
   DEFAULT_MIDI_CONFIG,
   type MIDIConfig,
@@ -107,7 +108,7 @@ export function MIDIProvider({
   // Fetch available devices from server
   const fetchDevices = useCallback(async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/midi/devices`)
+      const response = await serverFetch(`/api/midi/devices`)
       const result = await response.json()
 
       if (result.data) {
@@ -156,7 +157,7 @@ export function MIDIProvider({
         setPermissionError(null)
 
         // Sync MIDI status on WebSocket connect to handle reconnection during MIDI reconnection cycle
-        fetch(`${getApiUrl()}/api/midi/status`)
+        serverFetch(`/api/midi/status`)
           .then((res) => res.json())
           .then((result) => {
             if (result.data) {
@@ -298,7 +299,7 @@ export function MIDIProvider({
 
       if (inputName !== null || outputName !== null) {
         try {
-          const response = await fetch(`${getApiUrl()}/api/midi/connect`, {
+          const response = await serverFetch(`/api/midi/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -335,7 +336,7 @@ export function MIDIProvider({
   const connectToDevices = useCallback(
     async (inputName: string | null, outputName: string | null) => {
       try {
-        const response = await fetch(`${getApiUrl()}/api/midi/connect`, {
+        const response = await serverFetch(`/api/midi/connect`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -402,8 +403,8 @@ export function MIDIProvider({
         }
 
         // Disconnect devices on server
-        fetch(`${getApiUrl()}/api/midi/disconnect`, { method: 'POST' }).catch(
-          (error) => logger.error('Failed to disconnect', { error }),
+        serverFetch(`/api/midi/disconnect`, { method: 'POST' }).catch((error) =>
+          logger.error('Failed to disconnect', { error }),
         )
       }
     },

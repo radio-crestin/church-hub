@@ -24,6 +24,8 @@ export interface PublishedChange {
   uuid: string
   op: 'upsert' | 'delete'
   version: number
+  /** The user (uuid) it was checked against; null: a church server. */
+  author?: string | null
   data?: LibraryAggregate
   deletedAt?: number
 }
@@ -50,8 +52,17 @@ export interface ChangeInput {
   uuid: string
   op: 'upsert' | 'delete'
   baseVersion: number
+  /** The user (uuid) who made it; null: the server itself. */
+  author: string | null
   data?: LibraryAggregate
   deletedAt?: number
+}
+
+/** A change the service refused (403): its author may not make it. */
+export interface RejectedChange {
+  type: SyncEntityType
+  uuid: string
+  permission: string
 }
 
 /** A row's central version, as `sync_versions` keeps it. */

@@ -3,6 +3,7 @@ import { CheckCheck, Inbox, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SyncChangeKindBadge } from './SyncChangeKindBadge'
+import { SyncRefusalReason } from './SyncRefusalReason'
 import { useMarkSyncUpdatesSeen } from '../hooks/useMarkSyncUpdatesSeen'
 import { useSyncRecentUpdates } from '../hooks/useSyncRecentUpdates'
 import type { SyncUpdate } from '../service'
@@ -90,6 +91,11 @@ export function SyncChangesList() {
                 >
                   {update.title}
                 </span>
+                {update.changeKind === 'rejected' && update.detail && (
+                  <span className="flex-shrink-0 text-xs text-fg-hint">
+                    <SyncRefusalReason permission={update.detail} />
+                  </span>
+                )}
                 <span className="hidden flex-shrink-0 text-xs text-fg-hint sm:inline">
                   {update.sourceDevice
                     ? t('sections.sync.changes.onDevice', {

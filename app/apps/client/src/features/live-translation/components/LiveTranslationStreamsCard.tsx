@@ -3,8 +3,8 @@ import { Check, Copy, Globe, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { getApiUrl } from '~/config'
 import { createLogger } from '~/utils/logger'
+import { serverFetch } from '~/utils/serverFetch'
 import { ListenerLinkChangedNotice } from './ListenerLinkChangedNotice'
 import { LANGUAGES, type TranslationTarget } from '../hooks/useLiveTranslation'
 
@@ -20,33 +20,32 @@ export function LiveTranslationStreamsCard() {
   const [linkChanged, setLinkChanged] = useState(false)
   const [targets, setTargets] = useState<TranslationTarget[]>([])
   const [copied, setCopied] = useState(false)
-  const baseUrl = getApiUrl() || ''
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/stream-secret`)
+    serverFetch(`/api/live-translation/stream-secret`)
       .then((r) => r.json())
       .then((d: { link: string; linkChanged?: boolean }) => {
         setStreamUrl(d.link)
         setLinkChanged(d.linkChanged === true)
       })
       .catch(() => {})
-  }, [baseUrl])
+  }, [])
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/settings`)
+    serverFetch(`/api/live-translation/settings`)
       .then((r) => r.json())
       .then((d: PersistedSettingsSubset) => {
         setTargets(Array.isArray(d.targets) ? d.targets : [])
       })
       .catch(() => {})
-  }, [baseUrl])
+  }, [])
 
   const langName = (code: string) =>
     LANGUAGES.find((l) => l.code === code)?.name || code.toUpperCase()
 
   const dismissLinkChanged = () => {
     setLinkChanged(false)
-    fetch(`${baseUrl}/api/live-translation/link-changed`, {
+    serverFetch(`/api/live-translation/link-changed`, {
       method: 'DELETE',
     }).catch((error) =>
       logger.error('Link notice not dismissed', String(error)),

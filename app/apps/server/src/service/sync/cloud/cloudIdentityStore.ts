@@ -59,20 +59,14 @@ export async function saveCloudIdentity(
 }
 
 /**
- * Updates what a cycle learned (seq, head version, read path, access, the
+ * Updates what a cycle learned (seq, head version, read path, the
  * owner) or what the owner changed (a fresh server token).
  */
 export async function updateCloudIdentity(
   patch: Partial<
     Pick<
       CloudIdentity,
-      | 'seq'
-      | 'headEtag'
-      | 'readUrl'
-      | 'accessHash'
-      | 'ownerEmail'
-      | 'deviceId'
-      | 'serverToken'
+      'seq' | 'headEtag' | 'readUrl' | 'ownerEmail' | 'deviceId' | 'serverToken'
     >
   >,
 ): Promise<void> {

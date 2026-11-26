@@ -6,6 +6,8 @@ import {
   test,
 } from '@playwright/test'
 
+import { checksTimingBudgets } from './helpers/timing-budgets'
+
 /**
  * A slide change animates only what changed, down to single words: when the
  * next slide keeps most of the one on screen ("… slide 1" → "… slide 2", or a
@@ -165,6 +167,8 @@ async function sampleSlideChange(
           (animation.effect as KeyframeEffect)
             .getKeyframes()
             .some((keyframe) => 'opacity' in keyframe)
+        // Seen even between two sparse frames: a slow machine may draw no
+        // frame in the middle of a 300 ms fade.
         const isAnimatingOpacity = (element: HTMLElement | undefined) => {
           for (let el = element ?? null; el; el = el.parentElement) {
             if (
@@ -676,6 +680,13 @@ test.describe('Slide changes and exits run at a steady frame rate on a full HD p
   test.use({ viewport: { width: 1920, height: 1080 } })
   let screenId: number | undefined
   let songId: number | undefined
+
+  // The draw probe misses a runner that draws at 30 fps (33 ms frames pass
+  // it, yet the median fails), so the budgets also follow checksTimingBudgets.
+  test.skip(
+    !checksTimingBudgets,
+    "GitHub's shared runners can't hold a frame rate",
+  )
 
   test.beforeAll(async ({ request }) => {
     const screen = await request.post('/api/screens', {

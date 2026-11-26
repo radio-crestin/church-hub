@@ -1260,13 +1260,28 @@
           "added": "Added",
           "updated": "Updated",
           "removed": "Removed",
-          "conflict": "Conflict"
+          "conflict": "Conflict",
+          "rejected": "Not allowed"
         },
         "entity": {
           "song": "Song",
           "song_category": "Category",
           "song_group": "Group",
-          "schedule": "Presentation"
+          "schedule": "Presentation",
+          "song_tag": "Tag",
+          "song_bookmark": "Song bookmark",
+          "song_bookmark_note": "Song bookmarks note",
+          "bible_bookmark": "Bible bookmark",
+          "bible_bookmark_note": "Bible bookmarks note",
+          "music_playlist": "Playlist",
+          "setting": "Setting",
+          "role": "Role",
+          "user": "User"
+        },
+        "needs": "Needs: {{permission}}",
+        "needsSpecial": {
+          "super_admin": "a super admin",
+          "active_user": "an active account"
         }
       }
     },
