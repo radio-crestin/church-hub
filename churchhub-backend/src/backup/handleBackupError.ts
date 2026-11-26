@@ -1,20 +1,20 @@
 import type { Context } from 'hono'
 import { SyncError } from '../sync/SyncError'
+import { describeError } from './describeError'
 
-const TOKEN = /\bchb[agr]_[A-Za-z0-9_.-]+/g
-const ACCOUNT_PATH = /accounts\/[0-9a-f]{64}\/[^\s"'<]*/g
-
-/** A message with backup tokens and account paths cut out. */
-export function redactBackupSecrets(text: string): string {
-  return text
-    .replace(TOKEN, 'chb_<redacted>')
-    .replace(ACCOUNT_PATH, 'accounts/<redacted>')
-}
+/** The stack's frames (where it failed), without the message line above them. */
+const framesOf = (error: Error) =>
+  (error.stack ?? '')
+    .split('\n')
+    .filter((line) => /^\s+at /.test(line))
+    .slice(0, 5)
+    .join('\n')
 
 /**
  * Every error a /backup route raises, as `{ error, code, ...details }`. An
- * unexpected one is logged without tokens or object keys (storage errors
- * name only the operation and S3's code; the rest is redacted too).
+ * unexpected one is logged as its name and a known code (describeError)
+ * with the stack's frames, never its message: messages can carry tokens,
+ * object keys, URLs or an email.
  */
 export function handleBackupError(error: Error, c: Context): Response {
   if (error instanceof SyncError) {
@@ -23,9 +23,6 @@ export function handleBackupError(error: Error, c: Context): Response {
       error.status
     )
   }
-  console.error(
-    '[backup] request failed:',
-    redactBackupSecrets(error.stack ?? String(error))
-  )
+  console.error(`[backup] request failed: ${describeError(error)}\n${framesOf(error)}`)
   return c.json({ error: 'Internal server error', code: 'internal' }, 500)
 }

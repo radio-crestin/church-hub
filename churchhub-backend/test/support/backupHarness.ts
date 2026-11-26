@@ -46,6 +46,8 @@ export class BackupHarness {
   private readonly codes = new Map<string, GoogleAccount>()
   private readonly googleTokens = new Map<string, GoogleAccount>()
   private realFetch = globalThis.fetch
+  /** Makes a request fail as a network error would (its message naming the URL). */
+  fault: ((url: string) => Error | null) | null = null
 
   constructor(public env: Bindings = backupEnv()) {}
 
@@ -53,6 +55,8 @@ export class BackupHarness {
     this.realFetch = globalThis.fetch
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = new Request(input, init)
+      const failure = this.fault?.(request.url)
+      if (failure) throw failure
       const { host } = new URL(request.url)
       if (host === 's3.test') return this.s3.handle(request)
       if (host === 'google.test') return this.google(request)

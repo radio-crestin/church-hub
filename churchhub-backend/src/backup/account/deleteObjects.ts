@@ -1,3 +1,4 @@
+import { describeError } from '../describeError'
 import type { BackupBucket } from '../storage/createBackupBucket'
 import { blobKey, manifestKey, userPartKey } from './accountKeys'
 
@@ -19,8 +20,8 @@ export async function deleteObjects(
     ...(objects.blobs ?? []).map((hash) => blobKey(accountId, blobPrefix, hash)),
   ]
   for (const key of keys) {
-    await bucket.delete(key).catch((error: Error) => {
-      console.error(`[backup] delete failed: ${error.message}`)
+    await bucket.delete(key).catch((error: unknown) => {
+      console.error(`[backup] delete failed: ${describeError(error)}`)
     })
   }
 }

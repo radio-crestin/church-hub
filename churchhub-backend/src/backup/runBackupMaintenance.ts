@@ -5,6 +5,7 @@ import { reconcileAccount } from './account/reconcileAccount'
 import { sweepUnlistedObjects } from './account/sweepUnlistedObjects'
 import { UPLOAD_MAX_AGE_MS } from './account/takeExpiredUploads'
 import { readBackupSettings } from './backupSettings'
+import { describeError } from './describeError'
 import {
   type BackupBucket,
   createBackupBucket,
@@ -61,7 +62,7 @@ async function eachAccount(
       done++
     } catch (error) {
       console.error(
-        `[backup] ${step} failed for account ${accountId.slice(0, 12)}: ${error instanceof Error ? error.message : 'unknown'}`
+        `[backup] ${step} failed for account ${accountId.slice(0, 12)}: ${describeError(error)}`
       )
     }
   }
@@ -106,7 +107,7 @@ export async function runBackupMaintenance(
     )
   } catch (error) {
     console.error(
-      `[backup] maintenance failed: ${error instanceof Error ? error.message : 'unknown'}`
+      `[backup] maintenance failed: ${describeError(error)}`
     )
   }
 }

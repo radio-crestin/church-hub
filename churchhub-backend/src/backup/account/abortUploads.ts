@@ -1,3 +1,4 @@
+import { describeError } from '../describeError'
 import type { BackupBucket } from '../storage/createBackupBucket'
 import type { PendingUpload } from './AccountRecord'
 import { userPartKey } from './accountKeys'
@@ -19,8 +20,8 @@ export async function abortUploads(
   for (const upload of uploads) {
     await bucket
       .abortMultipartUpload(userPartKey(accountId, upload.id), upload.uploadId)
-      .catch((error: Error) => {
-        console.error(`[backup] abort upload failed: ${error.message}`)
+      .catch((error: unknown) => {
+        console.error(`[backup] abort upload failed: ${describeError(error)}`)
       })
   }
   await deleteObjects(bucket, accountId, blobPrefix, {

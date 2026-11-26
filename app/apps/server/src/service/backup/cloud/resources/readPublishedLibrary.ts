@@ -2,6 +2,7 @@ import { slidesFingerprint } from './slidesFingerprint'
 import { createLogger } from '../../../../utils/logger'
 import { BUILT_IN_SONG_SOURCES } from '../../../song-sources'
 import { readSourceSongList } from '../../../song-sources/updates/readSourceSongList'
+import { logSafeError } from '../logSafeError'
 
 const logger = createLogger('backup')
 
@@ -57,7 +58,7 @@ export async function readPublishedLibrary(): Promise<PublishedLibrary> {
       }
     } catch (error) {
       logger.warning(
-        `Cloud backup: ${source.id} could not be read; its songs stay encrypted (${error instanceof Error ? error.message : 'unknown'})`,
+        `Cloud backup: ${source.id} could not be read; its songs stay encrypted (${logSafeError(error)})`,
       )
     }
   }

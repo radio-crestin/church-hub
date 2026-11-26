@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, spyOn, test } from 'bun:test'
 import { createMemoryRateLimiter } from '../src/node/createMemoryRateLimiter'
 import { resolveClientIp } from '../src/node/resolveClientIp'
 import { withClientIp } from '../src/node/withClientIp'
+import { runBackupMaintenance } from '../src/backup/runBackupMaintenance'
 import { BackupHarness, backupEnv } from './support/backupHarness'
 
 /**
@@ -54,6 +55,30 @@ test('a failing store logs and answers without tokens, emails or object keys', a
   expect(lines.join('\n')).toContain('[backup] request failed')
   for (const secret of [accessToken, refreshToken, ALICE.email, ALICE.sub, backupId, 'accounts/']) {
     expect(everything).not.toContain(secret)
+  }
+})
+
+test('a failing account’s upkeep and request logs name no key, URL or email', async () => {
+  const alice = await harness.signIn(ALICE)
+  await harness.upload(alice.accessToken, new Uint8Array(10), [new Uint8Array(20).fill(1)])
+  const recordKey = harness.s3.keys().find((key) => key.endsWith('account.json')) as string
+  const accountId = recordKey.split('/')[1]
+  const { blobPrefix } = JSON.parse(new TextDecoder().decode(harness.s3.objects.get(`backups/${recordKey}`)))
+  harness.fault = (url) =>
+    url.includes(accountId)
+      ? new TypeError(`fetch failed: ${url} for ${ALICE.email} (prefix ${blobPrefix})`)
+      : null
+
+  await runBackupMaintenance(harness.env, { reconcile: true })
+  const failed = await harness.request('/backup/backups', {}, alice.accessToken)
+  expect(failed.status).toBe(500)
+  harness.fault = null
+
+  const logged = lines.join('\n')
+  expect(logged).toContain(`failed for account ${accountId.slice(0, 12)}: TypeError`)
+  expect(logged).toContain('[backup] request failed: TypeError')
+  for (const secret of ['s3.test', 'https://', 'accounts/', 'blobs/', '@', blobPrefix, accountId]) {
+    expect(logged).not.toContain(secret)
   }
 })
 

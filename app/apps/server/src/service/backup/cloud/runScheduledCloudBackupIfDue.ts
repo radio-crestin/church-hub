@@ -1,6 +1,6 @@
-import { CloudBackupError } from './CloudBackupError'
 import { readCloudBackupCredential } from './cloudBackupCredential'
 import { getCloudBackupSchedule } from './cloudBackupSchedule'
+import { logSafeError } from './logSafeError'
 import { uploadCloudBackup } from './uploadCloudBackup'
 import { createLogger } from '../../../utils/logger'
 
@@ -20,7 +20,7 @@ export async function runScheduledCloudBackupIfDue(): Promise<void> {
     logger.info('Running scheduled cloud backup...')
     await uploadCloudBackup()
   } catch (error) {
-    const code = error instanceof CloudBackupError ? error.code : String(error)
+    const code = logSafeError(error)
     logger.warning(`Scheduled cloud backup failed: ${code}`)
   }
 }

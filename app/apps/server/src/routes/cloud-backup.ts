@@ -13,6 +13,7 @@ import {
   updateCloudBackupSchedule,
   uploadCloudBackup,
 } from '../service/backup/cloud'
+import { logSafeError } from '../service/backup/cloud/logSafeError'
 import { escapeHtml } from '../service/text-search/text/escapeHtml'
 import { createLogger } from '../utils/logger'
 
@@ -31,9 +32,7 @@ function failure(error: unknown): Response {
       { status: error.status },
     )
   }
-  logger.error(
-    `Cloud backup failed: ${error instanceof Error ? error.message : 'unknown'}`,
-  )
+  logger.error(`Cloud backup failed: ${logSafeError(error)}`)
   return Response.json({ error: 'cloud_backup_failed' }, { status: 500 })
 }
 
