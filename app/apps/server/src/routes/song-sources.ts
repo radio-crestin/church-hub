@@ -19,7 +19,6 @@ import {
   readCatalog,
   readChangedForReview,
   readLackingSongs,
-  readManagedRelease,
   readSourceArchive,
   readSourceChecksum,
   readSourceSongs,
@@ -51,7 +50,6 @@ const logger = createLogger('song-sources')
 const SOURCE_SONGS_PATH = /^\/api\/song-sources\/([\w-]+)\/songs$/
 const SOURCE_ARCHIVE_PATH = /^\/api\/song-sources\/([\w-]+)\/archive$/
 const SOURCE_CHECKSUM_PATH = /^\/api\/song-sources\/([\w-]+)\/checksum$/
-const SOURCE_MANAGED_PATH = /^\/api\/song-sources\/([\w-]+)\/managed$/
 const SOURCE_LACKING_PATH = /^\/api\/song-sources\/([\w-]+)\/lacking$/
 const SOURCE_CHANGED_PATH = /^\/api\/song-sources\/([\w-]+)\/changed$/
 const SOURCE_RECOUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/recount$/
@@ -79,7 +77,6 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - GET    /api/song-sources/:id/songs           a shared folder's OpenSong files (songs.create)
  * - GET    /api/song-sources/:id/archive         a song file source's .chsongs (songs.create)
  * - GET    /api/song-sources/:id/checksum        what changes when the source's songs do (songs.view)
- * - GET    /api/song-sources/:id/managed         the version of our managed copy, null while there is none (songs.view)
  * - GET    /api/song-sources/:id/lacking         the songs its last check found the library lacks (songs.create)
  * - GET    /api/song-sources/:id/changed         library songs its last check found changed, both versions (songs.create)
  * - POST   /api/song-sources/:id/changed         update or keep some of them `{ songIds, action: 'update'|'keep' }` (songs.create)
@@ -460,18 +457,6 @@ export async function handleSongSourceRoutes(
       })
     } catch (error) {
       logger.warning(`Checksum of ${checksumId} failed: ${error}`)
-      return respond(502, { error: errorMessage(error) })
-    }
-  }
-
-  const managedId = pathname.match(SOURCE_MANAGED_PATH)?.[1]
-  if (req.method === 'GET' && managedId) {
-    const denied = deny('songs.view')
-    if (denied) return denied
-    try {
-      return respond(200, { data: await readManagedRelease(managedId) })
-    } catch (error) {
-      logger.warning(`Managed copy of ${managedId} failed: ${error}`)
       return respond(502, { error: errorMessage(error) })
     }
   }
