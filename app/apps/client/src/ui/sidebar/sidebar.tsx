@@ -30,7 +30,6 @@ import type {
   NativeWindowSettings,
 } from '../../features/sidebar-config/types'
 import { usePermissions } from '../../provider/permissions-provider'
-import { AppMark } from '../brand/AppMark'
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean
@@ -125,6 +124,13 @@ export function Sidebar({
 
   const handleSidebarItemClick = useSidebarItemClick()
 
+  // The notifications bell lives in the header, at the right of the name.
+  const bell = isScreenRoute ? null : (
+    <NotificationsBell
+      onClick={(e) => handleSidebarItemClick('/notifications', e)}
+    />
+  )
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false)
@@ -176,25 +182,24 @@ export function Sidebar({
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
-        {/* Mobile Close Button */}
-        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-line">
-          <div className="flex items-center gap-3">
-            <AppMark size={28} />
-            <span className="text-sm font-semibold text-fg">Church Hub</span>
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
-            aria-label={t('sidebar:actions.closeMenu')}
-          >
-            <X size={20} strokeWidth={1.5} />
-          </button>
-        </div>
-
-        {/* Desktop Header */}
-        <div className="hidden md:block">
-          <SidebarHeader isCollapsed={isCollapsed} />
-        </div>
+        {/* One header for every size: the name, the notifications bell, and
+            on a phone the button that closes the menu. */}
+        <SidebarHeader
+          isCollapsed={isCollapsed}
+          action={
+            <>
+              {bell}
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
+                aria-label={t('sidebar:actions.closeMenu')}
+              >
+                <X size={20} strokeWidth={1.5} />
+              </button>
+            </>
+          }
+        />
 
         <nav className="flex-1 flex flex-col p-2 overflow-y-auto scrollbar-thin">
           {groupSidebarItems(menuItems).map((group, index) => (
@@ -290,33 +295,23 @@ export function Sidebar({
               </button>
             )}
 
-            {/* Settings, with the notifications bell (synced songs, app
-                updates) at the right end of its row; stacked when collapsed. */}
-            <div
-              className={`flex items-center justify-end gap-1 ${isCollapsed ? 'md:flex-col md:items-stretch' : ''}`}
-            >
-              {canViewSettings && (
-                <SidebarItem
-                  pageId="settings"
-                  icon={Settings}
-                  label={t('sidebar:navigation.settings')}
-                  to="/settings"
-                  isCollapsed={isCollapsed}
-                  isActive={
-                    location.pathname === '/settings' ||
-                    location.pathname.startsWith('/settings/')
-                  }
-                  className="md:flex flex-1 min-w-0"
-                  onClick={(e) => handleSidebarItemClick('/settings', e)}
-                  nativeWindowSettings={getItemNativeWindowSettings('settings')}
-                />
-              )}
-              {!isScreenRoute && (
-                <NotificationsBell
-                  onClick={(e) => handleSidebarItemClick('/notifications', e)}
-                />
-              )}
-            </div>
+            {/* Settings */}
+            {canViewSettings && (
+              <SidebarItem
+                pageId="settings"
+                icon={Settings}
+                label={t('sidebar:navigation.settings')}
+                to="/settings"
+                isCollapsed={isCollapsed}
+                isActive={
+                  location.pathname === '/settings' ||
+                  location.pathname.startsWith('/settings/')
+                }
+                className="md:flex"
+                onClick={(e) => handleSidebarItemClick('/settings', e)}
+                nativeWindowSettings={getItemNativeWindowSettings('settings')}
+              />
+            )}
 
             {/* Current user — opens the account page (profile, permissions,
                 switch user, log out), replacing the current page content. */}

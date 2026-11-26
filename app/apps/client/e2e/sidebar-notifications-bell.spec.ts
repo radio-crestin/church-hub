@@ -8,8 +8,8 @@ import {
 import { clearNotifications } from './helpers/song-folder-source'
 
 /**
- * Notifications in the sidebar are a bell on the Settings row, at its right
- * end, with a dot (no number) while something is unread; it opens the
+ * Notifications in the sidebar are a bell in its header, at the right of the
+ * app's name, with a dot (no number) while something is unread; it opens the
  * notifications page. Also in the collapsed sidebar and on a phone.
  */
 
@@ -17,10 +17,8 @@ const SHOTS_DIR = process.env.SHOTS_DIR
 
 const bellOf = (page: Page) => page.getByTestId('sidebar-notifications-bell')
 const dotOf = (page: Page) => page.getByTestId('sidebar-notifications-dot')
-const settingsOf = (page: Page) =>
-  page
-    .getByTestId('main-sidebar')
-    .getByRole('link', { name: /^(Settings|Setări)$/ })
+const appNameOf = (page: Page) =>
+  page.getByTestId('main-sidebar').getByText('Church Hub', { exact: true })
 
 async function addUnread(request: APIRequestContext) {
   await clearNotifications(request)
@@ -45,14 +43,14 @@ async function shot(page: Page, name: string) {
   })
 }
 
-async function expectBellRightOfSettings(page: Page) {
+async function expectBellInHeader(page: Page) {
   const bell = await bellOf(page).boundingBox()
-  const settings = await settingsOf(page).boundingBox()
-  if (!bell || !settings) throw new Error('bell or Settings not laid out')
+  const name = await appNameOf(page).boundingBox()
+  if (!bell || !name) throw new Error('bell or app name not laid out')
   const bellMiddle = bell.y + bell.height / 2
-  expect(bellMiddle).toBeGreaterThan(settings.y)
-  expect(bellMiddle).toBeLessThan(settings.y + settings.height)
-  expect(bell.x).toBeGreaterThanOrEqual(settings.x + settings.width - 1)
+  expect(bellMiddle).toBeGreaterThan(name.y - bell.height)
+  expect(bellMiddle).toBeLessThan(name.y + name.height + bell.height)
+  expect(bell.x).toBeGreaterThanOrEqual(name.x + name.width - 1)
 }
 
 test.describe('Sidebar notifications bell', () => {
@@ -62,7 +60,7 @@ test.describe('Sidebar notifications bell', () => {
     await clearNotifications(request)
   })
 
-  test('a bell with a dot on the Settings row opens the notifications', async ({
+  test('a bell with a dot in the sidebar header opens the notifications', async ({
     page,
     request,
   }) => {
@@ -81,7 +79,7 @@ test.describe('Sidebar notifications bell', () => {
         .getByTestId('main-sidebar')
         .getByText(/^(Notifications|Notificări)$/),
     ).toHaveCount(0)
-    await expectBellRightOfSettings(page)
+    await expectBellInHeader(page)
     await shot(page, 'after-unread')
 
     await bellOf(page).click()
@@ -134,7 +132,7 @@ test.describe('Sidebar notifications bell', () => {
 
     await expect(bellOf(page)).toBeVisible()
     await expect(dotOf(page)).toBeVisible()
-    await expectBellRightOfSettings(page)
+    await expectBellInHeader(page)
     await shot(page, 'after-mobile')
     await bellOf(page).click()
     await expect(page).toHaveURL(/\/notifications$/)
