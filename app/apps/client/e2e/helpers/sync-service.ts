@@ -1,15 +1,13 @@
 import { type BackendProcess, startBackendProcess } from './backend-process'
 import { SYNC_SERVICE_PORT } from '../../playwright.config'
 
-const READY_LINE = /\[server\] Church Hub backend listening/
 /**
  * Ready once the server listens and /sync's startup probe has checked the
  * bucket's conditional writes (createSyncGuard): until then /sync answers
  * 503 not_configured. Both lines, in either order, in the output so far.
  */
-const BOTH_READY = new RegExp(
-  `${READY_LINE.source}[\s\S]*\[sync\] conditional writes verified|\[sync\] conditional writes verified[\s\S]*${READY_LINE.source}`,
-)
+const BOTH_READY =
+  /\[server\] Church Hub backend listening[\s\S]*\[sync\] conditional writes verified|\[sync\] conditional writes verified[\s\S]*\[server\] Church Hub backend listening/
 
 /** The bucket the service writes to, on the spec's fake S3. */
 export const SYNC_BUCKET = 'church-hub-sync'
