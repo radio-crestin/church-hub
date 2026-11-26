@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNavigateTemporary } from '~/features/presentation'
+import type { TopicVerseSource } from '~/features/presentation/types'
 import { TemplatePicker } from '~/features/slide-templates/components/TemplatePicker'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
@@ -24,7 +25,7 @@ interface BibleTopicPassagesProps {
   activeVerseId?: number
   onBack: () => void
   /** Presents a verse drawn with its passage's template, else the topic's */
-  onPresentVerse: (verse: BibleVerse, templateId: number | null) => void
+  onPresentVerse: (verse: BibleVerse, topic: TopicVerseSource) => void
   onOpenVerse: (verse: BibleVerse) => void
 }
 
@@ -54,8 +55,16 @@ export function BibleTopicPassages({
   // The server draws the topic's slideshow with them, at once if it plays.
   const setTopicTemplate = useSetTopicTemplate(topicId)
   const setPassageTemplate = useSetPassageTemplate(topicId)
-  const templateOf = (passage: BibleTopicPassage) =>
-    passage.templateId ?? templateId
+  // A passage presents as its topic's: the server draws it with its template.
+  const sourceOf = (passage: BibleTopicPassage): TopicVerseSource => ({
+    topicId,
+    passage: {
+      book: passage.book,
+      chapter: passage.chapter,
+      startVerse: passage.startVerse,
+      endVerse: passage.endVerse,
+    },
+  })
   const activeIndex =
     slideshow.position?.index ??
     passages.findIndex((passage) =>
@@ -72,7 +81,7 @@ export function BibleTopicPassages({
     }
     const passage = passages[index]
     const verse = passage?.verses[0]
-    if (verse) onPresentVerse(verse, templateOf(passage))
+    if (verse) onPresentVerse(verse, sourceOf(passage))
   }
 
   return (
@@ -149,7 +158,7 @@ export function BibleTopicPassages({
                 >
                   <button
                     type="button"
-                    onClick={() => onPresentVerse(first, templateOf(passage))}
+                    onClick={() => onPresentVerse(first, sourceOf(passage))}
                     title={t('topics.present')}
                     className="min-w-0 flex-1 px-2.5 py-2 text-left hover:bg-hover rounded-l-lg"
                   >

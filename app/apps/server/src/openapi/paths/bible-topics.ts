@@ -125,7 +125,7 @@ export const bibleTopicsPaths = {
       tags,
       summary: "Set a topic's template",
       description:
-        "The slide template the topic's verses are drawn with, presented by hand or in its slideshow, remembered for the topic; `null` goes back to its fitting default. The topic's slideshow on screen redraws with it at once. Needs bible.present_now.",
+        "The slide template the topic's verses are drawn with, presented by hand or in its slideshow, remembered for the topic; `null` goes back to its fitting default. The topic's slideshow, or a verse presented from it, redraws with it at once on every screen, and clients get a `bible_topics_updated` WebSocket message to reload the topics. Needs bible.present_now.",
       security,
       parameters: [
         { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
@@ -161,7 +161,7 @@ export const bibleTopicsPaths = {
       tags,
       summary: "Set a passage's own template",
       description:
-        "One of the topic's passages (its reference: book code, chapter, verse range) is drawn with its own slide template, presented by hand or in the topic's slideshow; `null` draws it with the topic's again. The topic's slideshow on screen redraws at once. Needs bible.present_now.",
+        "One of the topic's passages (its reference: book code, chapter, verse range) is drawn with its own slide template, presented by hand or in the topic's slideshow; `null` draws it with the topic's again. What the topic has on screen redraws at once, and clients get a `bible_topics_updated` WebSocket message. Needs bible.present_now.",
       security,
       parameters: [
         { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },

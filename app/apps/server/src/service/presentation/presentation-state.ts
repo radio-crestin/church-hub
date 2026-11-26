@@ -461,9 +461,9 @@ export function presentTemporaryBible(
         secondaryBookName: input.secondaryBookName,
         secondaryTranslationAbbreviation:
           input.secondaryTranslationAbbreviation,
-        // A topic's verse is drawn with the topic's template; the verses
-        // stepped to from it keep it (they spread this data).
-        templateId: input.templateId,
+        // A topic's verse: drawn with its template (withTopicTemplates); the
+        // verses stepped to from it keep it (they spread this data).
+        topic: input.topic,
       },
     }
 

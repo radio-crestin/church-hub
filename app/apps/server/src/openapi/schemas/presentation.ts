@@ -107,7 +107,26 @@ export const presentationSchemas = {
         type: 'integer',
         nullable: true,
         description:
-          "The slide template the screens that follow presentations draw it with (a Bible topic's); unset: each screen's own. Stepping to the next or previous verse keeps it.",
+          "The slide template the screens that follow presentations draw it with, set by the server for a topic verse (see topic); unset: each screen's own.",
+      },
+      topic: {
+        type: 'object',
+        description:
+          "The Bible topic passage the verse was presented from. The server draws it with the passage's own template, else the topic's, and redraws it when either changes; the verses stepped to from it keep it.",
+        required: ['topicId', 'passage'],
+        properties: {
+          topicId: { type: 'integer' },
+          passage: {
+            type: 'object',
+            required: ['book', 'chapter', 'startVerse', 'endVerse'],
+            properties: {
+              book: { type: 'string', example: 'JHN' },
+              chapter: { type: 'integer' },
+              startVerse: { type: 'integer' },
+              endVerse: { type: 'integer' },
+            },
+          },
+        },
       },
     },
   },
@@ -259,11 +278,24 @@ export const presentationSchemas = {
       secondaryText: { type: 'string', nullable: true },
       secondaryBookName: { type: 'string', nullable: true },
       secondaryTranslationAbbreviation: { type: 'string', nullable: true },
-      templateId: {
-        type: 'integer',
-        nullable: true,
+      topic: {
+        type: 'object',
         description:
-          "The slide template the screens that follow presentations draw it with (a Bible topic's); unset: each screen's own. Stepping to the next or previous verse keeps it.",
+          "The Bible topic passage the verse is presented from. The server draws it with the passage's own template, else the topic's, and redraws it when either changes; the verses stepped to from it keep it.",
+        required: ['topicId', 'passage'],
+        properties: {
+          topicId: { type: 'integer' },
+          passage: {
+            type: 'object',
+            required: ['book', 'chapter', 'startVerse', 'endVerse'],
+            properties: {
+              book: { type: 'string', example: 'JHN' },
+              chapter: { type: 'integer' },
+              startVerse: { type: 'integer' },
+              endVerse: { type: 'integer' },
+            },
+          },
+        },
       },
     },
   },

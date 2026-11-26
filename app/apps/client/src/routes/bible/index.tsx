@@ -50,6 +50,7 @@ import {
   useSetSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import type { TopicVerseSource } from '~/features/presentation/types'
 import type { ScheduleItem } from '~/features/schedules'
 import {
   getSchedulePassageTarget,
@@ -391,12 +392,12 @@ function BiblePage() {
     presentationState?.temporaryContent?.type === 'bible'
       ? presentationState.temporaryContent.data.translationId
       : undefined
-  // The template the verse on screen is drawn with (a topic's): the verse
-  // stepped to next keeps it.
-  const shownTemplateId =
+  // The topic passage the verse on screen was presented from: the verse
+  // stepped to next keeps it, and so its template.
+  const shownTopic =
     presentationState?.temporaryContent?.type === 'bible'
-      ? (presentationState.temporaryContent.data.templateId ?? null)
-      : null
+      ? presentationState.temporaryContent.data.topic
+      : undefined
   const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
 
   // Sync navigation with current Bible verse only on initial page open
@@ -907,11 +908,7 @@ function BiblePage() {
 
   // Handle verse presentation to screen (API call)
   const presentVerseToScreen = useCallback(
-    async (
-      verse: BibleVerse,
-      verseIndex: number,
-      templateId: number | null = null,
-    ) => {
+    async (verse: BibleVerse, verseIndex: number, topic?: TopicVerseSource) => {
       const reference = formatVerseReference(
         verse.bookName,
         verse.chapter,
@@ -953,7 +950,7 @@ function BiblePage() {
         secondaryText,
         secondaryBookName,
         secondaryTranslationAbbreviation,
-        templateId,
+        topic,
       })
 
       // Bring back whatever highlighting was saved with this verse. Live
@@ -1028,10 +1025,10 @@ function BiblePage() {
         if (clampedIndex !== presentedIndex) {
           navigation.presentVerse(clampedIndex)
         }
-        presentVerseToScreen(verse, clampedIndex, shownTemplateId)
+        presentVerseToScreen(verse, clampedIndex, shownTopic)
       }
     }
-  }, [navigation, verses, presentVerseToScreen, shownTemplateId])
+  }, [navigation, verses, presentVerseToScreen, shownTopic])
 
   // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
@@ -1063,10 +1060,10 @@ function BiblePage() {
   // follows the screen to its chapter (the server sync), so the next verse
   // continues the passage.
   const handlePresentTopicVerse = useCallback(
-    async (verse: BibleVerse, templateId: number | null) => {
+    async (verse: BibleVerse, topic: TopicVerseSource) => {
       isBrowsingRef.current = false
       hasNavigatedOnOpen.current = true
-      await presentVerseToScreen(verse, verse.verse - 1, templateId)
+      await presentVerseToScreen(verse, verse.verse - 1, topic)
     },
     [presentVerseToScreen],
   )
@@ -1136,7 +1133,7 @@ function BiblePage() {
       const verse = verses[nextIndex]
       if (verse) {
         navigation.presentVerse(nextIndex)
-        await presentVerseToScreen(verse, nextIndex, shownTemplateId)
+        await presentVerseToScreen(verse, nextIndex, shownTopic)
       }
     } else {
       // Just move selection (not presenting)
@@ -1150,7 +1147,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
-    shownTemplateId,
+    shownTopic,
   ])
 
   const handlePreviousVerse = useCallback(async () => {
@@ -1188,7 +1185,7 @@ function BiblePage() {
       const verse = verses[prevIndex]
       if (verse) {
         navigation.presentVerse(prevIndex)
-        await presentVerseToScreen(verse, prevIndex, shownTemplateId)
+        await presentVerseToScreen(verse, prevIndex, shownTopic)
       }
     } else {
       // Just move selection (not presenting)
@@ -1202,7 +1199,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
-    shownTemplateId,
+    shownTopic,
   ])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection

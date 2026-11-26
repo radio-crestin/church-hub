@@ -12,7 +12,11 @@ import {
   getPresentationState,
   updatePresentationState,
 } from '../service/presentation'
-import { broadcastPresentationState } from '../websocket'
+import { presentedTopicId } from '../service/presentation/withTopicTemplates'
+import {
+  broadcastBibleTopicsUpdated,
+  broadcastPresentationState,
+} from '../websocket'
 
 type HandleCors = (req: Request, res: Response) => Response
 
@@ -49,16 +53,15 @@ function readPassageTemplate(body: unknown) {
   }
 }
 
-/** The topic's slideshow on screen now redraws with its templates. */
-function redrawIfLive(topicId: number): void {
+/**
+ * What the topic presents now redraws with its templates, on every screen
+ * (its slideshow, or a verse presented from it), and every client reloads
+ * the topics.
+ */
+function redrawTopic(topicId: number): void {
+  broadcastBibleTopicsUpdated(topicId)
   const { temporaryContent, isHidden } = getPresentationState()
-  if (
-    isHidden ||
-    temporaryContent?.type !== 'versete_tineri' ||
-    temporaryContent.data.slideshow !== `topic:${topicId}`
-  ) {
-    return
-  }
+  if (isHidden || presentedTopicId(temporaryContent) !== topicId) return
   broadcastPresentationState(updatePresentationState({ temporaryContent }))
 }
 
@@ -82,7 +85,7 @@ async function putTopicTemplate(
   }
   const result = setBibleTopicTemplate(topicId, templateId as number | null)
   if (result !== 'ok') return respond(404, { error: NOT_FOUND[result] })
-  redrawIfLive(topicId)
+  redrawTopic(topicId)
   return respond(200, { data: { success: true } })
 }
 
@@ -105,7 +108,7 @@ async function putPassageTemplate(
     input.templateId,
   )
   if (result !== 'ok') return respond(404, { error: NOT_FOUND[result] })
-  redrawIfLive(topicId)
+  redrawTopic(topicId)
   return respond(200, { data: { success: true } })
 }
 

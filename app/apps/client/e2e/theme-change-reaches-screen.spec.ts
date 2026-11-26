@@ -11,7 +11,9 @@ import {
  * it, its slideshow. Choosing another template mid-play restyles the screen
  * at once, and opening another topic mid-play moves the slideshow to it. A
  * passage may have its own template over the topic's. A topic starts with a
- * fitting built-in template, and the one chosen for it is remembered.
+ * fitting built-in template, and the one chosen for it is remembered. A
+ * change shows at once: on what the topic has on screen, and on every
+ * computer's Bible page.
  */
 
 const RED = 'rgb(255, 0, 0)'
@@ -339,5 +341,71 @@ test.describe("A Bible topic's template on screen", () => {
       'data-value',
       String(red),
     )
+  })
+
+  test('a verse presented by hand restyles when its template changes', async ({
+    page,
+    request,
+  }) => {
+    const panel = page.getByTestId('bible-topics-panel')
+    await chooseTemplate(page, red)
+    await panel
+      .getByTestId('bible-topic-passage')
+      .first()
+      .getByRole('button')
+      .first()
+      .click()
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+
+    // The topic's template, then the passage's own: the verse follows.
+    await chooseTemplate(page, blue)
+    await expect.poll(() => drawsColour(display, BLUE)).toBe(true)
+    await panel.getByTestId('bible-topic-passage-template-0').click()
+    await page.getByTestId(`template-choice-${red}`).click()
+    await expect.poll(() => drawsColour(display, RED)).toBe(true)
+    expect(await onScreen(request)).toMatchObject({
+      type: 'bible',
+      reference: 'Ioan 3:16',
+      templateId: red,
+    })
+  })
+
+  test("another computer's Bible page shows a template change at once", async ({
+    page,
+    context,
+    browser,
+  }) => {
+    const other = await browser.newContext({
+      storageState: await context.storageState(),
+      baseURL: test.info().project.use.baseURL,
+    })
+    try {
+      const otherPage = await other.newPage()
+      await otherPage.addInitScript(() => {
+        window.localStorage.setItem('church-hub-language', 'ro')
+        window.localStorage.setItem('bible:topics-open', 'true')
+      })
+      await otherPage.goto('/bible')
+      const otherPanel = otherPage.getByTestId('bible-topics-panel')
+      await otherPanel.getByTestId('bible-topic-gods-love').click()
+      await expect(
+        otherPanel.getByTestId('bible-topic-passage').first(),
+      ).toBeVisible()
+
+      await chooseTemplate(page, red)
+      await expect(
+        otherPage.getByTestId('bible-topic-template'),
+      ).toHaveAttribute('data-value', String(red))
+      await page
+        .getByTestId('bible-topics-panel')
+        .getByTestId('bible-topic-passage-template-1')
+        .click()
+      await page.getByTestId(`template-choice-${blue}`).click()
+      await expect(
+        otherPanel.getByTestId('bible-topic-passage-template-1'),
+      ).toHaveAttribute('data-value', String(blue))
+    } finally {
+      await other.close()
+    }
   })
 })

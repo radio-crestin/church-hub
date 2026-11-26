@@ -65,6 +65,18 @@ export interface TextStyleRange {
 // TEMPORARY CONTENT TYPES (for instant display)
 // ============================================================================
 
+/** The Bible topic passage a verse was presented from (T-902). */
+export interface TopicVerseSource {
+  topicId: number
+  /** The passage's reference, by book code */
+  passage: {
+    book: string
+    chapter: number
+    startVerse: number
+    endVerse: number
+  }
+}
+
 /**
  * Temporary Bible content for instant display
  */
@@ -84,8 +96,13 @@ export interface TemporaryBibleContent {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
-  /** The template screens that follow presentations draw it with (a topic's). */
+  /**
+   * The template screens that follow presentations draw it with: for a topic
+   * verse, its passage's or its topic's, set by the server.
+   */
   templateId?: number | null
+  /** The topic passage it was presented from; the verses stepped to keep it. */
+  topic?: TopicVerseSource
 }
 
 /**
@@ -349,8 +366,8 @@ export interface PresentTemporaryBibleInput {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
-  /** The template screens that follow presentations draw it with (a topic's). */
-  templateId?: number | null
+  /** The topic passage it is presented from: drawn with its template. */
+  topic?: TopicVerseSource
 }
 
 /**

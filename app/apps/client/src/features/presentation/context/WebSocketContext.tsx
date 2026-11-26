@@ -11,6 +11,7 @@ import {
 } from 'react'
 
 import { getApiUrl, getWsUrl, isMobile } from '~/config'
+import { BIBLE_TOPICS_QUERY_KEY } from '~/features/bible/topics/hooks/useBibleTopics'
 import { isTunnelOpen } from '~/features/remote-access/tunnel/tunnelState'
 import { slideTemplatesQueryKey } from '~/features/slide-templates/hooks/useSlideTemplates'
 import {
@@ -53,6 +54,14 @@ interface ScreenConfigUpdatedMessage {
   type: 'screen_config_updated'
   payload: {
     screenId: number
+    updatedAt: number
+  }
+}
+
+interface BibleTopicsUpdatedMessage {
+  type: 'bible_topics_updated'
+  payload: {
+    topicId: number
     updatedAt: number
   }
 }
@@ -187,6 +196,7 @@ type MessageData =
   | ScreenConfigUpdatedMessage
   | SlideTemplatePreviewMessage
   | SlideTemplateUpdatedMessage
+  | BibleTopicsUpdatedMessage
   | HighlightColorsUpdatedMessage
   | SlideHighlightsUpdatedMessage
   | SongUpdatedMessage
@@ -314,6 +324,11 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
         if (data.type === 'slide_template_updated') {
           reloadQueries(queryClient, slideTemplatesQueryKey)
+        }
+
+        // A topic's or a passage's template changed on another computer
+        if (data.type === 'bible_topics_updated') {
+          reloadQueries(queryClient, BIBLE_TOPICS_QUERY_KEY)
         }
 
         if (data.type === 'slide_template_preview') {
