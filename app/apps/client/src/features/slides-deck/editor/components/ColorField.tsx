@@ -1,9 +1,16 @@
 import { PanelField } from './PanelField'
 
-/** `#rgb` or a colour name made `#rrggbb` for the colour input; others black. */
+/** `#rgb` or `rgb()` made `#rrggbb` for the colour input; others black. */
 function toHex(color: string | undefined): string {
   if (!color) return '#000000'
   if (/^#[0-9a-f]{6}$/i.test(color)) return color
+  const rgb = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i)
+  if (rgb) {
+    return `#${rgb
+      .slice(1, 4)
+      .map((c) => Number(c).toString(16).padStart(2, '0'))
+      .join('')}`
+  }
   if (/^#[0-9a-f]{3}$/i.test(color)) {
     return `#${[...color.slice(1)].map((c) => c + c).join('')}`
   }

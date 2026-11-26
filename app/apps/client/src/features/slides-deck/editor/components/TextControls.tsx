@@ -13,11 +13,13 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import { FONT_FAMILY_OPTIONS } from '~/features/presentation/utils/fontFamilyOptions'
+import { getFontFamilyStack } from '~/features/presentation/utils/getFontFamilyStack'
 import { ColorField } from './ColorField'
 import { NumberField } from './NumberField'
 import { PanelField } from './PanelField'
 import { ToggleButton } from './ToggleButton'
 import type { DeckShapeElement, DeckTextElement } from '../../types'
+import { useSelectionTextStyle } from '../hooks/useSelectionTextStyle'
 import { transformTextHtml } from '../utils/transformTextHtml'
 
 interface TextControlsProps {
@@ -27,22 +29,74 @@ interface TextControlsProps {
   update: (patch: Partial<DeckTextElement>, merge?: string) => void
 }
 
+const DEFAULT_SIZE = 40
+
 /**
  * A text box's font, size and colour, and bold, italic, underline, alignment
- * and lists: on the selected words while it is edited, else on all its text.
+ * and lists: on the selected words while it is edited (font, size and colour
+ * as their `<span style>`, the size in em of the box's), else on all its text.
  */
 export function TextControls({ element, editor, update }: TextControlsProps) {
   const { t } = useTranslation('schedules')
   const text = element.type === 'text' ? element : null
+  // The whole box's HTML changed by a command (when it is not edited).
+  const html = (command: (chain: ChainedCommands) => ChainedCommands) =>
+    transformTextHtml(element.html ?? '', command)
   const run = (command: (chain: ChainedCommands) => ChainedCommands) => {
     if (editor) {
       command(editor.chain().focus()).run()
       return
     }
-    update({ html: transformTextHtml(element.html ?? '', command) })
+    update({ html: html(command) })
   }
   const isActive = (name: string, attrs?: Record<string, unknown>) =>
     editor?.isActive(name, attrs) ?? false
+  const boxSize = text?.fontSize ?? DEFAULT_SIZE
+  const shown = useSelectionTextStyle(editor, {
+    fontFamily: text?.fontFamily,
+    fontSize: boxSize,
+    color: text?.color,
+  })
+  // On the whole box, its runs' own font, size or colour go.
+  // Without focus(): the field being typed in keeps it, the editor its selection.
+  const setFont = (name: string) => {
+    if (!editor) {
+      return update({
+        fontFamily: name || undefined,
+        html: html((c) => c.unsetFontFamily()),
+      })
+    }
+    const chain = editor.chain()
+    const stack = getFontFamilyStack(name)
+    ;(stack ? chain.setFontFamily(stack) : chain.unsetFontFamily()).run()
+  }
+  const setSize = (size: number) => {
+    if (!editor) {
+      return update(
+        { fontSize: size, html: html((c) => c.unsetFontSize()) },
+        `fontSize:${element.id}`,
+      )
+    }
+    const em = Math.round((size / boxSize) * 1000) / 1000
+    editor.chain().setFontSize(`${em}em`).run()
+  }
+  const setColor = (color: string) => {
+    if (!editor) {
+      return update(
+        { color, html: html((c) => c.unsetColor()) },
+        `color:${element.id}`,
+      )
+    }
+    editor.chain().setColor(color).run()
+  }
+  const fonts =
+    shown.fontFamily &&
+    !FONT_FAMILY_OPTIONS.some((o) => o.value === shown.fontFamily)
+      ? [
+          { value: shown.fontFamily, label: shown.fontFamily },
+          ...FONT_FAMILY_OPTIONS,
+        ]
+      : FONT_FAMILY_OPTIONS
 
   return (
     <div className="space-y-2">
@@ -51,14 +105,12 @@ export function TextControls({ element, editor, update }: TextControlsProps) {
           <PanelField label={t('deckEditor.design.font')}>
             <select
               data-testid="deck-editor-font"
-              value={text.fontFamily ?? ''}
-              onChange={(e) =>
-                update({ fontFamily: e.target.value || undefined })
-              }
+              value={shown.fontFamily ?? ''}
+              onChange={(e) => setFont(e.target.value)}
               className="w-full rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
               <option value="">{t('deckEditor.design.themeFont')}</option>
-              {FONT_FAMILY_OPTIONS.map((o) => (
+              {fonts.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -68,18 +120,16 @@ export function TextControls({ element, editor, update }: TextControlsProps) {
           <div className="grid grid-cols-2 gap-2">
             <NumberField
               label={t('deckEditor.design.size')}
-              value={text.fontSize ?? 40}
+              value={shown.fontSize ?? boxSize}
               min={1}
               testId="deck-editor-font-size"
-              onChange={(fontSize) =>
-                update({ fontSize }, `fontSize:${element.id}`)
-              }
+              onChange={setSize}
             />
             <ColorField
               label={t('deckEditor.design.textColor')}
-              value={text.color}
+              value={shown.color}
               testId="deck-editor-text-color"
-              onChange={(color) => update({ color }, `color:${element.id}`)}
+              onChange={setColor}
             />
           </div>
         </>
