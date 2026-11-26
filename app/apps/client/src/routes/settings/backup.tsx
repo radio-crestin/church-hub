@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
 import { isLocalhost } from '~/config'
-import { BackupManager } from '~/features/backup'
+import { BackupManager, CloudBackupPanel } from '~/features/backup'
 import {
   SecretStoreResetNotice,
   SecretStoreStatus,
@@ -33,6 +33,14 @@ function BackupSettings() {
             </p>
           )}
         </SettingsSection>
+        {isLocalhost() && (
+          <SettingsSection
+            title={t('sections.backup.cloud.title')}
+            description={t('sections.backup.cloud.description')}
+          >
+            <CloudBackupPanel />
+          </SettingsSection>
+        )}
         {isLocalhost() && (
           <SettingsSection
             title={t('sections.secretStore.title')}

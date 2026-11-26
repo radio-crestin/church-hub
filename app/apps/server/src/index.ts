@@ -48,6 +48,7 @@ import { authenticateLogin, type LoginBody } from './routes/auth-login'
 import { handleUserLinkRoute } from './routes/auth-user-link/handleUserLinkRoute'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleBibleTopicRoutes } from './routes/bible-topics'
+import { handleCloudBackupRoutes } from './routes/cloud-backup'
 import { handleCloudSyncRoutes } from './routes/cloud-sync'
 import { handleFeatureRequestRoutes } from './routes/feature-requests'
 import { handleLiveTranslationRoutes } from './routes/live-translation'
@@ -1882,6 +1883,14 @@ async function startRealServer(): Promise<void> {
                 },
               ),
             )
+
+      // Church Hub Cloud backup (free, Google sign-in), same localhost guard
+      if (url.pathname.startsWith('/api/backup/cloud/')) {
+        const guard = backupLocalhostGuard()
+        if (guard) return guard
+        const cloudBackupResponse = await handleCloudBackupRoutes(req, url)
+        if (cloudBackupResponse) return handleCors(req, cloudBackupResponse)
+      }
 
       // GET /api/backup/status - Drive connection + auto-backup settings
       if (req.method === 'GET' && url.pathname === '/api/backup/status') {
