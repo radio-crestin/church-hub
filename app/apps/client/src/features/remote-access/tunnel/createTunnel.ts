@@ -25,6 +25,8 @@ export interface Tunnel {
     close: () => void
   }
   onClose: (listener: () => void) => void
+  /** Ends the tunnel: its onClose listeners are called. */
+  close: () => void
 }
 
 const toBytes = (base64: string) =>
@@ -68,7 +70,14 @@ export function createTunnel(channel: RTCDataChannel): Tunnel {
     }
   })
 
-  channel.onclose = () => {
+  let closed = false
+  /**
+   * Once, whichever comes first: the channel's close event, or close() (a
+   * failed connection can end the channel without that event).
+   */
+  const shutdown = () => {
+    if (closed) return
+    closed = true
     for (const resolve of pending.values()) {
       resolve({ status: 503, headers: [], body: new Uint8Array() })
     }
@@ -77,6 +86,7 @@ export function createTunnel(channel: RTCDataChannel): Tunnel {
     sockets.clear()
     for (const listener of closeListeners) listener()
   }
+  channel.onclose = shutdown
 
   return {
     request: (message) =>
@@ -95,5 +105,9 @@ export function createTunnel(channel: RTCDataChannel): Tunnel {
       }
     },
     onClose: (listener) => closeListeners.push(listener),
+    close: () => {
+      channel.close()
+      shutdown()
+    },
   }
 }
