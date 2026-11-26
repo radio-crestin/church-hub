@@ -10,6 +10,7 @@ import {
 import StarterKit from '@tiptap/starter-kit'
 
 import { DeckBlockMargins } from './deckBlockMargins'
+import { KeepStyleOnReplaceAll } from './keepStyleOnReplaceAll'
 
 const BLOCKS = ['paragraph', 'listItem']
 
@@ -19,7 +20,7 @@ const BLOCKS = ['paragraph', 'listItem']
  * underline, lists; a run's colour, font and size (`<span style>`); a
  * paragraph's alignment, line height, indent and spacing. No headings, code,
  * quotes, rules, strike or links. An imported PowerPoint text box keeps its
- * look when it is edited.
+ * look when it is edited, even when all of its text is typed over.
  */
 export function deckTextExtensions(): Extensions {
   return [
@@ -42,5 +43,6 @@ export function deckTextExtensions(): Extensions {
     FontSize.configure({ types: ['textStyle', ...BLOCKS] }),
     LineHeight.configure({ types: BLOCKS }),
     DeckBlockMargins,
+    KeepStyleOnReplaceAll,
   ]
 }

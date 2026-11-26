@@ -31,7 +31,12 @@ interface DeckElement {
   h: number
   html?: string
   mediaId?: string
-  animations?: { effect: string; kind: string; trigger: string }[]
+  animations?: {
+    effect: string
+    kind: string
+    trigger: string
+    direction?: string
+  }[]
 }
 
 interface DeckSlide {
@@ -45,7 +50,10 @@ interface Deck {
   slides: DeckSlide[]
 }
 
-async function createDeck(request: APIRequestContext) {
+async function createDeck(
+  request: APIRequestContext,
+  { html = '<p style="text-align: center">Bun venit</p>' } = {},
+) {
   const schedule = await request.post('/api/schedules', {
     data: { title: `E2E Slides editor ${Date.now()}` },
   })
@@ -66,7 +74,7 @@ async function createDeck(request: APIRequestContext) {
                 y: 390,
                 w: 1600,
                 h: 300,
-                html: '<p style="text-align: center">Bun venit</p>',
+                html,
                 fontSize: 88,
               },
             ],
@@ -469,6 +477,47 @@ test.describe('Slides editor', () => {
     } finally {
       for (const id of media) await request.delete(`${MEDIA_API}/${id}`)
     }
+  })
+
+  test('typing over a whole title keeps its centring and bold; a new Fly shows the side it flies from', async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1600, height: 900 })
+    const { scheduleId, itemId } = await createDeck(request, {
+      html: '<p style="text-align: center"><strong>Bun venit</strong></p>',
+    })
+    await page.goto(`/schedules/${scheduleId}/slides/${itemId}`)
+    const title = page.locator(
+      '[data-testid="deck-editor-element"][data-element-id="title"]',
+    )
+    const html = async () =>
+      (await savedDeck(request, scheduleId)).slides[0]!.elements[0]!.html
+
+    await title.dblclick()
+    await expect(page.getByTestId('deck-editor-text-input')).toBeFocused()
+    await page.keyboard.press('ControlOrMeta+A')
+    await page.keyboard.type('Salut')
+    await page.keyboard.press('Escape')
+    await expect
+      .poll(html)
+      .toBe('<p style="text-align: center"><strong>Salut</strong></p>')
+
+    // Fly In: the editor shows the side it plays from, saved with it.
+    await title.click()
+    await page.getByTestId('deck-editor-tab-animations').click()
+    await page.getByTestId('deck-editor-add-animation').click()
+    await page.getByTestId('deck-editor-animation-effect').selectOption('fly')
+    await expect(
+      page.getByTestId('deck-editor-animation-direction'),
+    ).toHaveValue('down')
+    await expect
+      .poll(
+        async () =>
+          (await savedDeck(request, scheduleId)).slides[0]!.elements[0]!
+            .animations?.[0],
+      )
+      .toMatchObject({ effect: 'fly', direction: 'down' })
   })
 
   test('a deck saved while its slide is on screen shows the change at once', async ({
