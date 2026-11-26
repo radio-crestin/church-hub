@@ -40,5 +40,10 @@
     "loadFailed": "Cântările nu s-au putut încărca. Verifică conexiunea la internet.",
     "back": "Cântări",
     "more": "Caută ca să le găsești pe celelalte {{count}}."
+  },
+  "link": {
+    "connecting": "Se caută calculatorul bisericii…",
+    "live": "În direct de pe calculatorul bisericii",
+    "cloud": "Din cloud"
   }
 }

@@ -39,5 +39,10 @@
     "loadFailed": "Could not load the songs. Check the internet connection.",
     "back": "Songs",
     "more": "Search to find the other {{count}}."
+  },
+  "link": {
+    "connecting": "Looking for the church computer…",
+    "live": "Live from the church computer",
+    "cloud": "From the cloud"
   }
 }

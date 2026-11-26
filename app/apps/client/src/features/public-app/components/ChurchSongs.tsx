@@ -1,30 +1,45 @@
 import { Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Input } from '~/ui/input'
+import { PcLinkStatus } from './PcLinkStatus'
 import { SongLyrics } from './SongLyrics'
-import { useChurchSongs } from '../hooks/useChurchSongs'
-import { matchesSearch } from '../utils/matchesSearch'
+import { useOpenSong } from '../hooks/useOpenSong'
+import { usePcLink } from '../hooks/usePcLink'
+import { usePcSongEvents } from '../hooks/usePcSongEvents'
+import { useSongRows } from '../hooks/useSongRows'
+import type { ChurchBinding } from '../service/churchBinding'
 
 /** Enough to scroll on a phone; a search finds the rest. */
 const MAX_SHOWN = 200
 
-/** The church's songs: search by title or author, open one to read it. */
-export function ChurchSongs({ readUrl }: { readUrl: string }) {
+/**
+ * The church's songs: search by title or author, open one to read it. Live
+ * from the church computer while it is reached, else from the cloud.
+ */
+export function ChurchSongs({ binding }: { binding: ChurchBinding }) {
   const { t } = useTranslation('publicApp')
-  const { data: songs, isLoading, isError } = useChurchSongs(readUrl)
+  const link = usePcLink(binding)
+  const live = link === 'live'
+  usePcSongEvents(live)
   const [query, setQuery] = useState('')
-  const [openUuid, setOpenUuid] = useState<string | null>(null)
-  const shown = useMemo(
-    () => (songs ?? []).filter((song) => matchesSearch(song, query)),
-    [songs, query],
+  // A row's key belongs to its source (the cloud's uuid or the PC's id).
+  const [opened, setOpened] = useState<{ key: string; live: boolean }>()
+  const openKey = opened?.live === live ? opened.key : null
+  const { rows, total, isLoading, isError } = useSongRows(
+    binding.readUrl,
+    link,
+    query,
   )
-  const open = songs?.find((song) => song.uuid === openUuid)
+  const open = useOpenSong(binding.readUrl, link, openKey)
 
-  if (open) return <SongLyrics song={open} onBack={() => setOpenUuid(null)} />
-  if (isLoading) return <Message text={t('loading')} />
-  if (isError || !songs) return <Message text={t('songs.loadFailed')} />
+  if (open)
+    return <SongLyrics song={open} onBack={() => setOpened(undefined)} />
+  if (isLoading && !rows) return <Message text={t('loading')} />
+  if (isError || !rows) return <Message text={t('songs.loadFailed')} />
+
+  const hidden = (query.trim() ? rows.length : total) - MAX_SHOWN
 
   return (
     <div className="flex flex-col gap-3">
@@ -43,19 +58,22 @@ export function ChurchSongs({ readUrl }: { readUrl: string }) {
           className="h-11 pl-9"
         />
       </label>
-      <p className="text-xs text-fg-hint tabular-nums">
-        {t('songs.count', { count: songs.length })}
-      </p>
-      {shown.length === 0 ? (
-        <Message text={t(songs.length ? 'songs.noMatch' : 'songs.empty')} />
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-fg-hint tabular-nums">
+          {t('songs.count', { count: total })}
+        </p>
+        <PcLinkStatus link={link} />
+      </div>
+      {rows.length === 0 ? (
+        <Message text={t(total ? 'songs.noMatch' : 'songs.empty')} />
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-panel">
-          {shown.slice(0, MAX_SHOWN).map((song) => (
-            <li key={song.uuid}>
+          {rows.slice(0, MAX_SHOWN).map((song) => (
+            <li key={song.key}>
               <button
                 type="button"
                 data-testid="church-song"
-                onClick={() => setOpenUuid(song.uuid)}
+                onClick={() => setOpened({ key: song.key, live })}
                 className="flex min-h-12 w-full flex-col items-start justify-center px-3 py-2 text-left hover:bg-hover focus-visible:ring-1 focus-visible:ring-focus focus-visible:ring-inset focus-visible:outline-none active:bg-selected"
               >
                 <span className="text-sm font-medium text-fg-body">
@@ -69,9 +87,7 @@ export function ChurchSongs({ readUrl }: { readUrl: string }) {
           ))}
         </ul>
       )}
-      {shown.length > MAX_SHOWN && (
-        <Message text={t('songs.more', { count: shown.length - MAX_SHOWN })} />
-      )}
+      {hidden > 0 && <Message text={t('songs.more', { count: hidden })} />}
     </div>
   )
 }

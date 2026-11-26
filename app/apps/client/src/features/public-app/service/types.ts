@@ -38,3 +38,10 @@ export interface Segment {
     data?: ChurchSong
   }[]
 }
+
+/** A song in the list: `key` opens it (its uuid on the cloud, id on the PC). */
+export interface SongRow {
+  key: string
+  title: string
+  author: string | null
+}
