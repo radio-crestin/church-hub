@@ -25,6 +25,7 @@ import { SyncError } from '../sync/SyncError'
 import { syncBodyLimit } from '../sync/syncBodyLimit'
 import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
+import { clientIp } from '../utils/clientIp'
 
 const DEFAULT_COMPACT_AFTER = 40
 /** Pinned, so the docs page runs only the Scalar build it was checked with. */
@@ -93,7 +94,7 @@ sync.get('/sync/docs', (c) =>
 /** POST /sync/churches: register a church server, owned or as a guest. */
 sync.post('/sync/churches', async (c) => {
   if (c.env.SYNC_RATE_LIMITER) {
-    const ip = c.req.header('CF-Connecting-IP') ?? 'unknown'
+    const ip = clientIp(c)
     const { success } = await c.env.SYNC_RATE_LIMITER.limit({
       key: `sync-register:${ip}`,
     })
