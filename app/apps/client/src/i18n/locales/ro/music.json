@@ -25,7 +25,6 @@
     "queue": "Coadă",
     "more": "Mai multe",
     "viewActions": "Acțiuni pentru listă",
-    "addToPlaylist": "Adaugă în {{name}}",
     "newPlaylistWith": "Playlist nou cu această piesă",
     "removeFromPlaylist": "Scoate din playlist",
     "hint": "Clic pe o piesă o pornește · meniul ⋮ o adaugă într-un playlist",
@@ -119,5 +118,10 @@
     "removed": "{{count}} fișiere șterse",
     "updated": "{{count}} fișiere actualizate",
     "errors": "{{count}} erori"
+  },
+  "playlistPicker": {
+    "search": "Caută playlist…",
+    "noMatch": "Niciun playlist găsit",
+    "close": "Închide"
   }
 }

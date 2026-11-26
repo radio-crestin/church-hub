@@ -23,7 +23,6 @@
     "queue": "Queue",
     "more": "More",
     "viewActions": "Actions for this list",
-    "addToPlaylist": "Add to {{name}}",
     "newPlaylistWith": "New playlist with this track",
     "removeFromPlaylist": "Remove from this playlist",
     "hint": "Click a track to play it · the ⋮ menu adds it to a playlist",
@@ -116,5 +115,10 @@
     "removed": "{{count}} files removed",
     "updated": "{{count}} files updated",
     "errors": "{{count}} errors"
+  },
+  "playlistPicker": {
+    "search": "Search playlists…",
+    "noMatch": "No playlist matches",
+    "close": "Close"
   }
 }
