@@ -1033,6 +1033,35 @@
         }
       }
     },
+    "secretStore": {
+      "title": "Parole și chei salvate",
+      "description": "Parolele, cheile API și datele de conectare salvate pe acest computer sunt criptate.",
+      "keptIn": {
+        "keychain": "Cheia care le deblochează este păstrată în macOS Keychain, niciodată în baza de date sau în copiile de rezervă ale acesteia.",
+        "credentialManager": "Cheia care le deblochează este păstrată în Windows Credential Manager, niciodată în baza de date sau în copiile de rezervă ale acesteia.",
+        "secretService": "Cheia care le deblochează este păstrată în inelul de chei al sistemului, niciodată în baza de date sau în copiile de rezervă ale acesteia.",
+        "file": "Acest computer nu are un inel de chei al sistemului, așa că cheia care le deblochează este păstrată într-un fișier din folderul de date Church Hub, pe care doar tu îl poți citi. Copiile de rezervă nu includ acest fișier."
+      },
+      "locked": "Church Hub nu a putut accesa cheia din inelul de chei al sistemului, așa că parolele și cheile salvate nu pot fi folosite momentan. Deblochează inelul de chei, apoi repornește Church Hub.",
+      "otherComputer": "O copie de rezervă restaurată pe alt computer nu poate debloca aceste date. Pe acel computer, conectează-te din nou și introdu din nou cheile.",
+      "reset": {
+        "title": "Această copie de rezervă provine de pe alt computer. Configurează din nou:",
+        "features": {
+          "youtube": "YouTube: conectează-te din nou",
+          "googleDrive": "Copii de rezervă în Google Drive: conectează-te din nou",
+          "cloudSync": "Sincronizare în cloud: proprietarul bisericii o conectează din nou",
+          "listenerLink": "Traducere live: distribuie noul link pentru ascultători",
+          "remoteAccess": "Telefoane: scanează din nou codul de asociere",
+          "cloudBackup": "Copie de rezervă Church Hub Cloud: conectează-te din nou",
+          "obs": "OBS: introdu din nou parola",
+          "songSources": "Surse de cântări: introdu din nou cheia secretă S3",
+          "aiSearch": "Căutare AI: introdu din nou cheia API",
+          "liveTranslation": "Traducere live: introdu din nou cheile API",
+          "users": "Utilizatori: conectează din nou telefoanele cu un cod nou"
+        },
+        "dismiss": "Gata"
+      }
+    },
     "cloudSync": {
       "title": "Sincronizare în cloud",
       "description": "Cântările și programele ajung în câteva secunde pe telefoane și pe celelalte calculatoare, prin cloudul Church Hub.",
@@ -1097,10 +1126,6 @@
       "signIn": {
         "waiting": "Termină conectarea în fereastra browserului…",
         "failed": "Conectarea nu a pornit. Verifică conexiunea la internet și încearcă din nou."
-      },
-      "backupWarning": {
-        "title": "Copiile de rezervă conțin cheile sincronizării în cloud",
-        "body": "Oricine are o copie de rezervă poate citi și modifica cântările sincronizate ale bisericii. Păstrează fișierul doar pentru tine. Dacă ajunge pe mâini străine, proprietarul poate revoca toate dispozitivele din Sincronizare în cloud."
       }
     },
     "sync": {

@@ -3,12 +3,9 @@ import { useTranslation } from 'react-i18next'
 
 import { isLocalhost } from '~/config'
 import { BackupManager } from '~/features/backup'
+import { SecretStoreStatus } from '~/features/secret-store'
 import { SettingsLeafGuard, SettingsSection } from '~/features/settings'
-import {
-  CloudBackupWarning,
-  CloudSyncSection,
-  SyncSettingsSection,
-} from '~/features/sync'
+import { CloudSyncSection, SyncSettingsSection } from '~/features/sync'
 
 export const Route = createFileRoute('/settings/backup')({
   component: BackupSettings,
@@ -25,16 +22,21 @@ function BackupSettings() {
           description={t('sections.backup.description')}
         >
           {isLocalhost() ? (
-            <>
-              <CloudBackupWarning />
-              <BackupManager />
-            </>
+            <BackupManager />
           ) : (
             <p className="text-sm text-fg-hint">
               {t('sections.backup.localhostOnly')}
             </p>
           )}
         </SettingsSection>
+        {isLocalhost() && (
+          <SettingsSection
+            title={t('sections.secretStore.title')}
+            description={t('sections.secretStore.description')}
+          >
+            <SecretStoreStatus />
+          </SettingsSection>
+        )}
         {isLocalhost() && (
           <SettingsSection
             title={t('sections.cloudSync.title')}
