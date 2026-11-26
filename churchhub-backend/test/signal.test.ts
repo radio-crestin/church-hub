@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import app from '../src/index'
 import { hostedRoomId } from '../src/signal/hostedRoomId'
 import * as timing from '../src/utils/constantTimeEqual'
-import { memoryKv } from './support/memoryKv'
+import { createMemoryKv } from '../src/node/createMemoryKv'
 
 /**
  * The WebRTC signaling relay, on an in-memory KV. A hosted room ("h1…" id)
@@ -16,7 +16,8 @@ const OTHER_KEY = 'host-key-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
 const SDP = 'v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\n'
 
 let ROOM: string
-let kv: ReturnType<typeof memoryKv>
+/** What the relay wrote and has not deleted, by key. */
+let written: Map<string, string>
 let env: Record<string, unknown>
 
 beforeAll(async () => {
@@ -24,8 +25,21 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-  kv = memoryKv()
-  env = { SIGNALING_KV: kv }
+  const kv = createMemoryKv()
+  written = new Map()
+  env = {
+    SIGNALING_KV: {
+      get: kv.get.bind(kv),
+      put: (key: string, value: string, options?: KVNamespacePutOptions) => {
+        written.set(key, value)
+        return kv.put(key, value, options)
+      },
+      delete: (key: string) => {
+        written.delete(key)
+        return kv.delete(key)
+      },
+    },
+  }
 })
 
 function call(path: string, body?: unknown, hostKey?: string) {
@@ -86,7 +100,7 @@ describe('a hosted room', () => {
 
   test('stores nothing of the host key', async () => {
     await host(ROOM).register(HOST_KEY)
-    const stored = [...kv.entries].flat().map(String).join()
+    const stored = [...written].flat().join()
     expect(stored).not.toContain(HOST_KEY)
   })
 
@@ -94,7 +108,7 @@ describe('a hosted room', () => {
     expect((await host(ROOM).register()).status).toBe(401)
     expect((await host(ROOM).register(OTHER_KEY)).status).toBe(401)
     expect(await listener(ROOM).check()).toBe(false)
-    expect(kv.entries.size).toBe(0)
+    expect(written.size).toBe(0)
   })
 
   test('cannot be claimed by concurrent registers: only the key holder wins', async () => {
@@ -232,7 +246,7 @@ describe('refuses', () => {
     for (const secret of ['short', 'x'.repeat(600), `${LEGACY_ID}:x`, 42]) {
       expect((await call('/signal/register', { secret })).status).toBe(400)
     }
-    expect(kv.entries.size).toBe(0)
+    expect(written.size).toBe(0)
   })
 
   test('a body that is not JSON with a 400, not a 500', async () => {
@@ -245,7 +259,7 @@ describe('refuses', () => {
       offer: 'x'.repeat(65 * 1024),
     })
     expect(response.status).toBe(400)
-    expect([...kv.entries.keys()]).toEqual([`room:${ROOM}`])
+    expect([...written.keys()]).toEqual([`room:${ROOM}`])
   })
 
   test('an offer to a room that is not open', async () => {
@@ -266,7 +280,7 @@ describe('refuses', () => {
       answer: SDP,
     })
     expect(response.status).toBe(400)
-    expect(kv.entries.size).toBe(0)
+    expect(written.size).toBe(0)
   })
 
   test('more pending offers than the host can take at once', async () => {

@@ -11,6 +11,7 @@ import { readJsonBody } from '../sync/readJsonBody'
 import { createSyncStore } from '../sync/state/createSyncStore'
 import { SyncError } from '../sync/SyncError'
 import type { Bindings } from '../types'
+import { publicOrigin } from '../utils/publicOrigin'
 
 type OwnerContext = Context<{ Bindings: Bindings }>
 
@@ -53,7 +54,7 @@ syncOwner.get('/sync/owner/sign-in', async (c) =>
   c.redirect(
     await startOwnerSignIn(
       c.env,
-      c.req.url,
+      publicOrigin(c.env, c.req.url),
       c.req.query('returnUrl'),
       c.req.query('nonce')
     )
@@ -63,7 +64,7 @@ syncOwner.get('/sync/owner/sign-in', async (c) =>
 /** GET /sync/owner/callback: Google's answer, back to the PC with a ticket. */
 syncOwner.get('/sync/owner/callback', async (c) =>
   c.redirect(
-    await finishOwnerSignIn(c.env, c.req.url, {
+    await finishOwnerSignIn(c.env, publicOrigin(c.env, c.req.url), {
       code: c.req.query('code'),
       state: c.req.query('state'),
       error: c.req.query('error'),

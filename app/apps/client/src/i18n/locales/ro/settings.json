@@ -444,7 +444,15 @@
           "title": "Regenerează tokenul",
           "message": "Tokenul actual al lui „{{name}}” nu va mai funcționa. Utilizatorul va trebui să se autentifice din nou.",
           "confirm": "Regenerează"
-        }
+        },
+        "deactivate": {
+          "title": "Dezactivează utilizatorul",
+          "message": "„{{name}}” nu se va mai putea autentifica.",
+          "confirm": "Dezactivează"
+        },
+        "devicesSignedOut_one": "Dispozitivul va fi deconectat. Pentru reconectare, trebuie adăugat din nou.",
+        "devicesSignedOut_few": "Cele {{count}} dispozitive vor fi deconectate. Pentru reconectare, trebuie adăugate din nou.",
+        "devicesSignedOut_other": "{{count}} de dispozitive vor fi deconectate. Pentru reconectare, trebuie adăugate din nou."
       },
       "toast": {
         "created": "Utilizatorul a fost creat",

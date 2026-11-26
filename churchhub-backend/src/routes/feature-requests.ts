@@ -10,6 +10,8 @@ import {
   submitFeatureRequest,
 } from '../feature-requests'
 import type { Bindings } from '../types'
+import { clientIp } from '../utils/clientIp'
+import { publicOrigin } from '../utils/publicOrigin'
 
 // `<random UUID>.<ext>`: unguessable, so only the issue's link finds it.
 const SCREENSHOT_ID_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/
@@ -33,10 +35,10 @@ const featureRequestBodyLimit = bodyLimit({
  * checked before anything reaches GitHub or WhatsApp.
  */
 featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => {
-  const clientIp = c.req.header('CF-Connecting-IP') ?? 'unknown'
+  const ip = clientIp(c)
   const { success: withinLimit } =
     await c.env.FEATURE_REQUEST_RATE_LIMITER.limit({
-      key: `feature-request:${clientIp}`,
+      key: `feature-request:${ip}`,
     })
   if (!withinLimit) return rateLimited(c)
 
@@ -44,7 +46,7 @@ featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => 
     const request = parseFeatureRequest(await c.req.json().catch(() => null))
     const withinDailyQuota = await consumeDailyQuota(
       c.env.SIGNALING_KV,
-      clientIp,
+      ip,
       c.env.COOKIE_ENCRYPTION_KEY
     )
     if (!withinDailyQuota) return rateLimited(c)
@@ -52,7 +54,7 @@ featureRequests.post('/feature-requests', featureRequestBodyLimit, async (c) => 
     const issue = await submitFeatureRequest(
       c.env,
       request,
-      new URL(c.req.url).origin
+      publicOrigin(c.env, c.req.url)
     )
     return c.json({
       success: true,
@@ -81,7 +83,8 @@ featureRequests.get(`${SCREENSHOT_ROUTE_PREFIX}/:id`, async (c) => {
   const id = c.req.param('id')
   if (!SCREENSHOT_ID_PATTERN.test(id)) return c.json({ error: 'Not found' }, 404)
 
-  const screenshot = await getScreenshotStore(c.env).load(id)
+  const store = getScreenshotStore(c.env)
+  const screenshot = store ? await store.load(id) : null
   if (!screenshot) return c.json({ error: 'Not found' }, 404)
 
   return new Response(screenshot.body, {

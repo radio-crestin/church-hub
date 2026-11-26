@@ -78,6 +78,61 @@ const broadcast = {
 }
 
 export const livestreamYouTubePaths = {
+  '/api/livestream/youtube/sign-in': {
+    post: {
+      tags,
+      security,
+      summary: 'Start a YouTube sign-in',
+      description:
+        'The state the sign-in must bring its tokens back with (single use, valid 10 minutes). In the desktop app it rides in the OAuth worker’s returnUrl to the app’s /auth/youtube/callback page.',
+      responses: {
+        '200': json(
+          { type: 'object', properties: { state: { type: 'string' } } },
+          'The sign-in’s state',
+        ),
+        '401': errors['401'],
+      },
+    },
+  },
+  '/api/livestream/youtube/tokens': {
+    post: {
+      tags,
+      security,
+      summary: 'Store the tokens a YouTube sign-in brought back',
+      description:
+        'Connects the YouTube channel, only with a state from POST /api/livestream/youtube/sign-in (used up here), so a link carrying tokens of someone else’s choosing can’t connect another channel.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['state', 'accessToken', 'refreshToken', 'expiresAt'],
+              properties: {
+                state: { type: 'string' },
+                accessToken: { type: 'string' },
+                refreshToken: { type: 'string' },
+                expiresAt: {
+                  type: 'integer',
+                  description: 'Access-token expiry (ms epoch)',
+                },
+                channelId: { type: 'string' },
+                channelName: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': json({ type: 'object' }, 'The YouTube connection status'),
+        '400': {
+          description:
+            '`unknown_sign_in` (no state, or one this server did not issue or already used), or missing token fields',
+        },
+        '401': errors['401'],
+      },
+    },
+  },
   '/api/livestream/youtube/config': {
     get: {
       tags,
