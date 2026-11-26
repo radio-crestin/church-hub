@@ -1,5 +1,6 @@
 import type { CloudIdentity } from './cloudIdentityStore'
 import { getInstallation } from './getInstallation'
+import { oneWriteAtATime } from './oneWriteAtATime'
 import { setServerConflict } from './serverConflict'
 
 /** Requests to the sync service give up after this long. */
@@ -22,7 +23,8 @@ interface ServerInUseBody {
  * `ownerTicket` signs in as the church's owner instead. Every call names
  * this installation, so the service can tell a second PC holding the same
  * token (a restored backup) from this one: its 409 server_in_use is kept
- * (getServerConflict) and thrown as `server_in_use`.
+ * (getServerConflict) and thrown as `server_in_use`. Writes go one at a
+ * time (oneWriteAtATime).
  */
 export async function syncServiceRequest<T>(
   target: {
@@ -41,17 +43,19 @@ export async function syncServiceRequest<T>(
     : `${base}/sync${path}`
   const token = identity?.serverToken ?? ownerTicket
   const installation = getInstallation()
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Church-Hub-Installation': installation.id,
-      'X-Church-Hub-Installation-Name': encodeURIComponent(installation.name),
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-  })
+  const send = () =>
+    fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Church-Hub-Installation': installation.id,
+        'X-Church-Hub-Installation-Name': encodeURIComponent(installation.name),
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+  const response = await (method === 'GET' ? send() : oneWriteAtATime(send))
   const json = (await response.json().catch(() => ({}))) as T & {
     error?: string
     code?: string
