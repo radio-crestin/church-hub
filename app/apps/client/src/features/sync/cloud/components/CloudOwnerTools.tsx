@@ -57,12 +57,13 @@ export function CloudOwnerTools({
   return (
     <div className="space-y-4" data-testid="cloud-owner-tools">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-fg-label">
+        <p className="min-w-0 break-words text-xs text-fg-label">
           {t('sections.cloudSync.owner.signedInAs', { email })}
         </p>
         <Button
           size="sm"
           variant="ghost"
+          className="shrink-0"
           onClick={() => signOut.mutate(undefined)}
           data-testid="cloud-owner-sign-out"
         >
@@ -105,7 +106,7 @@ export function CloudOwnerTools({
         </div>
       </div>
 
-      <div className="rounded-lg border border-line p-3">
+      <div className="border-t border-line pt-3">
         <h5 className="text-xs font-medium text-fg">
           {t('sections.cloudSync.owner.revokeTitle')}
         </h5>

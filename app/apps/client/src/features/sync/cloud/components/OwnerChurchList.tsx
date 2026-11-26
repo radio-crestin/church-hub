@@ -40,13 +40,13 @@ export function OwnerChurchList({
   }
 
   return (
-    <ul className="divide-y divide-line rounded-lg border border-line">
+    <ul className="divide-y divide-line">
       {list.map((church) => {
         const isHere = church.churchId === currentChurchId
         return (
           <li
             key={church.churchId}
-            className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between"
             data-testid={`owner-church-${church.churchId}`}
           >
             <div className="flex min-w-0 items-start gap-2">
