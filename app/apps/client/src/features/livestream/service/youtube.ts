@@ -11,6 +11,8 @@ import type {
 } from '../types'
 
 interface StoreTokensInput {
+  /** The sign-in's state, from {@link startYouTubeSignIn}. */
+  state: string
   accessToken: string
   refreshToken: string
   expiresAt: number
@@ -18,36 +20,26 @@ interface StoreTokensInput {
   channelName?: string
 }
 
-interface StorePKCESessionInput {
-  codeVerifier: string
-  codeChallenge: string
-}
-
 /**
- * Store PKCE session on server for server-side token exchange.
- * Used when auth is initiated from Tauri and callback can't use postMessage.
+ * Starts a YouTube sign-in: the state its tokens must come back with. The
+ * server stores tokens only with a state it issued (single use, 10 minutes).
  */
-export async function storePKCESession(
-  session: StorePKCESessionInput,
-): Promise<string> {
-  const response = await fetcher<{ data: { sessionId: string } }>(
-    '/api/livestream/youtube/pkce-session',
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(session),
-    },
+export async function startYouTubeSignIn(): Promise<string> {
+  const response = await fetcher<{ data?: { state: string }; error?: string }>(
+    '/api/livestream/youtube/sign-in',
+    { method: 'POST' },
   )
-  return response.data.sessionId
+  if (!response.data) throw new Error(response.error ?? 'sign_in_failed')
+  return response.data.state
 }
 
 /**
- * Store OAuth tokens on the server after PKCE exchange on the client.
+ * Stores the tokens a sign-in brought back, with that sign-in's state.
  */
 export async function storeYouTubeTokens(
   tokens: StoreTokensInput,
 ): Promise<YouTubeAuthStatus> {
-  const response = await fetcher<{ data: YouTubeAuthStatus }>(
+  const response = await fetcher<{ data?: YouTubeAuthStatus; error?: string }>(
     '/api/livestream/youtube/tokens',
     {
       method: 'POST',
@@ -55,6 +47,7 @@ export async function storeYouTubeTokens(
       body: JSON.stringify(tokens),
     },
   )
+  if (!response.data) throw new Error(response.error ?? 'store_failed')
   return response.data
 }
 

@@ -9,7 +9,9 @@
     "cardDescription": "Distribuie acest link ascultătorilor. Ei aleg limba din player.",
     "configuredLanguages": "Limbi configurate",
     "noLanguages": "Nu ai configurat încă nicio limbă țintă.",
-    "openSettings": "Deschide setările"
+    "openSettings": "Deschide setările",
+    "linkChanged": "Linkul pentru ascultători s-a schimbat. Distribuie mai jos noul link; cel vechi nu mai funcționează.",
+    "dismissLinkChanged": "Închide"
   },
   "settings": {
     "button": "Setări",

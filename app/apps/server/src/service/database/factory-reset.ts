@@ -68,6 +68,8 @@ export function performFactoryReset(
     // Clear app settings
     log('debug', 'Clearing app_settings...')
     db.run('DELETE FROM app_settings')
+    // New signaling host keys: links and pairing codes shared before stop
+    db.run('DELETE FROM server_secrets')
 
     // Optionally clear and reseed Bible translations
     if (includeBibles) {

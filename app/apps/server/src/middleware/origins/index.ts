@@ -1,4 +1,5 @@
 export { isAppWebviewOrigin } from './isAppWebviewOrigin'
 export { isLoopbackHostname } from './isLoopbackHostname'
+export { isOpenedByUser } from './isOpenedByUser'
 export { isTrustedOrigin } from './isTrustedOrigin'
 export { refuseUntrustedRequest } from './refuseUntrustedRequest'

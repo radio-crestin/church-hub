@@ -18,7 +18,7 @@ export const settingsPaths = {
       ],
       responses: {
         '200': {
-          description: 'List of settings',
+          description: 'List of settings, without server secret keys',
           content: {
             'application/json': {
               schema: {
@@ -87,6 +87,10 @@ export const settingsPaths = {
         },
         '400': { $ref: '#/components/responses/BadRequest' },
         '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description:
+            'A server secret key (signaling room secrets, host keys): the settings API never reads, writes or deletes it',
+        },
       },
     },
   },
@@ -133,6 +137,10 @@ export const settingsPaths = {
           },
         },
         '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description:
+            'A server secret key (signaling room secrets, host keys): the settings API never reads, writes or deletes it',
+        },
       },
     },
     delete: {
@@ -171,6 +179,10 @@ export const settingsPaths = {
           },
         },
         '401': { $ref: '#/components/responses/Unauthorized' },
+        '403': {
+          description:
+            'A server secret key (signaling room secrets, host keys): the settings API never reads, writes or deletes it',
+        },
         '404': { $ref: '#/components/responses/NotFound' },
       },
     },
