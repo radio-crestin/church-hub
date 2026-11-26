@@ -22,10 +22,13 @@ import type { ChurchState, SyncStore } from '../sync/state/ChurchState'
 import { createSyncStore } from '../sync/state/createSyncStore'
 import { readChurch } from '../sync/state/readChurch'
 import { SyncError } from '../sync/SyncError'
+import { syncBodyLimit } from '../sync/syncBodyLimit'
 import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
 
 const DEFAULT_COMPACT_AFTER = 40
+/** Pinned, so the docs page runs only the Scalar build it was checked with. */
+const SCALAR_VERSION = '1.76.4'
 /** Managing devices and access needs the app's user management permission. */
 const MANAGE_PERMISSION = 'users.edit'
 
@@ -34,6 +37,8 @@ type SyncContext = Context<{ Bindings: Bindings }>
 const sync = new Hono<{ Bindings: Bindings }>()
 
 sync.onError(handleSyncError)
+// Every /sync route, the owner's (/sync/owner/*) included.
+sync.use('/sync/*', syncBodyLimit)
 
 /**
  * The church in the path, read once, and the device calling for it. The
@@ -80,7 +85,7 @@ sync.get('/sync/docs', (c) =>
     '<!doctype html><html><head><title>Church Hub cloud sync</title>' +
       '<meta charset="utf-8"></head><body>' +
       '<script id="api-reference" data-url="/sync/openapi.json"></script>' +
-      '<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>' +
+      `<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@${SCALAR_VERSION}"></script>` +
       '</body></html>'
   )
 )

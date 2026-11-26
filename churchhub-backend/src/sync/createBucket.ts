@@ -42,6 +42,12 @@ function decodeXml(text: string): string {
     .replace(/&amp;/g, '&')
 }
 
+/** S3's error `<Code>` (e.g. AccessDenied), or `unknown`. */
+async function errorCode(response: Response): Promise<string> {
+  const body = await response.text().catch(() => '')
+  return body.match(/<Code>([A-Za-z0-9.]{1,64})<\/Code>/)?.[1] ?? 'unknown'
+}
+
 /**
  * Any S3-compatible bucket with conditional writes (R2, AWS S3, MinIO…),
  * path-style and signed with SigV4, from the S3_* settings: the public
@@ -83,10 +89,10 @@ export function createBucket(env: Bindings, name = env.S3_BUCKET): Bucket {
     if (response.ok || response.status === 404 || allowed(response.status)) {
       return response
     }
-    const detail = await response.text().catch(() => '')
-    throw new Error(
-      `S3 ${init.method} ${url} failed: ${response.status} ${detail.slice(0, 200)}`
-    )
+    // The URL, its query and S3's error body name the object key (a church's
+    // path secret): the message keeps only the method, status and S3's code.
+    const code = await errorCode(response)
+    throw new Error(`S3 ${init.method} failed: ${response.status} ${code}`)
   }
 
   return {
