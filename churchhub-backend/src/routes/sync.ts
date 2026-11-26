@@ -22,6 +22,7 @@ import type { ChurchState, SyncStore } from '../sync/state/ChurchState'
 import { createSyncStore } from '../sync/state/createSyncStore'
 import { readChurch } from '../sync/state/readChurch'
 import { SyncError } from '../sync/SyncError'
+import { syncBodyLimit } from '../sync/syncBodyLimit'
 import { updateAccess } from '../sync/updateAccess'
 import type { Bindings } from '../types'
 
@@ -34,6 +35,8 @@ type SyncContext = Context<{ Bindings: Bindings }>
 const sync = new Hono<{ Bindings: Bindings }>()
 
 sync.onError(handleSyncError)
+// Every /sync route, the owner's (/sync/owner/*) included.
+sync.use('/sync/*', syncBodyLimit)
 
 /**
  * The church in the path, read once, and the device calling for it. The
