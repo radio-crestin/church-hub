@@ -175,8 +175,6 @@ export async function getLocalUsers(): Promise<LocalUser[]> {
 
 export interface LoginResult {
   user: CurrentUser | null
-  /** One-time ticket to finalize the session via top-level navigation. */
-  ticket: string
   /** The user auth token (localhost only) — persisted on desktop Tauri. */
   token?: string
 }
@@ -204,7 +202,6 @@ export async function login(
 ): Promise<LoginResult> {
   const response = await fetcher<
     Partial<ApiResponse<CurrentUser | null>> & {
-      ticket?: string
       token?: string
       error?: string
       pairingId?: string
@@ -214,13 +211,13 @@ export async function login(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, password, ...pairing }),
   })
-  // The server returns `{ data, ticket, token }` on success and `{ error }` on
-  // failure (e.g. 401 for wrong credentials). The shared fetcher does not
-  // throw on non-ok responses, so we surface failures here ourselves.
+  // The server returns `{ data, token }` on success and `{ error }` on failure
+  // (e.g. 401 for wrong credentials). The shared fetcher does not throw on
+  // non-ok responses, so we surface failures here ourselves.
   if (response.error === 'pairing_required' && response.pairingId) {
     throw new PairingRequiredError(response.pairingId)
   }
-  if (!response.ticket) {
+  if (response.error || !response.data) {
     throw new Error(response.error ?? 'Invalid credentials')
   }
   // On desktop Tauri persist the token so subsequent requests (including the
@@ -230,33 +227,9 @@ export async function login(
     setStoredUserToken(response.token)
   }
   return {
-    user: response.data ?? null,
-    ticket: response.ticket,
+    user: response.data,
     token: response.token,
   }
-}
-
-/**
- * Builds the URL that finalizes a user switch via a top-level navigation. The
- * 302 response sets the session cookie reliably (works in the Tauri desktop
- * webview, where a cross-origin `fetch` Set-Cookie may not overwrite the
- * existing cookie) and redirects back to the current app origin.
- */
-export function getLoginRedirectUrl(ticket: string): string {
-  const ret = encodeURIComponent(`${window.location.origin}/`)
-  return `${getApiUrl()}/api/auth/login-redirect/${encodeURIComponent(
-    ticket,
-  )}?return=${ret}`
-}
-
-/**
- * Builds the URL that clears the session via a top-level navigation, so the
- * cookie is reliably removed in the desktop webview. Redirects back to the app
- * (which then shows the account picker because no session is active).
- */
-export function getLogoutRedirectUrl(): string {
-  const ret = encodeURIComponent(`${window.location.origin}/`)
-  return `${getApiUrl()}/api/auth/logout-redirect?return=${ret}`
 }
 
 /**

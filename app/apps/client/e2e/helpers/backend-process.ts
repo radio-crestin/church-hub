@@ -10,14 +10,21 @@ export interface BackendProcess {
   stop: () => Promise<void>
 }
 
+interface ReadySignals {
+  /** Lines that must all have been printed before the process is ready. */
+  ready: RegExp[]
+  /** A line that means it never will be. */
+  failed?: RegExp
+}
+
 /**
  * Runs a churchhub-backend script on Bun, as a church would self-host it;
- * resolves once it prints `readyLine`.
+ * resolves once it has printed every `ready` line.
  */
 export async function startBackendProcess(
   script: string,
   env: Record<string, string>,
-  readyLine: RegExp,
+  { ready, failed }: ReadySignals,
 ): Promise<BackendProcess> {
   installBackendDependencies()
   const child = spawn(
@@ -37,7 +44,10 @@ export async function startBackendProcess(
     )
     const onData = (chunk: Buffer) => {
       output += chunk.toString()
-      if (readyLine.test(output)) {
+      if (failed?.test(output)) {
+        clearTimeout(timer)
+        reject(new Error(`${script} refused to start:\n${output}`))
+      } else if (ready.every((line) => line.test(output))) {
         clearTimeout(timer)
         resolve()
       }

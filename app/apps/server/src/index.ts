@@ -33,8 +33,10 @@ import {
   buildUserAuthCookie,
   combinedAuthMiddleware,
   isLocalhost,
+  reissueSessionCookie,
   requireAnyPermission,
   requirePermission,
+  SESSION_COOKIE_MAX_AGE_SECONDS,
 } from './middleware'
 import { isTrustedOrigin, refuseUntrustedRequest } from './middleware/origins'
 import { getOpenApiSpec, getScalarDocs } from './openapi'
@@ -43,6 +45,7 @@ import {
   handleAnalyticsRoutes,
 } from './routes/analytics'
 import { authenticateLogin, type LoginBody } from './routes/auth-login'
+import { handleUserLinkRoute } from './routes/auth-user-link/handleUserLinkRoute'
 import { handleBackgroundMediaRoutes } from './routes/background-media'
 import { handleBibleTopicRoutes } from './routes/bible-topics'
 import { handleCloudBackupRoutes } from './routes/cloud-backup'
@@ -75,7 +78,6 @@ import {
   getLocalUsers,
   getSetting,
   getUserById,
-  getUserByToken,
   isServerSecretKey,
   type Permission,
   regenerateUserToken,
@@ -429,57 +431,11 @@ import {
 } from './websocket'
 
 /**
- * Short-lived, single-use login tickets. After a password is verified via
- * POST /api/auth/login the client receives a ticket and performs a TOP-LEVEL
- * navigation to /api/auth/login-redirect/:ticket. Setting the session cookie
- * on a navigation response (302) reliably overwrites the existing cookie in
- * every webview — unlike a cross-origin `fetch` Set-Cookie, which the Tauri
- * desktop webview may not apply. This is what makes "switch user" work on
- * desktop. Tickets expire after 60s and are consumed on use.
+ * Sent as `ticket` in a successful login answer: phone apps released before
+ * 2026-11-27 take a truthy `ticket` as the sign of success, and they keep
+ * talking to updated servers.
  */
-const LOGIN_TICKET_TTL_MS = 60_000
-const loginTickets = new Map<string, { token: string; expiresAt: number }>()
-
-function createLoginTicket(token: string): string {
-  const ticket = crypto.randomUUID()
-  loginTickets.set(ticket, {
-    token,
-    expiresAt: Date.now() + LOGIN_TICKET_TTL_MS,
-  })
-  return ticket
-}
-
-function consumeLoginTicket(ticket: string): string | null {
-  const entry = loginTickets.get(ticket)
-  loginTickets.delete(ticket)
-  if (!entry || entry.expiresAt < Date.now()) return null
-  return entry.token
-}
-
-/**
- * Validates a post-login return URL. Only same-machine origins are allowed so
- * the redirect can never be turned into an open redirect.
- */
-function resolveReturnUrl(
-  returnParam: string | null,
-  fallbackHost: string,
-): string {
-  const fallback = `http://${fallbackHost}/`
-  if (!returnParam) return fallback
-  try {
-    const u = new URL(returnParam)
-    const host = u.hostname.toLowerCase()
-    const allowed =
-      host === 'localhost' ||
-      host === '127.0.0.1' ||
-      host === '::1' ||
-      host === 'tauri.localhost' ||
-      host.endsWith('.localhost')
-    return allowed ? u.toString() : fallback
-  } catch {
-    return fallback
-  }
-}
+const LOGIN_SUCCESS_MARKER = 'signed-in'
 
 // Startup timing helper
 const startupStart = performance.now()
@@ -977,45 +933,9 @@ async function startRealServer(): Promise<void> {
       }
       let _context: RequestContext | null = null
 
-      // User authentication endpoint (public - sets cookie for remote users)
-      const userAuthMatch = url.pathname.match(/^\/api\/auth\/user\/([^/]+)$/)
-      if (req.method === 'GET' && userAuthMatch?.[1]) {
-        const token = decodeURIComponent(userAuthMatch[1])
-        const user = await getUserByToken(token)
-
-        if (!user || !user.isActive) {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                error: 'Invalid or inactive user token',
-              }),
-              {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
-        // Redirect to frontend using the same host the user accessed from
-        // The server serves the client on its own port (dev and installed app)
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = getServerPort()
-        const frontendUrl = `http://${host}:${frontendPort}/`
-
-        // Redirect to frontend app with cookie set. Cookie attributes are
-        // engine-aware — see buildUserAuthCookie.
-        const response = new Response(null, {
-          status: 302,
-          headers: {
-            Location: frontendUrl,
-            'Set-Cookie': buildUserAuthCookie(req, token, 31536000),
-          },
-        })
-
-        return handleCors(req, response)
-      }
+      // A user's sign-in link (public: it carries the user's token)
+      const userLink = await handleUserLinkRoute(req, url, handleCors)
+      if (userLink) return userLink
 
       // OpenAPI documentation endpoints (public)
       if (url.pathname === '/api/docs') {
@@ -1112,10 +1032,6 @@ async function startRealServer(): Promise<void> {
             localhost: isLocalhost(req),
           })
 
-          // Also issue a one-time ticket so the client can finalize the switch
-          // via a top-level navigation (reliable cookie overwrite on desktop).
-          const ticket = createLoginTicket(outcome.token)
-
           // On localhost (the packaged desktop app) the cross-site `Secure`
           // cookie can't be stored by macOS WKWebView, so also return the token
           // in the body; the desktop client persists it and sends it back as an
@@ -1125,12 +1041,22 @@ async function startRealServer(): Promise<void> {
 
           return handleCors(
             req,
-            new Response(JSON.stringify({ data: currentUser, ticket, token }), {
-              headers: {
-                'Content-Type': 'application/json',
-                'Set-Cookie': buildAuthCookie(outcome.token, 31536000),
+            new Response(
+              JSON.stringify({
+                data: currentUser,
+                ticket: LOGIN_SUCCESS_MARKER,
+                token,
+              }),
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Set-Cookie': buildAuthCookie(
+                    outcome.token,
+                    SESSION_COOKIE_MAX_AGE_SECONDS,
+                  ),
+                },
               },
-            }),
+            ),
           )
         } catch (_error) {
           return handleCors(
@@ -1141,55 +1067,6 @@ async function startRealServer(): Promise<void> {
             }),
           )
         }
-      }
-
-      // GET /api/auth/login-redirect/:ticket - finalize a login via top-level
-      // navigation. Sets the session cookie on a 302 response (overwrites
-      // reliably in every webview) and redirects back to the app.
-      const loginRedirectMatch = url.pathname.match(
-        /^\/api\/auth\/login-redirect\/([^/]+)$/,
-      )
-      if (req.method === 'GET' && loginRedirectMatch?.[1]) {
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = getServerPort()
-        const fallbackHost = `${host}:${frontendPort}`
-        const token = consumeLoginTicket(
-          decodeURIComponent(loginRedirectMatch[1]),
-        )
-        const location = resolveReturnUrl(
-          url.searchParams.get('return'),
-          fallbackHost,
-        )
-
-        if (!token) {
-          // Expired/invalid ticket — just go back to the app (still signed in
-          // as whoever the current cookie is).
-          authLogger.warn('Account switch failed: expired/invalid ticket')
-          return handleCors(
-            req,
-            new Response(null, {
-              status: 302,
-              headers: { Location: location },
-            }),
-          )
-        }
-
-        const switchedUser = await getUserByToken(token)
-        authLogger.info('Account switch', {
-          userId: switchedUser?.id ?? null,
-          userName: switchedUser?.name ?? null,
-        })
-
-        return handleCors(
-          req,
-          new Response(null, {
-            status: 302,
-            headers: {
-              Location: location,
-              'Set-Cookie': buildAuthCookie(token, 31536000),
-            },
-          }),
-        )
       }
 
       // POST /api/auth/logout - clear the auth cookie
@@ -1209,32 +1086,6 @@ async function startRealServer(): Promise<void> {
           new Response(JSON.stringify({ data: { success: true } }), {
             headers: {
               'Content-Type': 'application/json',
-              'Set-Cookie': buildAuthCookie('', 0),
-            },
-          }),
-        )
-      }
-
-      // GET /api/auth/logout-redirect - clear the session via top-level
-      // navigation. Like login-redirect, clearing the cookie on a 302 response
-      // reliably applies in the desktop (Tauri) webview where a cross-origin
-      // `fetch` Set-Cookie may not.
-      if (
-        req.method === 'GET' &&
-        url.pathname === '/api/auth/logout-redirect'
-      ) {
-        const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-        const frontendPort = getServerPort()
-        const location = resolveReturnUrl(
-          url.searchParams.get('return'),
-          `${host}:${frontendPort}`,
-        )
-        return handleCors(
-          req,
-          new Response(null, {
-            status: 302,
-            headers: {
-              Location: location,
               'Set-Cookie': buildAuthCookie('', 0),
             },
           }),
@@ -1270,22 +1121,24 @@ async function startRealServer(): Promise<void> {
         if (authResult.context?.userId) {
           const user = getUserById(authResult.context.userId)
           if (user) {
-            return handleCors(
-              req,
-              new Response(
-                JSON.stringify({
-                  data: {
-                    id: user.id,
-                    name: user.name,
-                    isApp: user.isSuperAdmin,
-                    permissions: user.isSuperAdmin
-                      ? ALL_PERMISSIONS
-                      : user.permissions,
-                  },
-                }),
-                { headers: { 'Content-Type': 'application/json' } },
-              ),
+            const response = new Response(
+              JSON.stringify({
+                data: {
+                  id: user.id,
+                  name: user.name,
+                  isApp: user.isSuperAdmin,
+                  permissions: user.isSuperAdmin
+                    ? ALL_PERMISSIONS
+                    : user.permissions,
+                },
+              }),
+              { headers: { 'Content-Type': 'application/json' } },
             )
+            // A session cookie an older version stored as SameSite=None
+            // becomes Lax on the app's next start.
+            const reissued = reissueSessionCookie(req)
+            if (reissued) response.headers.set('Set-Cookie', reissued)
+            return handleCors(req, response)
           }
         }
 

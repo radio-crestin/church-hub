@@ -1,9 +1,9 @@
 import { type ChildProcess, spawn } from 'node:child_process'
-import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
 
+import { freePort } from './helpers/free-port'
 import { killAndWait, makeTempDir, removeTempDir } from './helpers/temp-dir'
 
 /**
@@ -16,17 +16,6 @@ import { killAndWait, makeTempDir, removeTempDir } from './helpers/temp-dir'
  */
 
 const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
-
-function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer()
-    server.on('error', reject)
-    server.listen(0, () => {
-      const { port } = server.address() as { port: number }
-      server.close(() => resolve(port))
-    })
-  })
-}
 
 /** Runs `code` in bun and resolves once it prints its first line. */
 function startBun(code: string): Promise<ChildProcess> {
