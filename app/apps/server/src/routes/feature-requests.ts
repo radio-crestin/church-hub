@@ -11,7 +11,7 @@ export const FEATURE_REQUESTS_PATH = '/api/feature-requests'
 /**
  * POST /api/feature-requests — "Request a feature" from the app. Any
  * signed-in user (or the app itself) may send one; the body is relayed to
- * the Cloudflare worker, which validates it, opens the public GitHub issue
+ * the Church Hub backend, which validates it, opens the public GitHub issue
  * and notifies the maintainer on WhatsApp.
  */
 export async function handleFeatureRequestRoutes(

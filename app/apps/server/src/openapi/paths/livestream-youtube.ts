@@ -78,6 +78,31 @@ const broadcast = {
 }
 
 export const livestreamYouTubePaths = {
+  '/api/livestream/youtube/auth-url': {
+    get: {
+      tags,
+      summary: 'The page that signs the church into YouTube',
+      description:
+        "On Church Hub's backend, which holds the Google client. `redirect` (the desktop app) comes back to /auth/youtube/callback; `postMessage` (a browser popup) posts the tokens to its opener.",
+      security,
+      parameters: [
+        {
+          name: 'mode',
+          in: 'query',
+          required: true,
+          schema: { type: 'string', enum: ['redirect', 'postMessage'] },
+        },
+      ],
+      responses: {
+        '200': json(
+          { type: 'object', properties: { authUrl: { type: 'string' } } },
+          'The URL to open',
+        ),
+        '400': { description: 'mode is not redirect or postMessage' },
+        '401': errors['401'],
+      },
+    },
+  },
   '/api/livestream/youtube/config': {
     get: {
       tags,

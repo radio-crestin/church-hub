@@ -58,6 +58,16 @@ export async function storeYouTubeTokens(
   return response.data
 }
 
+/** The backend page that signs the church into YouTube (the server knows where the backend is). */
+export async function getYouTubeAuthUrl(
+  mode: 'redirect' | 'postMessage',
+): Promise<string> {
+  const response = await fetcher<{ data: { authUrl: string } }>(
+    `/api/livestream/youtube/auth-url?mode=${mode}`,
+  )
+  return response.data.authUrl
+}
+
 export async function getYouTubeAuthStatus(): Promise<YouTubeAuthStatus> {
   const response = await fetcher<{ data: YouTubeAuthStatus }>(
     '/api/livestream/youtube/status',

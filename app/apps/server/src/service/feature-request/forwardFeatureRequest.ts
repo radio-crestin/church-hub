@@ -1,8 +1,8 @@
 import { createLogger } from '../../utils/logger'
+import { getBackendBaseUrl } from '../backend'
 
 const logger = createLogger('feature-request')
 
-const DEFAULT_BACKEND_URL = 'https://churchub-backend.radiocrestin.ro'
 const FORWARD_TIMEOUT_MS = 30_000
 
 export interface ForwardedResponse {
@@ -11,19 +11,17 @@ export interface ForwardedResponse {
 }
 
 /**
- * Relays a "Request a feature" submission to the Church Hub Cloudflare
- * worker (`POST /feature-requests`), which owns the GitHub token and the
- * WhatsApp settings. The app never holds those secrets. The worker's status
+ * Relays a "Request a feature" submission to the Church Hub backend
+ * (`POST /feature-requests`), which owns the GitHub token and the
+ * WhatsApp settings. The app never holds those secrets. The backend's status
  * and JSON body are passed back unchanged so the client sees its errors.
  */
 export async function forwardFeatureRequest(
   rawBody: string,
 ): Promise<ForwardedResponse> {
-  const backendUrl = process.env.YOUTUBE_OAUTH_SERVER || DEFAULT_BACKEND_URL
-  // The URL comes from an env var that sits next to OAuth settings: never log it.
   logger.debug('Forwarding feature request to the Church Hub backend')
 
-  const response = await fetch(`${backendUrl}/feature-requests`, {
+  const response = await fetch(`${getBackendBaseUrl()}/feature-requests`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: rawBody,

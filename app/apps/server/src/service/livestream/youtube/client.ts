@@ -5,6 +5,7 @@ import { parseGoogleAuthError, type YouTubeAuthError } from './errors'
 import { getDatabase } from '../../../db'
 import { youtubeAuth } from '../../../db/schema'
 import { broadcastYouTubeAuthStatus } from '../../../websocket'
+import { getBackendBaseUrl } from '../../backend'
 
 /**
  * The OAuth2 client of the `google-auth-library` googleapis itself builds on,
@@ -14,8 +15,6 @@ const OAuth2Client = google.auth.OAuth2
 type OAuth2Client = InstanceType<typeof OAuth2Client>
 
 const DEBUG = process.env.DEBUG === 'true'
-const YOUTUBE_OAUTH_SERVER =
-  process.env.YOUTUBE_OAUTH_SERVER || 'https://churchub-backend.radiocrestin.ro'
 // Where the YouTube Data API lives; the e2e suite points it at a stand-in.
 export const YOUTUBE_API_ORIGIN =
   process.env.YOUTUBE_API_ORIGIN || 'https://www.googleapis.com'
@@ -88,7 +87,7 @@ async function refreshTokensViaWorker(
 ): Promise<RefreshTokenResponse> {
   try {
     const response = await fetch(
-      `${YOUTUBE_OAUTH_SERVER}/auth/youtube/refresh`,
+      `${getBackendBaseUrl()}/auth/youtube/refresh`,
       {
         method: 'POST',
         headers: {

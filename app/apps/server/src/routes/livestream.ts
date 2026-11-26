@@ -42,6 +42,7 @@ import type {
 import {
   consumePKCESession,
   createBroadcast,
+  createYouTubeAuthUrl,
   endBroadcast,
   getActiveBroadcast,
   getAuthStatus,
@@ -354,6 +355,27 @@ export async function handleLivestreamRoutes(
         ),
       )
     }
+  }
+
+  // GET /api/livestream/youtube/auth-url?mode=redirect|postMessage
+  if (
+    req.method === 'GET' &&
+    url.pathname === '/api/livestream/youtube/auth-url'
+  ) {
+    const mode = url.searchParams.get('mode')
+    if (mode !== 'redirect' && mode !== 'postMessage') {
+      return handleCors(
+        req,
+        Response.json(
+          { error: 'mode must be redirect or postMessage' },
+          { status: 400 },
+        ),
+      )
+    }
+    return handleCors(
+      req,
+      Response.json({ data: { authUrl: createYouTubeAuthUrl(mode) } }),
+    )
   }
 
   // GET /api/livestream/youtube/status

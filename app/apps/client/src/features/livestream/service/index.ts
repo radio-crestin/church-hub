@@ -25,6 +25,7 @@ export {
   getUpcomingBroadcasts,
   getVideoCategories,
   getYouTubeAuthStatus,
+  getYouTubeAuthUrl,
   getYouTubeConfig,
   getYoutubePlaylists,
   logoutYouTube,
