@@ -58,6 +58,7 @@ export function QueueItems({ scheduleId, onEditItem }: QueueItemsProps) {
           : undefined
       }
       readOnly={!editable}
+      quietPast
     />
   )
 }

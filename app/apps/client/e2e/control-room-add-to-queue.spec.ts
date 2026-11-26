@@ -248,6 +248,11 @@ test.describe('The control room queue', () => {
     await expectLive('versete_tineri', 2)
     await next.click()
     await expectLive('video', 3)
+    // What has gone by reads quieter; what is live and next does not.
+    const rows = column.getByTestId('schedule-item')
+    await expect(rows.nth(0)).toHaveAttribute('data-past', 'true')
+    await expect(rows.nth(1)).toHaveAttribute('data-past', 'true')
+    await expect(rows.nth(2)).not.toHaveAttribute('data-past', 'true')
     await next.click()
     await expectLive('announcement', 4)
     // The program's live item is marked inside its group.

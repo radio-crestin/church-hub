@@ -53,7 +53,7 @@ export function ControlRoomQueue() {
 
   return (
     <div
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-2 lg:h-full lg:min-h-0"
       data-testid="control-room-queue"
       data-showing={program ? 'program' : 'queue'}
       data-schedule-id={target.id}
@@ -132,15 +132,18 @@ export function ControlRoomQueue() {
           )}
         </div>
       ) : (
-        <QueueItems
-          key={target.id}
-          scheduleId={target.id}
-          onEditItem={
-            !program && canEdit
-              ? (item) => addRef.current?.edit(item)
-              : undefined
-          }
-        />
+        // The list fills the panel and scrolls, following the live step.
+        <div className="lg:flex-1 lg:min-h-0">
+          <QueueItems
+            key={target.id}
+            scheduleId={target.id}
+            onEditItem={
+              !program && canEdit
+                ? (item) => addRef.current?.edit(item)
+                : undefined
+            }
+          />
+        </div>
       )}
 
       {canEdit && (
