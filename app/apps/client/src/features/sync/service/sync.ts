@@ -5,8 +5,23 @@ export type SyncEntityType =
   | 'song_category'
   | 'song_group'
   | 'schedule'
+  | 'song_tag'
+  | 'song_bookmark'
+  | 'song_bookmark_note'
+  | 'bible_bookmark'
+  | 'bible_bookmark_note'
+  | 'music_playlist'
+  | 'setting'
+  | 'role'
+  | 'user'
 
-export type SyncChangeKind = 'added' | 'updated' | 'removed' | 'conflict'
+/** `rejected`: a change made here the sync service refused, put back. */
+export type SyncChangeKind =
+  | 'added'
+  | 'updated'
+  | 'removed'
+  | 'conflict'
+  | 'rejected'
 
 /** Another PC holds this church's token (a backup restored there). */
 export interface CloudServerConflict {
@@ -74,6 +89,8 @@ export interface SyncUpdate {
   seen: boolean
   /** Human-readable device name (hostname) the change was made on. */
   sourceDevice: string | null
+  /** For `rejected`: the permission its author lacked. */
+  detail: string | null
 }
 
 export interface SyncPendingEntry {
