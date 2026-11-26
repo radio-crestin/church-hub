@@ -128,11 +128,20 @@ test.describe('The backend set on this machine', () => {
 })
 
 test.describe('A build with no backend set', () => {
-  test('keeps the legacy backend every released version uses', async ({
-    request,
-  }) => {
+  test('keeps the legacy backend every released version uses', async () => {
+    test.setTimeout(300_000)
+    // The same install restarted with no backend set (the suite's own
+    // servers point at a stand-in).
+    await server.stop()
+    await server.start({
+      CHURCH_HUB_BACKEND_URL: '',
+      CHURCH_HUB_SIGNALING_URL: '',
+      CHURCH_HUB_SYNC_URL: '',
+    })
+    await api.dispose()
+    api = await server.adminRequest()
     const youtube = await dataOf(
-      await request.post('/api/livestream/youtube/sign-in'),
+      await api.post('/api/livestream/youtube/sign-in'),
     )
     expect(pageOf(youtube.authUrl)).toBe(
       'https://churchub-backend.radiocrestin.ro/auth/youtube',
