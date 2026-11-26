@@ -1,3 +1,6 @@
+/** starting: probe pending; enabled: verified; disabled: the probe failed; off: sync not configured. */
+export type SyncReadiness = 'starting' | 'enabled' | 'disabled' | 'off'
+
 export interface Bindings {
   YOUTUBE_CLIENT_ID: string
   YOUTUBE_CLIENT_SECRET: string
@@ -36,6 +39,11 @@ export interface Bindings {
   // state: no database) and the secret. Unset = /sync answers 503.
   /** Hashes device tokens and, derived, encrypts the church states (openssl rand -hex 32). */
   SYNC_SECRET?: string
+  /**
+   * Node only: where the startup conditional-write probe stands (createSyncGuard).
+   * Absent on the Worker, which has no probe, so it reads as ready.
+   */
+  SYNC_READINESS?: SyncReadiness
   /** Any S3-compatible endpoint, e.g. https://<account>.r2.cloudflarestorage.com */
   S3_ENDPOINT?: string
   S3_BUCKET?: string
