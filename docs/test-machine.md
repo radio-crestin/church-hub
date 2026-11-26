@@ -29,7 +29,7 @@ Loading the copy into a data folder (`app/scripts/use-adunare-copy.ts`) backs up
   ```
   Without the release signing key, the updater files are left out, as CI does for non-release builds.
 - **A task's own server** (its port, never 3000/3001): load the copy into its `app/data` before starting it: `bun app/scripts/use-adunare-copy.ts app/data`.
-- **A review build** (`bun app/scripts/review-build.ts <task>`): load the copy into its data folder: `bun app/scripts/use-adunare-copy.ts .review-build/<task>/data` in the main checkout.
+- **A review build** (`bun app/scripts/review-build.ts <task>`): load the copy into its data folder: `bun app/scripts/use-adunare-copy.ts .review-build/<task>/data` in the task's worktree.
 
 Close the Church Hub that uses a folder before loading the copy into it.
 
