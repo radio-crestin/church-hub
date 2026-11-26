@@ -27,8 +27,8 @@ export function useMediaUrl(url: string | null | undefined): MediaSource {
   const [source, setSource] = useState<MediaSource>(NONE)
 
   useEffect(() => {
-    setSource(NONE)
     if (!tunneled || !resolved) return
+    setSource(NONE)
     let objectUrl: string | null = null
     let cancelled = false
     const settle = (next: MediaSource) => {

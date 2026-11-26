@@ -56,9 +56,9 @@ async function setRemoteAccess(request: APIRequestContext, enabled: boolean) {
 
 /** The church's media index as the PC published it, or null. */
 function mediaIndex(): Record<string, { hash: string }> | null {
-  const put = s3.requests.findLast((line) =>
-    /^PUT .*\/media\/index\.json$/.test(line),
-  )
+  const put = [...s3.requests]
+    .reverse()
+    .find((line) => /^PUT .*\/media\/index\.json$/.test(line))
   const text = put && s3.text(put.slice('PUT '.length))
   return text ? JSON.parse(text).media : null
 }
