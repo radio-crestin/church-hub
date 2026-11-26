@@ -1,0 +1,44 @@
+{
+  "submit": {
+    "menuLabel": "Submit to the Church Hub Library",
+    "menuDescription": "Send this song to the shared library every church can use",
+    "title": "Submit to the Church Hub Library",
+    "message": "“{{title}}” will be sent to the Church Hub team. Once they approve it, every church can add it to their songs.",
+    "noteLabel": "Note for the team (optional)",
+    "notePlaceholder": "e.g. the author, or what you corrected",
+    "confirm": "Submit",
+    "sent": "Song sent. Thank you!",
+    "rateLimited": "Too many songs sent at once. Try again in a minute.",
+    "failed": "The song could not be sent. Check the internet connection and try again."
+  },
+  "curator": {
+    "title": "Church Hub Library",
+    "description": "Review the songs churches send to the shared library: approve them, merge them into a song already there, or reject them.",
+    "signIn": "Sign in with Google",
+    "waiting": "Finish the sign-in in the browser window…",
+    "signInFailed": "The sign-in did not work. Try again.",
+    "signedInAs": "Signed in as {{email}}",
+    "notCurator": "{{email}} is not a curator of the Church Hub Library.",
+    "unavailable": "The Church Hub Library cannot be reached right now.",
+    "empty": "No songs are waiting for review.",
+    "submittedAt": "Sent {{date}}",
+    "matches": "Already in the library",
+    "sameLyrics": "same lyrics",
+    "sameTitle": "same title",
+    "approve": "Approve",
+    "merge": "Merge into a song",
+    "mergeInto": "Merge into this",
+    "mergeSearch": "Search the library by title",
+    "mergeNone": "No song with this title in the library.",
+    "reject": "Reject",
+    "rejectTitle": "Reject this song?",
+    "rejectMessage": "“{{title}}” will not be added to the library.",
+    "rejectReason": "Reason (optional)",
+    "decided": {
+      "approved": "Song added to the library.",
+      "merged": "Song merged into the library.",
+      "rejected": "Song rejected."
+    },
+    "decisionFailed": "The library could not be updated. Try again."
+  }
+}

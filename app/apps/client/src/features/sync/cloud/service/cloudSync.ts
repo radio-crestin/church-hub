@@ -5,8 +5,8 @@ interface ApiResponse<T> {
   error?: string
 }
 
-/** Why the owner signs in: turn sync on, claim a guest church, or manage. */
-export type OwnerSignInIntent = 'connect' | 'claim' | 'manage'
+/** Why the owner signs in: turn sync on, claim a guest church, manage, or curate the Church Hub Library. */
+export type OwnerSignInIntent = 'connect' | 'claim' | 'manage' | 'curate'
 
 /** A church server the signed-in owner owns, or is offered by a transfer. */
 export interface OwnedChurch {

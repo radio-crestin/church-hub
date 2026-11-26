@@ -1,0 +1,44 @@
+{
+  "submit": {
+    "menuLabel": "Trimite în Biblioteca Church Hub",
+    "menuDescription": "Trimite cântarea în biblioteca comună pe care o pot folosi toate bisericile",
+    "title": "Trimite în Biblioteca Church Hub",
+    "message": "„{{title}}” va fi trimisă echipei Church Hub. După ce o aprobă, orice biserică o poate adăuga la cântările ei.",
+    "noteLabel": "Mesaj pentru echipă (opțional)",
+    "notePlaceholder": "de ex. autorul sau ce ai corectat",
+    "confirm": "Trimite",
+    "sent": "Cântarea a fost trimisă. Mulțumim!",
+    "rateLimited": "Prea multe cântări trimise deodată. Încearcă din nou peste un minut.",
+    "failed": "Cântarea nu a putut fi trimisă. Verifică conexiunea la internet și încearcă din nou."
+  },
+  "curator": {
+    "title": "Biblioteca Church Hub",
+    "description": "Verifică cântările trimise de biserici în biblioteca comună: aprobă-le, unește-le cu o cântare care există deja sau respinge-le.",
+    "signIn": "Conectează-te cu Google",
+    "waiting": "Termină conectarea în fereastra browserului…",
+    "signInFailed": "Conectarea nu a reușit. Încearcă din nou.",
+    "signedInAs": "Conectat ca {{email}}",
+    "notCurator": "{{email}} nu face parte din echipa care îngrijește Biblioteca Church Hub.",
+    "unavailable": "Biblioteca Church Hub nu poate fi accesată acum.",
+    "empty": "Nu sunt cântări de verificat.",
+    "submittedAt": "Trimisă {{date}}",
+    "matches": "Există deja în bibliotecă",
+    "sameLyrics": "aceleași versuri",
+    "sameTitle": "același titlu",
+    "approve": "Aprobă",
+    "merge": "Unește cu o cântare",
+    "mergeInto": "Unește cu aceasta",
+    "mergeSearch": "Caută în bibliotecă după titlu",
+    "mergeNone": "Nicio cântare cu acest titlu în bibliotecă.",
+    "reject": "Respinge",
+    "rejectTitle": "Respingi această cântare?",
+    "rejectMessage": "„{{title}}” nu va fi adăugată în bibliotecă.",
+    "rejectReason": "Motivul (opțional)",
+    "decided": {
+      "approved": "Cântarea a fost adăugată în bibliotecă.",
+      "merged": "Cântarea a fost unită cu cea din bibliotecă.",
+      "rejected": "Cântarea a fost respinsă."
+    },
+    "decisionFailed": "Biblioteca nu a putut fi actualizată. Încearcă din nou."
+  }
+}

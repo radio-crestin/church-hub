@@ -59,6 +59,7 @@ import {
   KeyLineEditDialog,
   type KeyLineEditDialogHandle,
 } from '~/features/song-key'
+import { useSubmitToLibraryAction } from '~/features/song-library'
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
@@ -236,6 +237,7 @@ function SongPreviewPage() {
   const resetPresentationCount = useResetPresentationCount()
   const upsertSong = useUpsertSong()
   const songHistory = useSongHistoryAction(numericId, song?.title ?? '')
+  const submitToLibrary = useSubmitToLibraryAction(numericId, song?.title ?? '')
   const addBookmarkMutation = useAddBookmark()
   const removeBookmarkMutation = useRemoveBookmark()
   const { data: bookmarks = [] } = useSongBookmarks()
@@ -1057,6 +1059,7 @@ function SongPreviewPage() {
       testId: 'song-same-theme',
     },
     ...(songHistory.menuItem ? [songHistory.menuItem] : []),
+    ...(submitToLibrary.menuItem ? [submitToLibrary.menuItem] : []),
     // Panels only form movable columns on a large screen; on a phone they are
     // a plain stack, so there is nothing to rearrange.
     ...(isLargeScreen ? [editLayoutAction] : []),
@@ -1244,6 +1247,7 @@ function SongPreviewPage() {
       />
 
       {songHistory.dialog}
+      {submitToLibrary.dialog}
       <KeyLineEditDialog ref={keyLineDialogRef} />
       <CategoryEditDialog ref={categoryDialogRef} />
 

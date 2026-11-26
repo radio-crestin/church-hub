@@ -28,6 +28,7 @@ import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsUpdatesRouteImport } from './routes/settings/updates'
 import { Route as SettingsThemesRouteImport } from './routes/settings/themes'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
+import { Route as SettingsSongLibraryRouteImport } from './routes/settings/song-library'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
 import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
@@ -150,6 +151,11 @@ const SettingsThemesRoute = SettingsThemesRouteImport.update({
 const SettingsSongsRoute = SettingsSongsRouteImport.update({
   id: '/songs',
   path: '/songs',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsSongLibraryRoute = SettingsSongLibraryRouteImport.update({
+  id: '/song-library',
+  path: '/song-library',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsSidebarRoute = SettingsSidebarRouteImport.update({
@@ -320,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/song-library': typeof SettingsSongLibraryRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/song-library': typeof SettingsSongLibraryRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
@@ -418,6 +426,7 @@ export interface FileRoutesById {
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/song-library': typeof SettingsSongLibraryRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
@@ -469,6 +478,7 @@ export interface FileRouteTypes {
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
+    | '/settings/song-library'
     | '/settings/songs'
     | '/settings/themes'
     | '/settings/updates'
@@ -517,6 +527,7 @@ export interface FileRouteTypes {
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
+    | '/settings/song-library'
     | '/settings/songs'
     | '/settings/themes'
     | '/settings/updates'
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
+    | '/settings/song-library'
     | '/settings/songs'
     | '/settings/themes'
     | '/settings/updates'
@@ -752,6 +764,13 @@ declare module '@tanstack/react-router' {
       path: '/songs'
       fullPath: '/settings/songs'
       preLoaderRoute: typeof SettingsSongsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/song-library': {
+      id: '/settings/song-library'
+      path: '/song-library'
+      fullPath: '/settings/song-library'
+      preLoaderRoute: typeof SettingsSongLibraryRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/sidebar': {
@@ -970,6 +989,7 @@ interface SettingsRouteRouteChildren {
   SettingsScreensRoute: typeof SettingsScreensRoute
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   SettingsSidebarRoute: typeof SettingsSidebarRoute
+  SettingsSongLibraryRoute: typeof SettingsSongLibraryRoute
   SettingsSongsRoute: typeof SettingsSongsRoute
   SettingsThemesRoute: typeof SettingsThemesRoute
   SettingsUpdatesRoute: typeof SettingsUpdatesRoute
@@ -994,6 +1014,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsScreensRoute: SettingsScreensRoute,
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   SettingsSidebarRoute: SettingsSidebarRoute,
+  SettingsSongLibraryRoute: SettingsSongLibraryRoute,
   SettingsSongsRoute: SettingsSongsRoute,
   SettingsThemesRoute: SettingsThemesRoute,
   SettingsUpdatesRoute: SettingsUpdatesRoute,
