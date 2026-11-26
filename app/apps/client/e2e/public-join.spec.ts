@@ -39,6 +39,8 @@ test.describe
     let joinUrl = ''
 
     test.beforeAll(async () => {
+      // The public app's build takes a while.
+      test.setTimeout(300_000)
       s3.signedWritesOnly = true
       await s3.start()
       await service.start(s3.endpoint, {
@@ -50,10 +52,14 @@ test.describe
     })
 
     test.afterAll(async ({ request }) => {
-      await request.delete('/api/sync/cloud')
-      await publicApp.stop()
-      await service.dispose()
-      await s3.stop()
+      try {
+        await request.delete('/api/sync/cloud')
+      } finally {
+        // Whatever failed, the ports are let go for the next spec.
+        await publicApp.stop()
+        await service.dispose()
+        await s3.stop()
+      }
     })
 
     test('the PC connects to the cloud and shows a join link for a new device', async ({

@@ -105,14 +105,18 @@ test.describe
 
     test.afterAll(async ({ request }) => {
       test.setTimeout(120_000)
-      await setRemoteAccess(request, false)
-      // Still connected, the next spec to connect would get a 409.
-      expect((await request.delete('/api/sync/cloud')).ok()).toBe(true)
-      if (userId) await request.delete(`/api/users/${userId}`)
-      await publicApp.stop()
-      stopRelay()
-      await service.dispose()
-      await s3.stop()
+      try {
+        await setRemoteAccess(request, false)
+        // Still connected, the next spec to connect would get a 409.
+        expect((await request.delete('/api/sync/cloud')).ok()).toBe(true)
+        if (userId) await request.delete(`/api/users/${userId}`)
+      } finally {
+        // Whatever failed, the ports are let go for the next spec.
+        await publicApp.stop()
+        stopRelay()
+        await service.dispose()
+        await s3.stop()
+      }
     })
 
     test('the join link names the PC’s room and its relay', () => {
