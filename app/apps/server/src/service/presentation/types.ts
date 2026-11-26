@@ -235,6 +235,20 @@ export interface TemporaryVerseteTineriContent {
 }
 
 /**
+ * The timer of a playing verse slideshow (verse-loop.ts): the verse it times
+ * and how long it has left, so the operator sees when the next one goes up.
+ */
+export interface VerseLoopTimer {
+  /** The list that started the slideshow (`TemporaryVerseteTineriContent`). */
+  slideshow: string | null
+  entryIndex: number
+  /** The verse's whole reading time at the current speed. */
+  durationMs: number
+  /** Time left before the next verse goes up, as of sending. */
+  remainingMs: number
+}
+
+/**
  * Temporary scene content for instant display (shows empty slide)
  */
 export interface TemporarySceneContent {
