@@ -36,6 +36,8 @@ interface TextLayerProps {
   morph?: number | null
   /** SlideLayer.rejectMorph */
   onMorphRejected?: () => void
+  /** Cut the text into words, for a text whose slide changes can morph */
+  byWord?: boolean
   /** The slide change transitions a morph plays on single lines */
   lineTransitions: { enter: SlideAnimationConfig; exit: SlideAnimationConfig }
 }
@@ -53,6 +55,7 @@ export function TextLayer({
   leaving = false,
   morph = null,
   onMorphRejected,
+  byWord = false,
   lineTransitions,
 }: TextLayerProps) {
   const { text, style, width, height, left, top, contentScale, styleRanges } =
@@ -67,8 +70,8 @@ export function TextLayer({
   }, [text, styleRanges])
 
   const lines = useMemo(
-    () => splitSlideLines(text, styleRanges),
-    [text, styleRanges],
+    () => splitSlideLines(text, styleRanges, byWord),
+    [text, styleRanges, byWord],
   )
   const lineMorph = useLineMorph({
     lines,

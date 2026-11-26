@@ -35,8 +35,9 @@ interface AnimatedTextProps {
   contentKey: string
   /**
    * The slide shares lines with the previous one (usePresentationContent): on
-   * this slide change only the changed lines animate, if the text keeps its
-   * box, style and fitted size.
+   * this slide change only the changed lines and words animate, if the text
+   * keeps its box, style and fitted size. Only a text that is given this
+   * (the main text) is drawn word by word; others stay plain runs.
    */
   morphLines?: boolean
   /** Whether the element is visible */
@@ -171,7 +172,7 @@ function arePropsEqual(
 const AnimatedTextInner = memo(function AnimatedText({
   content,
   contentKey,
-  morphLines = false,
+  morphLines,
   isVisible,
   style,
   width,
@@ -218,7 +219,7 @@ const AnimatedTextInner = memo(function AnimatedText({
 
   const canMorph = useCallback(
     (from: TextLayerContent, to: TextLayerContent) =>
-      morphLines && canMorphText(from, to),
+      morphLines === true && canMorphText(from, to),
     [morphLines],
   )
 
@@ -254,6 +255,7 @@ const AnimatedTextInner = memo(function AnimatedText({
       leaving={layer.leaving}
       morph={layer.morph}
       onMorphRejected={layer.rejectMorph}
+      byWord={morphLines !== undefined}
       lineTransitions={lineTransitions}
     />
   ))
