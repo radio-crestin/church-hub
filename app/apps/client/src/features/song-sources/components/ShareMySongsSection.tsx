@@ -55,7 +55,7 @@ export function ShareMySongsSection() {
       ) : (
         <div className="space-y-3">
           <label className="block space-y-1">
-            <span className="text-sm text-fg-label">
+            <span className="block text-sm text-fg-label">
               {t('songSources.share.name')}
             </span>
             <input

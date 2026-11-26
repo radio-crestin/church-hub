@@ -356,6 +356,10 @@ test.describe
       await expect(updates.getByTestId('changed-edited-badge')).toHaveText(
         'Edited here · new version',
       )
+      // Never picked for "apply" by default: taking it is a choice.
+      await expect(
+        updates.getByRole('checkbox', { name: `Select ${fresh}` }),
+      ).not.toBeChecked()
       await updates.getByRole('button', { name: new RegExp(fresh) }).click()
       await expect(page.getByText(`${tag} versurile noastre`)).toBeVisible()
       await expect(page.getByText(freshLyrics('v3'))).toBeVisible()

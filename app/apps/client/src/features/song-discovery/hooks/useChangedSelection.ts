@@ -34,7 +34,7 @@ export function useChangedSelection(
         .filter((entry) => isSourceChecked(entry.sourceId))
         .map((entry) => ({
           ...entry,
-          selected: entry.edited !== toggled.has(entry.key),
+          selected: !entry.edited !== toggled.has(entry.key),
         })),
     [remaining, isSourceChecked, toggled],
   )
@@ -80,7 +80,7 @@ export function useChangedSelection(
         )
         const next = new Set(previous)
         for (const key of keys) {
-          if (selected === edited.has(key)) next.delete(key)
+          if (selected === !edited.has(key)) next.delete(key)
           else next.add(key)
         }
         return next
