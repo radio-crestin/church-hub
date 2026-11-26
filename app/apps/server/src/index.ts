@@ -1570,6 +1570,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = await requireAppAuth()
+        if (denied) return denied
 
         const tokenInfo = getSystemToken()
         return handleCors(
@@ -1594,6 +1596,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = await requireAppAuth()
+        if (denied) return denied
 
         const newToken = await regenerateSystemToken()
         return handleCors(
@@ -1619,6 +1623,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = checkPermission('settings.view')
+        if (denied) return denied
 
         const info = await getDatabaseInfo()
         return handleCors(
@@ -1640,6 +1646,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = await requireAppAuth()
+        if (denied) return denied
 
         const body = (await req.json()) as { destinationPath: string }
         if (!body.destinationPath) {
@@ -1682,6 +1690,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = await requireAppAuth()
+        if (denied) return denied
 
         const body = (await req.json()) as {
           sourcePath: string
@@ -1734,6 +1744,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = await requireAppAuth()
+        if (denied) return denied
 
         // Parse optional options from request body
         let options: { includeBibles?: boolean; includeSongs?: boolean } = {}
@@ -1782,6 +1794,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = checkPermission('settings.edit')
+        if (denied) return denied
 
         // Parse optional options from request body
         let options: {
@@ -1879,9 +1893,21 @@ async function startRealServer(): Promise<void> {
               ),
             )
 
+      /**
+       * A route of this computer's own data (backups, sync): only from this
+       * machine, and only for whoever holds `need` ('admin': a super admin
+       * or the system token, for what can hand over or replace the whole
+       * database).
+       */
+      const localGuard = async (
+        need: Permission | 'admin',
+      ): Promise<Response | null> =>
+        backupLocalhostGuard() ??
+        (need === 'admin' ? await requireAppAuth() : checkPermission(need))
+
       // GET /api/backup/status - Drive connection + auto-backup settings
       if (req.method === 'GET' && url.pathname === '/api/backup/status') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const status = await getBackupStatus()
@@ -1895,7 +1921,7 @@ async function startRealServer(): Promise<void> {
 
       // GET /api/backup/list - List backups stored in Google Drive
       if (req.method === 'GET' && url.pathname === '/api/backup/list') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const result = await listBackups()
@@ -1927,7 +1953,7 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/backup/now - Upload a fresh backup to Google Drive
       if (req.method === 'POST' && url.pathname === '/api/backup/now') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         const result = await uploadBackup()
@@ -1964,7 +1990,7 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/backup/restore - Restore a backup from Google Drive
       if (req.method === 'POST' && url.pathname === '/api/backup/restore') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('admin')
         if (guard) return guard
 
         let fileId: string | undefined
@@ -2018,7 +2044,7 @@ async function startRealServer(): Promise<void> {
       // POST /api/backup/inspect - Read a backup's contents (songs, schedules,
       // playlists, per-table counts) without restoring it
       if (req.method === 'POST' && url.pathname === '/api/backup/inspect') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         let fileId: string | undefined
@@ -2067,7 +2093,7 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/backup/delete - Delete a single backup from Google Drive
       if (req.method === 'POST' && url.pathname === '/api/backup/delete') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         let fileId: string | undefined
@@ -2118,7 +2144,7 @@ async function startRealServer(): Promise<void> {
       // GET /api/backup/local/list - Backups present in the configured folder,
       // or in `?dir=` when the operator is browsing another one to restore from
       if (req.method === 'GET' && url.pathname === '/api/backup/local/list') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const dir = url.searchParams.get('dir') || undefined
@@ -2136,7 +2162,7 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/backup/local/now - Write a fresh backup to the local folder
       if (req.method === 'POST' && url.pathname === '/api/backup/local/now') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         const result = await runLocalBackup()
@@ -2159,7 +2185,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'POST' &&
         url.pathname === '/api/backup/local/delete'
       ) {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         let fileName = ''
@@ -2200,7 +2226,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'POST' &&
         url.pathname === '/api/backup/local/restore'
       ) {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('admin')
         if (guard) return guard
 
         let input: RestoreLocalBackupInput = {}
@@ -2232,7 +2258,7 @@ async function startRealServer(): Promise<void> {
 
       // GET /api/backup/config - Read auto-backup settings
       if (req.method === 'GET' && url.pathname === '/api/backup/config') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const config = await getBackupConfig()
@@ -2246,7 +2272,7 @@ async function startRealServer(): Promise<void> {
 
       // PUT /api/backup/config - Update auto-backup settings
       if (req.method === 'PUT' && url.pathname === '/api/backup/config') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         let patch: {
@@ -2295,7 +2321,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'GET' &&
         url.pathname === '/api/backup/google/connect'
       ) {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('admin')
         if (guard) return guard
 
         const result = createDriveAuthUrl()
@@ -2355,7 +2381,7 @@ async function startRealServer(): Promise<void> {
         req.method === 'POST' &&
         url.pathname === '/api/backup/google/disconnect'
       ) {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         await clearDriveAuth()
@@ -2373,7 +2399,7 @@ async function startRealServer(): Promise<void> {
 
       // GET /api/sync/status - Sync state for the settings UI and indicator
       if (req.method === 'GET' && url.pathname === '/api/sync/status') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const status = await getSyncStatus()
@@ -2390,7 +2416,7 @@ async function startRealServer(): Promise<void> {
 
       // GET /api/sync/config - Read sync settings
       if (req.method === 'GET' && url.pathname === '/api/sync/config') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const config = await getSyncConfig()
@@ -2404,7 +2430,7 @@ async function startRealServer(): Promise<void> {
 
       // PUT /api/sync/config - Update sync settings
       if (req.method === 'PUT' && url.pathname === '/api/sync/config') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         const patch: { syncEnabled?: boolean; pollIntervalMinutes?: number } =
@@ -2440,7 +2466,7 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/sync/now - Run a sync cycle immediately
       if (req.method === 'POST' && url.pathname === '/api/sync/now') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.edit')
         if (guard) return guard
 
         const result = await runSyncCycle()
@@ -2468,7 +2494,7 @@ async function startRealServer(): Promise<void> {
 
       // GET /api/sync/pending - Local changes waiting to upload to Drive
       if (req.method === 'GET' && url.pathname === '/api/sync/pending') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const pending = listPendingChanges()
@@ -2485,7 +2511,7 @@ async function startRealServer(): Promise<void> {
 
       // GET /api/sync/updates - Changes applied from other devices
       if (req.method === 'GET' && url.pathname === '/api/sync/updates') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         const unseenOnly = url.searchParams.get('unseenOnly') === 'true'
@@ -2503,7 +2529,7 @@ async function startRealServer(): Promise<void> {
 
       // POST /api/sync/updates/seen - Mark update entries as reviewed
       if (req.method === 'POST' && url.pathname === '/api/sync/updates/seen') {
-        const guard = backupLocalhostGuard()
+        const guard = await localGuard('settings.view')
         if (guard) return guard
 
         let ids: number[] | undefined
@@ -2940,6 +2966,8 @@ async function startRealServer(): Promise<void> {
             ),
           )
         }
+        const denied = checkPermission('logs.view')
+        if (denied) return denied
         const result = openLogsFolder()
         return handleCors(
           req,
@@ -8134,6 +8162,8 @@ async function startRealServer(): Promise<void> {
         req.method === 'POST' &&
         url.pathname === '/api/feedback/attach-logs'
       ) {
+        const denied = checkPermission('settings.view')
+        if (denied) return denied
         try {
           const body = (await req.json()) as {
             ticketId?: string
@@ -8202,11 +8232,17 @@ async function startRealServer(): Promise<void> {
         req,
         url,
         handleCors,
+        checkPermission,
       )
       if (livestreamResponse) return livestreamResponse
 
       // MIDI routes
-      const midiResponse = await handleMIDIRoutes(req, url, handleCors)
+      const midiResponse = await handleMIDIRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+      )
       if (midiResponse) return midiResponse
 
       // Screen share routes (native capture frames, MJPEG stream)
@@ -8233,13 +8269,18 @@ async function startRealServer(): Promise<void> {
         const translationResponse = await handleLiveTranslationRoutes(
           req,
           url,
-          _context!,
+          checkPermission,
         )
         if (translationResponse) return handleCors(req, translationResponse)
       }
 
       // Music routes (folders, files, playlists)
-      const musicResponse = await handleMusicRoutes(req, url, handleCors)
+      const musicResponse = await handleMusicRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+      )
       if (musicResponse) return musicResponse
 
       // Per-song edit history (list, entry detail, restore)

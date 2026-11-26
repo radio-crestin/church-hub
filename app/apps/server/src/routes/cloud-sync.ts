@@ -44,11 +44,15 @@ export async function handleCloudSyncRoutes(
     url.pathname.startsWith('/api/sync/cloud/owner/') ||
     url.pathname === '/api/sync/cloud/keep'
   ) {
-    return localhostGuard() ?? handleCloudSyncOwnerRoutes(req, url)
+    return (
+      localhostGuard() ??
+      checkPermission('users.edit') ??
+      handleCloudSyncOwnerRoutes(req, url)
+    )
   }
 
   if (url.pathname === '/api/sync/cloud' && req.method === 'POST') {
-    const denied = localhostGuard()
+    const denied = localhostGuard() ?? checkPermission('users.edit')
     if (denied) return denied
     const body = (await req.json().catch(() => ({}))) as {
       serviceUrl?: unknown
@@ -69,7 +73,7 @@ export async function handleCloudSyncRoutes(
   }
 
   if (url.pathname === '/api/sync/cloud' && req.method === 'DELETE') {
-    const denied = localhostGuard()
+    const denied = localhostGuard() ?? checkPermission('users.edit')
     if (denied) return denied
     await disconnectCloudSync()
     return Response.json({ data: { connected: false } })

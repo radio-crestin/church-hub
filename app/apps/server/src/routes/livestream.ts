@@ -6,6 +6,11 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   console.log(`[${level.toUpperCase()}] [livestream-routes] ${message}`)
 }
 
+import { LIVESTREAM_PERMISSIONS } from './livestream-permissions'
+import {
+  type CheckPermission,
+  checkRoutePermission,
+} from '../middleware/route-permissions'
 import { generateBroadcastMessage } from '../service/livestream/message'
 import {
   getMixerChannels,
@@ -79,7 +84,16 @@ export async function handleLivestreamRoutes(
   req: Request,
   url: URL,
   handleCors: HandleCors,
+  checkPermission: CheckPermission,
 ): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/livestream/')) return null
+  const refused = checkRoutePermission(
+    req,
+    url.pathname,
+    LIVESTREAM_PERMISSIONS,
+    checkPermission,
+  )
+  if (refused) return refused
   // YouTube OAuth endpoints
 
   // POST /api/livestream/youtube/sign-in - Starts a YouTube sign-in: the

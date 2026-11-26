@@ -1,4 +1,8 @@
-import type { RequestContext } from '../middleware'
+import { LIVE_TRANSLATION_PERMISSIONS } from './live-translation-permissions'
+import {
+  type CheckPermission,
+  checkRoutePermission,
+} from '../middleware/route-permissions'
 import { getAudioDevices } from '../service/live-translation/audio-io'
 import { defaultVoiceForEngine } from '../service/live-translation/engines'
 import {
@@ -107,8 +111,16 @@ setListenerCountsCallback((counts) => {
 export async function handleLiveTranslationRoutes(
   req: Request,
   url: URL,
-  _context: RequestContext,
+  checkPermission: CheckPermission,
 ): Promise<Response | null> {
+  if (!url.pathname.startsWith('/api/live-translation/')) return null
+  const refused = checkRoutePermission(
+    req,
+    url.pathname,
+    LIVE_TRANSLATION_PERMISSIONS,
+    checkPermission,
+  )
+  if (refused) return refused
   if (req.method === 'GET' && url.pathname === '/api/live-translation/state') {
     return Response.json(getTranslationState())
   }

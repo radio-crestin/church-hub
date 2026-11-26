@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { getApiUrl } from '~/config'
+import { serverFetch } from '~/utils/serverFetch'
 
 export type TranslationEngine = 'openai' | 'gemini'
 export type OutputModality = 'audio_text' | 'text_only'
@@ -161,10 +161,8 @@ export function useLiveTranslation() {
   const [streamSecret, setStreamSecret] = useState<string>('')
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const baseUrl = getApiUrl() || ''
-
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/settings`)
+    serverFetch(`/api/live-translation/settings`)
       .then((res) => res.json())
       .then((data: Partial<LiveTranslationSettings>) => {
         // Migrate legacy gemini-api-key in localStorage
@@ -190,7 +188,7 @@ export function useLiveTranslation() {
         setSettings(merged)
         setSettingsLoaded(true)
         if (!data.geminiApiKey && lsKey) {
-          fetch(`${baseUrl}/api/live-translation/settings`, {
+          serverFetch(`/api/live-translation/settings`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(merged),
@@ -198,10 +196,10 @@ export function useLiveTranslation() {
         }
       })
       .catch(() => setSettingsLoaded(true))
-  }, [baseUrl])
+  }, [])
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/devices`)
+    serverFetch(`/api/live-translation/devices`)
       .then((res) => res.json())
       .then(
         (data: {
@@ -213,28 +211,25 @@ export function useLiveTranslation() {
         },
       )
       .catch(() => {})
-  }, [baseUrl])
+  }, [])
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/stream-secret`)
+    serverFetch(`/api/live-translation/stream-secret`)
       .then((res) => res.json())
       .then((data: { secret: string }) => setStreamSecret(data.secret))
       .catch(() => {})
-  }, [baseUrl])
+  }, [])
 
-  const saveSettings = useCallback(
-    (next: LiveTranslationSettings) => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-      saveTimeoutRef.current = setTimeout(() => {
-        fetch(`${baseUrl}/api/live-translation/settings`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(next),
-        }).catch(() => {})
-      }, 500)
-    },
-    [baseUrl],
-  )
+  const saveSettings = useCallback((next: LiveTranslationSettings) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(() => {
+      serverFetch(`/api/live-translation/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      }).catch(() => {})
+    }, 500)
+  }, [])
 
   const updateSetting = useCallback(
     <K extends keyof LiveTranslationSettings>(
@@ -382,7 +377,7 @@ export function useLiveTranslation() {
 
   const startTranslation = useCallback(async () => {
     if (!canStart) return
-    const res = await fetch(`${baseUrl}/api/live-translation/start`, {
+    const res = await serverFetch(`/api/live-translation/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -423,10 +418,10 @@ export function useLiveTranslation() {
         listenerCount: 0,
       })),
     }))
-  }, [baseUrl, canStart, settings])
+  }, [canStart, settings])
 
   const stopTranslation = useCallback(async () => {
-    await fetch(`${baseUrl}/api/live-translation/stop`, {
+    await serverFetch(`/api/live-translation/stop`, {
       method: 'POST',
     }).catch(() => {})
     setState((prev) => ({
@@ -436,25 +431,24 @@ export function useLiveTranslation() {
       outputAudioLevel: 0,
       startedAt: null,
     }))
-  }, [baseUrl])
+  }, [])
 
   const clearTranscription = useCallback(async () => {
-    await fetch(`${baseUrl}/api/live-translation/clear`, {
+    await serverFetch(`/api/live-translation/clear`, {
       method: 'POST',
     }).catch(() => {})
     setState((prev) => ({ ...prev, transcription: [] }))
-  }, [baseUrl])
+  }, [])
 
   const resetSecret = useCallback(async () => {
-    const res = await fetch(
-      `${baseUrl}/api/live-translation/stream-secret/reset`,
-      { method: 'POST' },
-    )
+    const res = await serverFetch(`/api/live-translation/stream-secret/reset`, {
+      method: 'POST',
+    })
     if (res.ok) {
       const data = await res.json()
       setStreamSecret(data.secret)
     }
-  }, [baseUrl])
+  }, [])
 
   const streamUrl = useMemo(
     () =>

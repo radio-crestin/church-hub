@@ -1,3 +1,4 @@
+import { requirePermission } from '../middleware/permissions'
 import type { RequestContext } from '../middleware/types'
 import { forwardFeatureRequest } from '../service/feature-request'
 import { createLogger } from '../utils/logger'
@@ -34,6 +35,8 @@ export async function handleFeatureRequestRoutes(
     )
 
   if (!context) return respond(401, { success: false, error: 'Unauthorized' })
+  const denied = requirePermission('settings.view')(context)
+  if (denied) return handleCors(req, denied)
 
   try {
     const { status, payload } = await forwardFeatureRequest(await req.text())
