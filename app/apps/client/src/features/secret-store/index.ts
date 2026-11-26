@@ -1,1 +1,1 @@
-export { SecretStoreStatus } from './components'
+export { SecretStoreResetNotice, SecretStoreStatus } from './components'

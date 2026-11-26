@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 
 import { useSecretStoreStatus } from '../hooks'
-import type { SecretFeature, SecretStoreStatus as Status } from '../service'
+import type { SecretStoreStatus as Status } from '../service'
 
 const KEPT_IN = {
   keychain: 'keychain',
@@ -10,20 +10,6 @@ const KEPT_IN = {
   file: 'file',
 } as const
 
-const FEATURE = {
-  youtube: 'youtube',
-  'google-drive': 'googleDrive',
-  'cloud-sync': 'cloudSync',
-  'listener-link': 'listenerLink',
-  'remote-access': 'remoteAccess',
-  'cloud-backup': 'cloudBackup',
-  obs: 'obs',
-  'song-sources': 'songSources',
-  'ai-search': 'aiSearch',
-  'live-translation': 'liveTranslation',
-  users: 'users',
-} as const satisfies Record<SecretFeature, string>
-
 const whereKept = (status: Status) =>
   status.locked || !status.keptIn
     ? 'locked'
@@ -31,12 +17,11 @@ const whereKept = (status: Status) =>
 
 /**
  * Where the key sealing this computer's saved passwords, API keys and
- * sign-ins is kept, and, after a restore from another computer, what to set
- * up again.
+ * sign-ins is kept.
  */
 export function SecretStoreStatus() {
   const { t } = useTranslation('settings')
-  const { status, dismissReset } = useSecretStoreStatus()
+  const { status } = useSecretStoreStatus()
   if (!status) return null
 
   return (
@@ -50,30 +35,6 @@ export function SecretStoreStatus() {
       <p className="text-xs text-fg-hint">
         {t('sections.secretStore.otherComputer')}
       </p>
-      {status.resetFeatures.length > 0 && (
-        <div
-          className="mt-3 rounded-xl border border-line p-3"
-          data-testid="secret-store-reset"
-        >
-          <p className="text-sm font-medium text-fg">
-            {t('sections.secretStore.reset.title')}
-          </p>
-          <ul className="mt-1.5 space-y-1 text-sm text-fg-label">
-            {status.resetFeatures.map((feature) => (
-              <li key={feature} data-feature={feature}>
-                {t(`sections.secretStore.reset.features.${FEATURE[feature]}`)}
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            onClick={() => dismissReset()}
-            className="mt-3 h-8 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover"
-          >
-            {t('sections.secretStore.reset.dismiss')}
-          </button>
-        </div>
-      )}
     </div>
   )
 }

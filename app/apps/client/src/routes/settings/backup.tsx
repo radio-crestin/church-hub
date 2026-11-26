@@ -3,7 +3,10 @@ import { useTranslation } from 'react-i18next'
 
 import { isLocalhost } from '~/config'
 import { BackupManager } from '~/features/backup'
-import { SecretStoreStatus } from '~/features/secret-store'
+import {
+  SecretStoreResetNotice,
+  SecretStoreStatus,
+} from '~/features/secret-store'
 import { SettingsLeafGuard, SettingsSection } from '~/features/settings'
 import { CloudSyncSection, SyncSettingsSection } from '~/features/sync'
 
@@ -17,6 +20,7 @@ function BackupSettings() {
   return (
     <SettingsLeafGuard itemId="backup">
       <div className="flex min-h-full flex-col gap-6">
+        {isLocalhost() && <SecretStoreResetNotice />}
         <SettingsSection
           title={t('sections.backup.title')}
           description={t('sections.backup.description')}
