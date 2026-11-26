@@ -33,6 +33,9 @@ function failed(reach: Exclude<ScreenReach, { kind: 'open' }>) {
     startupText(refused ? 'screenLinkRevoked' : 'screenUnreachable'),
     startupText(refused ? 'screenLinkRevokedHint' : 'screenUnreachableHint'),
     { label: startupText('retry'), onClick: () => window.location.reload() },
+    undefined,
+    // Nothing failed in the app: no report was sent.
+    false,
   )
   // A phone that comes back is found on its own: a TV has nobody to tap.
   if (!refused) setTimeout(() => window.location.reload(), RETRY_MS)

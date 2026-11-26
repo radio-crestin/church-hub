@@ -150,13 +150,15 @@ function ensureChild(id: string, tag: string, style: string): HTMLElement {
 
 /**
  * Replaces the spinner with what went wrong, an optional technical detail and
- * one button that moves forward (retry, or restart the server).
+ * one button that moves forward (retry, or restart the server). `reported`:
+ * false for a notice that is no failure (a revoked screen link).
  */
 export function setLoadingError(
   message: string,
   hint: string,
   action: LoadingAction,
   detail?: string,
+  reported = true,
 ): void {
   if (!byId('loading-screen')) return
   // A projection hides the loading page's content (index.html) so it starts
@@ -187,12 +189,12 @@ export function setLoadingError(
   button.style.cursor = 'pointer'
 
   // Startup failures are always reported, so the operator has nothing else to do.
-  const reported = ensureChild(
+  const reportedEl = ensureChild(
     'loading-reported',
     'div',
     'margin-top:8px;color:#4b5563;font-size:11px;line-height:1.5;',
   )
-  reported.textContent = startupText('reported')
+  reportedEl.textContent = reported ? startupText('reported') : ''
 
   button.onclick = () => {
     button.disabled = true
@@ -201,7 +203,7 @@ export function setLoadingError(
     if (spinner) spinner.style.display = ''
     updateLoadingHint('')
     detailEl.textContent = ''
-    reported.textContent = ''
+    reportedEl.textContent = ''
     action.onClick()
   }
 }
