@@ -29,7 +29,7 @@ export function CloudSyncSection() {
 
   if (isLoading || !status) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-line p-4 text-[13px] text-fg-hint">
+      <div className="flex items-center gap-2 rounded-xl border border-line p-4 text-sm text-fg-hint">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t('sections.sync.loading')}
       </div>

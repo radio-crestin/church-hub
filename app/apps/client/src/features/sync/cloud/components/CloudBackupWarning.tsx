@@ -22,7 +22,7 @@ export function CloudBackupWarning() {
         className="mt-0.5 h-4 w-4 flex-shrink-0 text-fg-label"
       />
       <div>
-        <p className="text-[13px] font-medium text-fg">
+        <p className="text-sm font-medium text-fg">
           {t('sections.cloudSync.backupWarning.title')}
         </p>
         <p className="mt-0.5 text-xs text-fg-hint">

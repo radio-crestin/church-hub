@@ -31,7 +31,7 @@ export function CloudServerConflict({ conflict }: { conflict: Conflict }) {
           className="mt-0.5 h-5 w-5 flex-shrink-0 text-fg"
         />
         <div className="min-w-0 flex-1">
-          <h4 className="text-[13px] font-medium text-fg">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.cloudSync.conflict.title')}
           </h4>
           <p className="mt-1 text-xs text-fg-label">

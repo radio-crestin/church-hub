@@ -73,14 +73,14 @@ export function CloudOwnerTools({
       </div>
 
       <div>
-        <h5 className="mb-2 text-xs font-medium text-fg-label">
+        <h5 className="mb-2 text-sm font-medium text-fg">
           {t('sections.cloudSync.owner.yourChurches')}
         </h5>
         <OwnerChurchList currentChurchId={churchId} />
       </div>
 
       <div>
-        <h5 className="text-xs font-medium text-fg-label">
+        <h5 className="text-sm font-medium text-fg">
           {t('sections.cloudSync.owner.transferTitle')}
         </h5>
         <p className="mb-2 text-xs text-fg-hint">
@@ -107,7 +107,7 @@ export function CloudOwnerTools({
       </div>
 
       <div className="border-t border-line pt-3">
-        <h5 className="text-xs font-medium text-fg">
+        <h5 className="text-sm font-medium text-fg">
           {t('sections.cloudSync.owner.revokeTitle')}
         </h5>
         <p className="mb-2 text-xs text-fg-hint">

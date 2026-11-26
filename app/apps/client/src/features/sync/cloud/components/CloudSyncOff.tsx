@@ -36,7 +36,7 @@ export function CloudSyncOff({
             className="mt-0.5 h-5 w-5 flex-shrink-0 text-fg-label"
           />
           <div className="min-w-0 flex-1">
-            <h4 className="text-[13px] font-medium text-fg">
+            <h4 className="text-sm font-medium text-fg">
               {t('sections.cloudSync.off.title')}
             </h4>
             <p className="mt-0.5 text-xs text-fg-hint">
@@ -80,7 +80,7 @@ export function CloudSyncOff({
       </div>
 
       <div className="rounded-xl border border-line p-4">
-        <h4 className="text-[13px] font-medium text-fg">
+        <h4 className="text-sm font-medium text-fg">
           {t('sections.cloudSync.recover.title')}
         </h4>
         <p className="mt-0.5 mb-3 text-xs text-fg-hint">

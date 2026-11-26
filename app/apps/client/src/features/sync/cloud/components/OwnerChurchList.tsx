@@ -55,7 +55,7 @@ export function OwnerChurchList({
                 className="mt-0.5 h-4 w-4 flex-shrink-0 text-fg-label"
               />
               <div className="min-w-0">
-                <p className="truncate text-[13px] font-medium text-fg">
+                <p className="truncate text-sm font-medium text-fg">
                   {church.name}
                   {isHere && (
                     <span className="ml-2 rounded-md bg-selected px-1.5 py-0.5 text-xs text-fg-label">
