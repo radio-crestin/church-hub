@@ -139,6 +139,52 @@ test.describe('Bible bookmark slideshow', () => {
     expect(await onScreen(request)).toBeNull()
   })
 
+  test('▶ and 🔁 are icon buttons; while 🔁 plays, the bookmark on screen shows a filling ring', async ({
+    page,
+    request,
+  }) => {
+    const saved = await request.post('/api/settings/app_settings', {
+      data: { key: READING_SPEED, value: '600' },
+    })
+    expect(saved.ok()).toBe(true)
+    await setBookmarks(request, 'Ioan 3:16\nRomani 5:8')
+    await openBible(page, 2)
+
+    const play = page.getByTestId('bible-bookmarks-play')
+    const loop = page.getByTestId('bible-bookmarks-loop')
+    for (const button of [play, loop]) {
+      await expect(button).toHaveText('')
+      await expect(button).toHaveAttribute('aria-pressed', 'false')
+    }
+    await loop.hover()
+    await expect(page.getByRole('tooltip')).toHaveText(/\S/)
+
+    const rows = page.getByTestId('bible-bookmark-item')
+    const ring = page.getByTestId('bible-bookmark-progress')
+    // Stepped by hand, nothing counts down.
+    await play.click()
+    await expect(play).toHaveAttribute('aria-pressed', 'true')
+    await expect.poll(() => onScreen(request)).toMatch(/^Ioan 3:16/)
+    await expect(ring).toHaveCount(0)
+
+    // 🔁 takes over from the verse on screen, and its ring follows it.
+    await loop.click()
+    await expect(loop).toHaveAttribute('aria-pressed', 'true')
+    await expect(play).toHaveAttribute('aria-pressed', 'false')
+    await expect(
+      rows.first().getByTestId('bible-bookmark-progress'),
+    ).toBeVisible()
+    await expect(
+      rows.nth(1).getByTestId('bible-bookmark-progress'),
+    ).toBeVisible({ timeout: 8000 })
+    await expect(ring).toHaveCount(1)
+
+    await loop.click()
+    await expect.poll(() => onScreen(request)).toBeNull()
+    await expect(ring).toHaveCount(0)
+    await request.delete(`/api/settings/app_settings/${READING_SPEED}`)
+  })
+
   test('the seldom-used actions wait under "More"', async ({
     page,
     request,

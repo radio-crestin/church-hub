@@ -3,10 +3,8 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useNavigateTemporary } from '~/features/presentation'
-import { HeaderIconButton } from '~/ui/button'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
-import { VerseProgressRing } from '../../components/VerseProgressRing'
-import { useVerseLoopTimer } from '../../hooks/useVerseLoopTimer'
+import { VerseProgressSlot } from '../../components/VerseProgressSlot'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
 import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
@@ -45,7 +43,6 @@ export function BibleTopicPassages({
   const entries = useMemo(() => toSlideshowEntries(passages), [passages])
   const [templateId, setTemplateId] = useTopicLoopTemplate()
   const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
-  const countdown = useVerseLoopTimer(`topic:${topicId}`)
   const navigateSlideshow = useNavigateTemporary()
   const activeIndex =
     slideshow.position?.index ??
@@ -67,42 +64,51 @@ export function BibleTopicPassages({
 
   return (
     <>
-      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-line flex-shrink-0">
-        <HeaderIconButton
+      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-line flex-shrink-0">
+        <button
+          type="button"
           onClick={onBack}
           data-testid="bible-topic-back"
-          label={t('topics.back')}
+          aria-label={t('topics.back')}
+          title={t('topics.back')}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
         >
-          <ArrowLeft size={16} strokeWidth={1.5} />
-        </HeaderIconButton>
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+        </button>
         <span
           data-testid="bible-topic-title"
           className="min-w-0 flex-1 truncate text-sm font-semibold text-fg"
         >
           {title}
         </span>
-        <HeaderIconButton
+        <button
+          type="button"
           onClick={() => present(activeIndex - 1)}
           disabled={activeIndex <= 0}
           data-testid="bible-topic-previous"
-          label={t('topics.previous')}
+          aria-label={t('topics.previous')}
+          title={t('topics.previous')}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40"
         >
-          <ChevronLeft size={16} strokeWidth={1.5} />
-        </HeaderIconButton>
+          <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+        </button>
         <span
           data-testid="bible-topic-position"
           className="text-xs tabular-nums text-fg-hint"
         >
           {activeIndex >= 0 ? activeIndex + 1 : '–'}/{passages.length}
         </span>
-        <HeaderIconButton
+        <button
+          type="button"
           onClick={() => present(activeIndex + 1)}
           disabled={activeIndex >= passages.length - 1}
           data-testid="bible-topic-next"
-          label={t('topics.next')}
+          aria-label={t('topics.next')}
+          title={t('topics.next')}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40"
         >
-          <ChevronRight size={16} strokeWidth={1.5} />
-        </HeaderIconButton>
+          <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+        </button>
       </div>
 
       {passages.length > 0 && (
@@ -127,7 +133,7 @@ export function BibleTopicPassages({
                   key={`${passage.book}-${passage.chapter}-${passage.startVerse}`}
                   data-testid="bible-topic-passage"
                   data-active={isActive || undefined}
-                  className={`relative flex items-start gap-1 rounded-lg ${
+                  className={`flex items-start gap-1 rounded-lg ${
                     isActive ? 'bg-live-tint ring-1 ring-inset ring-live' : ''
                   }`}
                 >
@@ -153,17 +159,11 @@ export function BibleTopicPassages({
                       ))}
                     </span>
                   </button>
-                  {/* Over the reference line's free end, so the verse
-                      text never rewraps as the ring comes and goes. */}
-                  {slideshow.isPlaying && countdown?.entryIndex === index && (
-                    <span className="pointer-events-none absolute top-2.5 right-10">
-                      <VerseProgressRing
-                        key={countdown.endsAt}
-                        countdown={countdown}
-                        testId="bible-topic-progress"
-                      />
-                    </span>
-                  )}
+                  <VerseProgressSlot
+                    slideshow={`topic:${topicId}`}
+                    entryIndex={index}
+                    testId="bible-topic-progress"
+                  />
                   <button
                     type="button"
                     onClick={() => onOpenVerse(first)}

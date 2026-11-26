@@ -41,6 +41,7 @@ import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
 import { ImportBibleBookmarksModal } from './ImportBibleBookmarksModal'
 import { useBookmarkSlideshowActions } from './useBookmarkSlideshowActions'
+import { VerseProgressSlot } from './VerseProgressSlot'
 import {
   useAddBibleBookmarkNote,
   useBibleBookmarkNotes,
@@ -52,6 +53,7 @@ import {
   useReorderBibleBookmarkItems,
   useUpdateBibleBookmarkNote,
 } from '../hooks'
+import { slideshowOrder } from '../hooks/useBookmarkSlideshow'
 import type { BibleBookmark, BibleBookmarkNote } from '../service'
 
 /** One row of the list verses and notes share. */
@@ -68,6 +70,8 @@ interface SortableBookmarkItemProps {
   isActive: boolean
   onSelect: () => void
   onRemove: () => void
+  /** Its place in the bookmarks slideshow, for the progress ring. */
+  slideshowIndex: number
 }
 
 function SortableBookmarkItem({
@@ -75,6 +79,7 @@ function SortableBookmarkItem({
   isActive,
   onSelect,
   onRemove,
+  slideshowIndex,
 }: SortableBookmarkItemProps) {
   const { t } = useTranslation('bible')
   const uniqueId = `verse-${bookmark.id}`
@@ -154,6 +159,12 @@ function SortableBookmarkItem({
           </p>
         )}
       </button>
+
+      <VerseProgressSlot
+        slideshow="bookmarks"
+        entryIndex={slideshowIndex}
+        testId="bible-bookmark-progress"
+      />
 
       <button
         type="button"
@@ -341,6 +352,10 @@ export function BibleBookmarksPanel({
   // Local order override for instant (synchronous) drag feedback
   const [localOrder, setLocalOrder] = useState<BookmarkListItem[] | null>(null)
   const slideshowActions = useBookmarkSlideshowActions(bookmarks)
+  const slideshowIds = useMemo(
+    () => slideshowOrder(bookmarks).map((bookmark) => bookmark.id),
+    [bookmarks],
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -493,6 +508,7 @@ export function BibleBookmarksPanel({
           isActive={activeVerseId === item.bookmark.verseId}
           onSelect={() => onSelectVerse(item.bookmark!)}
           onRemove={() => removeBookmarkMutation.mutate(item.bookmark!.id)}
+          slideshowIndex={slideshowIds.indexOf(item.bookmark.id)}
         />
       )
     }
