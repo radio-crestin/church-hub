@@ -2,15 +2,10 @@ import { KeyRound, Loader2, Server, Wifi, WifiOff, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  getStoredApiUrl,
-  isValidApiUrl,
-  parseAuthUrl,
-  setApiUrl,
-  testApiConnection,
-} from '~/service/api-url'
+import { getStoredApiUrl, parseAuthUrl, setApiUrl } from '~/service/api-url'
 import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
+import { useConnectionTest } from '../hooks/useConnectionTest'
 
 interface ServerConnectionModalProps {
   isOpen: boolean
@@ -31,11 +26,14 @@ export function ServerConnectionModal({
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
 
   const [url, setUrlState] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<
-    'idle' | 'testing' | 'success' | 'error'
-  >('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+  const {
+    status: connectionStatus,
+    isLoading,
+    errorMessage,
+    setErrorMessage,
+    test,
+    reset,
+  } = useConnectionTest()
 
   // Load current URL on open
   useEffect(() => {
@@ -65,34 +63,7 @@ export function ServerConnectionModal({
     return userToken !== null
   }, [url])
 
-  const handleTestConnection = async () => {
-    if (!url.trim()) {
-      setErrorMessage(t('sections.apiUrl.errors.emptyUrl'))
-      return
-    }
-
-    if (!isValidApiUrl(url)) {
-      setErrorMessage(t('sections.apiUrl.errors.invalidUrl'))
-      return
-    }
-
-    setIsLoading(true)
-    setConnectionStatus('testing')
-    setErrorMessage('')
-
-    const result = await testApiConnection(url)
-
-    if (result.success) {
-      setConnectionStatus('success')
-    } else {
-      setConnectionStatus('error')
-      setErrorMessage(
-        result.error || t('sections.apiUrl.errors.connectionFailed'),
-      )
-    }
-
-    setIsLoading(false)
-  }
+  const handleTestConnection = () => test(url)
 
   const handleSave = () => {
     if (connectionStatus !== 'success') {
@@ -123,7 +94,7 @@ export function ServerConnectionModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-xl shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-md w-[calc(100%-2rem)]"
+      className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel max-w-md w-[calc(100%-2rem)]"
       onClose={onClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -131,14 +102,14 @@ export function ServerConnectionModal({
       <div className="p-6 space-y-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
-              <Server className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex items-center justify-center text-fg-label">
+              <Server strokeWidth={1.5} className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-base font-semibold text-fg">
                 {t('sections.apiUrl.modal.title')}
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-fg-label">
                 {t('sections.apiUrl.modal.description')}
               </p>
             </div>
@@ -146,9 +117,9 @@ export function ServerConnectionModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X strokeWidth={1.5} className="w-4 h-4" />
           </button>
         </div>
 
@@ -156,7 +127,7 @@ export function ServerConnectionModal({
           <div className="space-y-2">
             <label
               htmlFor="server-url"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="block text-sm font-medium text-fg-body"
             >
               {t('sections.apiUrl.label')}
             </label>
@@ -167,14 +138,13 @@ export function ServerConnectionModal({
               value={url}
               onChange={(e) => {
                 setUrlState(e.target.value)
-                setConnectionStatus('idle')
-                setErrorMessage('')
+                reset()
               }}
               disabled={isLoading}
             />
             {hasAuthToken && (
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-                <KeyRound className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-sm text-fg-body">
+                <KeyRound strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
                 <span>{t('sections.apiUrl.authTokenDetected')}</span>
               </div>
             )}
@@ -187,8 +157,8 @@ export function ServerConnectionModal({
           )}
 
           {connectionStatus === 'success' && (
-            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-              <Wifi className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-sm text-fg-body">
+              <Wifi strokeWidth={1.5} className="w-4 h-4 text-ok" />
               <span>{t('sections.apiUrl.connectionSuccess')}</span>
             </div>
           )}
@@ -202,17 +172,20 @@ export function ServerConnectionModal({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2
+                    strokeWidth={1.5}
+                    className="w-4 h-4 mr-2 animate-spin"
+                  />
                   {t('sections.apiUrl.testing')}
                 </>
               ) : connectionStatus === 'error' ? (
                 <>
-                  <WifiOff className="w-4 h-4 mr-2" />
+                  <WifiOff strokeWidth={1.5} className="w-4 h-4 mr-2" />
                   {t('sections.apiUrl.retry')}
                 </>
               ) : (
                 <>
-                  <Wifi className="w-4 h-4 mr-2" />
+                  <Wifi strokeWidth={1.5} className="w-4 h-4 mr-2" />
                   {t('sections.apiUrl.testConnection')}
                 </>
               )}

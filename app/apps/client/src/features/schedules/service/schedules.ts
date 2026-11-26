@@ -30,6 +30,15 @@ export async function getScheduleById(
   return response.data ?? null
 }
 
+/** The control room's queue: a presentation hidden from the list. */
+export async function getQueueSchedule(): Promise<ScheduleWithItems> {
+  const response = await fetcher<ApiResponse<ScheduleWithItems>>(
+    '/api/schedules/queue',
+  )
+  if (!response.data) throw new Error(response.error ?? 'No queue')
+  return response.data
+}
+
 export async function upsertSchedule(
   input: UpsertScheduleInput,
 ): Promise<{ success: boolean; data?: Schedule; error?: string }> {
@@ -113,6 +122,56 @@ export async function markScheduleItemSung(
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isSung }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
+/** Sets how long each slide of an item stays up; null = the presentation's. */
+export async function setScheduleItemAdvance(
+  scheduleId: number,
+  itemId: number,
+  advanceSeconds: number | null,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/items/${itemId}/advance`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ advanceSeconds }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
+/** The template a presentation's slides are drawn with; null: each screen's own. */
+export async function setScheduleTemplate(
+  scheduleId: number,
+  templateId: number | null,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/template`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateId }),
+    },
+  )
+  return response.data?.success ?? false
+}
+
+/** One item's own template; null: the presentation's. */
+export async function setScheduleItemTemplate(
+  scheduleId: number,
+  itemId: number,
+  templateId: number | null,
+): Promise<boolean> {
+  const response = await fetcher<ApiResponse<{ success: boolean }>>(
+    `/api/schedules/${scheduleId}/items/${itemId}/template`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateId }),
     },
   )
   return response.data?.success ?? false

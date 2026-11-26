@@ -12,6 +12,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
+import { LeaveChurchItem } from '~/features/public-app/components/LeaveChurchItem'
+import { getChurchBinding } from '~/features/public-app/service/churchBinding'
 import { getLocalUsers, login, performLogout } from '~/features/users/service'
 import type { LocalUser } from '~/features/users/types'
 import { usePermissions } from '~/provider/permissions-provider'
@@ -72,6 +75,11 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
       setShowPassword(false)
       setError(false)
       setSubmitting(false)
+      return
+    }
+    // The web app is bound to its device's user: no other account here.
+    if (isWebApp) {
+      setAccounts([])
       return
     }
     let cancelled = false
@@ -194,7 +202,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
           left-aligned with it. */}
       <div
         ref={panelRef}
-        className="fixed z-[61] overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1 shadow-lg"
+        className="fixed z-[61] overflow-hidden rounded-[10px] border border-line bg-panel p-1 shadow-popover"
         style={{
           bottom: coords.bottom,
           left: coords.left,
@@ -206,16 +214,17 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
         <div className="flex items-center gap-2 px-1.5 py-1.5">
           <UserAvatar name={displayName} isSuperAdmin={isApp} size="sm" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+            <p className="truncate text-sm font-semibold text-fg">
               {displayName}
             </p>
-            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-              {roleLabel}
-            </p>
+            <p className="truncate text-xs text-fg-hint">{roleLabel}</p>
           </div>
         </div>
 
-        <div className="-mx-1 my-1 h-px bg-gray-200 dark:bg-gray-700" />
+        {/* A guest web app has nothing under its header */}
+        {(!isWebApp || getChurchBinding()) && (
+          <div className="-mx-1 my-1 h-px bg-line" />
+        )}
 
         {selected ? (
           /* Inline password prompt for a protected account */
@@ -229,12 +238,15 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 isSuperAdmin={selected.isSuperAdmin}
                 size="sm"
               />
-              <p className="min-w-0 truncate text-sm font-medium text-gray-900 dark:text-white">
+              <p className="min-w-0 truncate text-sm font-medium text-fg">
                 {selected.name}
               </p>
             </div>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Lock
+                strokeWidth={1.5}
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-hint"
+              />
               <input
                 type={showPassword ? 'text' : 'password'}
                 autoFocus
@@ -246,10 +258,10 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 disabled={submitting}
                 placeholder={t('login.passwordPlaceholder')}
                 aria-label={t('login.passwordLabel')}
-                className={`w-full rounded-lg border bg-white py-2 pl-9 pr-9 text-sm text-gray-900 outline-none transition focus:ring-2 disabled:opacity-60 dark:bg-gray-900 dark:text-white ${
+                className={`h-9 w-full rounded-[10px] bg-field pl-9 pr-9 text-sm text-fg outline-none transition-colors placeholder:text-fg-hint disabled:opacity-60 ${
                   error
-                    ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30'
-                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500/30 dark:border-gray-600'
+                    ? 'ring-1 ring-inset ring-red-500'
+                    : 'focus:ring-1 focus:ring-inset focus:ring-focus'
                 }`}
               />
               <button
@@ -259,12 +271,12 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 aria-label={
                   showPassword ? t('password.hide') : t('password.show')
                 }
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-fg-label transition-colors hover:bg-hover hover:text-fg"
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff strokeWidth={1.5} className="h-4 w-4" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye strokeWidth={1.5} className="h-4 w-4" />
                 )}
               </button>
             </div>
@@ -273,7 +285,10 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 role="alert"
                 className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400"
               >
-                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <AlertCircle
+                  strokeWidth={1.75}
+                  className="h-3.5 w-3.5 shrink-0"
+                />
                 {t('login.wrongPassword')}
               </p>
             ) : null}
@@ -282,14 +297,14 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                 type="button"
                 onClick={() => setSelected(null)}
                 disabled={submitting}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="h-8 flex-1 rounded-lg bg-field px-3 text-sm font-medium text-fg transition-colors hover:bg-hover disabled:opacity-60"
               >
                 {t('login.back')}
               </button>
               <button
                 type="submit"
                 disabled={submitting || password.length === 0}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                className="flex h-8 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -303,11 +318,11 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
             {/* Switch-user list */}
             {accounts === null ? (
               <div className="flex items-center justify-center py-3">
-                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                <Loader2 className="h-4 w-4 animate-spin text-fg-hint" />
               </div>
             ) : accounts.length > 0 ? (
               <>
-                <p className="px-1.5 pb-1 pt-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                <p className="px-1.5 pb-1 pt-0.5 text-xs font-medium text-fg-hint">
                   {t('switchUser')}
                 </p>
                 <ul className="max-h-64 space-y-0.5 overflow-y-auto scrollbar-thin">
@@ -317,36 +332,43 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
                         type="button"
                         onClick={() => handleSelect(user)}
                         disabled={submitting}
-                        className="flex w-full items-center gap-2 rounded-md px-1.5 py-1.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:opacity-60 dark:text-gray-300 dark:hover:bg-gray-700"
+                        className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-left text-sm text-fg-body transition-colors hover:bg-hover disabled:opacity-60"
                       >
                         <UserAvatar
                           name={user.name}
                           isSuperAdmin={user.isSuperAdmin}
-                          size="sm"
+                          size="xs"
                         />
                         <span className="min-w-0 flex-1 truncate">
                           {user.name}
                         </span>
                         {user.hasPassword ? (
-                          <Lock className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                          <Lock
+                            strokeWidth={1.75}
+                            className="h-3.5 w-3.5 shrink-0 text-fg-hint"
+                          />
                         ) : null}
                       </button>
                     </li>
                   ))}
                 </ul>
-                <div className="-mx-1 my-1 h-px bg-gray-200 dark:bg-gray-700" />
+                <div className="-mx-1 my-1 h-px bg-line" />
               </>
             ) : null}
 
-            {/* Log out */}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex w-full items-center gap-2 rounded-md px-1.5 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-            >
-              <LogOut className="h-4 w-4" />
-              {t('logout')}
-            </button>
+            {/* Log out; the web app leaves its church instead */}
+            {isWebApp ? (
+              <LeaveChurchItem />
+            ) : (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex h-8 w-full items-center gap-2 rounded-lg px-1.5 text-sm font-medium text-red-600 hover:bg-hover dark:text-red-400"
+              >
+                <LogOut strokeWidth={1.5} className="h-4 w-4" />
+                {t('logout')}
+              </button>
+            )}
           </>
         )}
       </div>
@@ -359,7 +381,7 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all w-full text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 ${open ? 'bg-gray-100 dark:bg-gray-800' : ''} ${isCollapsed ? 'md:justify-center' : ''}`}
+        className={`flex items-center gap-3 px-3 py-2 md:px-2 rounded-lg transition-colors w-full text-fg hover:bg-hover ${open ? 'bg-selected' : ''} ${isCollapsed ? 'md:justify-center' : ''}`}
         title={isCollapsed ? displayName : undefined}
         aria-label={t('profile.title')}
         aria-expanded={open}
@@ -373,15 +395,18 @@ export function CurrentUserButton({ isCollapsed }: CurrentUserButtonProps) {
         </span>
         {!isCollapsed && (
           <>
-            <span className="hidden flex-1 min-w-0 text-left md:block">
-              <span className="block truncate text-sm font-medium">
+            <span className="hidden flex-1 min-w-0 flex-col text-left md:flex">
+              <span className="truncate text-sm font-medium leading-5">
                 {displayName}
               </span>
-              <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+              <span className="truncate text-xs leading-4 text-fg-hint">
                 {roleLabel}
               </span>
             </span>
-            <ChevronsUpDown className="h-4 w-4 shrink-0 text-gray-400" />
+            <ChevronsUpDown
+              strokeWidth={1.5}
+              className="h-4 w-4 shrink-0 text-fg-hint"
+            />
           </>
         )}
       </button>

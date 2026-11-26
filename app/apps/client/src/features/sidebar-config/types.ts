@@ -31,7 +31,6 @@ export type BuiltInMenuItemId =
   | 'music'
   | 'song_key'
   | 'live_translation'
-  | 'feedback'
   | 'kiosk'
   | 'settings'
 
@@ -84,6 +83,9 @@ export interface SidebarItemSettings {
   customIconBgColor?: string
 }
 
+/** The sidebar sections pages are grouped under. */
+export type SidebarGroupId = 'live' | 'library' | 'tools'
+
 /**
  * Base properties shared by all menu items
  */
@@ -91,6 +93,8 @@ interface BaseMenuItem {
   id: string
   order: number
   isVisible: boolean
+  /** The section the operator put this page in; unset means its default one. */
+  group?: SidebarGroupId
   /** Optional settings for shortcuts and navigation behavior */
   settings?: SidebarItemSettings
 }
@@ -151,6 +155,8 @@ export interface BuiltInItemDefinition {
   labelKey: string
   to: string
   permission: Permission
+  /** Served only by the church PC (its hardware or files): the web app leaves it out. */
+  pcOnly?: boolean
 }
 
 /**
@@ -184,4 +190,6 @@ export interface ResolvedMenuItem {
   customIconUrl?: string
   /** Favicon background color (hex or from iconColor setting) */
   faviconBgColor?: string
+  /** The section the operator put this page in; unset means its default one. */
+  group?: SidebarGroupId
 }

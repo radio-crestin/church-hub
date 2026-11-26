@@ -56,6 +56,8 @@ export {
   reorderSongSlides,
   upsertSongSlide,
 } from './song-slides'
+// Songs on the same theme
+export { findSameThemeSongs } from './song-themes/findSameThemeSongs'
 // Songs
 export {
   batchImportSongs,
@@ -71,6 +73,7 @@ export {
   type SongFilters,
   upsertSong,
 } from './songs'
+export * from './source-link'
 // Tags
 export {
   deleteTag,

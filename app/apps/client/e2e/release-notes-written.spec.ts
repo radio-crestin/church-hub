@@ -33,6 +33,9 @@ const WRITTEN = {
   },
 }
 
+/** A version newer than any release, so never in the bundled notes. */
+const UNRELEASED_VERSION = '99.0.0'
+
 /** GitHub's releases, with `version` carrying the written notes. */
 async function routeGithub(page: Page, version: string) {
   await page.route('https://api.github.com/**', (route) =>
@@ -84,10 +87,10 @@ test('Settings > About shows the written notes in the app language, not the comm
   page,
 }) => {
   await setAppLanguage(page, 'ro')
+  // A version no release will ever bundle: bundled notes win over GitHub's
+  // for the versions they cover, so the current version would not do.
+  await routeGithub(page, UNRELEASED_VERSION)
   await page.goto('/settings/about')
-  const version = await page.evaluate(() => window.__appVersion)
-  await routeGithub(page, version)
-  await page.reload()
 
   const section = page.getByTestId('release-notes-section')
   await expect(section).toBeVisible({ timeout: 10000 })
@@ -107,7 +110,7 @@ test('the updates page shows a new version with its written notes', async ({
   page,
 }) => {
   await setAppLanguage(page, 'en')
-  await routeGithub(page, '99.0.0')
+  await routeGithub(page, UNRELEASED_VERSION)
   await page.goto('/settings/updates')
   const panel = page.getByTestId('update-panel')
   await expect(panel).toBeVisible({ timeout: 10000 })
@@ -122,4 +125,21 @@ test('the updates page shows a new version with its written notes', async ({
   // The commit list stays on GitHub.
   await expect(card).not.toContainText('T-158')
   await expect(card).not.toContainText('church-hub-notes')
+})
+
+test('"Show all" on Settings > About expands the whole version history', async ({
+  page,
+}) => {
+  await setAppLanguage(page, 'en')
+  await page.goto('/settings/about')
+  const section = page.getByTestId('release-notes-section')
+  const versions = section.getByText(/^v0\.1\./)
+  await expect(versions.first()).toBeVisible()
+  const before = await versions.count()
+
+  await section.getByRole('button', { name: /show all/i }).click()
+  await expect(
+    section.getByRole('button', { name: /show less/i }),
+  ).toBeVisible()
+  expect(await versions.count()).toBeGreaterThan(before)
 })

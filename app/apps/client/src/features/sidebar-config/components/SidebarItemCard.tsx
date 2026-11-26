@@ -10,10 +10,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  formatShortcutForDisplay,
-  isMIDIShortcut,
-} from '~/features/keyboard-shortcuts'
+import { formatShortcutForDisplay } from '~/features/keyboard-shortcuts'
 import {
   BUILTIN_ITEMS,
   DEFAULT_ICON_COLORS,
@@ -21,11 +18,18 @@ import {
   ICON_COLOR_HEX,
 } from '../constants'
 import { getIconComponent } from '../hooks/useResolvedSidebarItems'
-import type { CustomPageMenuItem, SidebarMenuItem } from '../types'
+import type {
+  CustomPageMenuItem,
+  SidebarGroupId,
+  SidebarMenuItem,
+} from '../types'
+import { groupOf, SIDEBAR_GROUPS } from '../utils/sidebarGroups'
 
 interface SidebarItemCardProps {
   item: SidebarMenuItem
   onToggleVisibility: () => void
+  /** Moves the page to another sidebar section; absent for the footer pages. */
+  onChangeGroup?: (group: SidebarGroupId) => void
   onOpenSettings: () => void
   onDelete?: () => void
 }
@@ -36,6 +40,7 @@ interface SidebarItemCardProps {
 export function SidebarItemCard({
   item,
   onToggleVisibility,
+  onChangeGroup,
   onOpenSettings,
   onDelete,
 }: SidebarItemCardProps) {
@@ -106,20 +111,20 @@ export function SidebarItemCard({
       ref={setNodeRef}
       style={style}
       className={`
-        flex items-center gap-3 p-3 bg-white dark:bg-gray-800
-        border border-gray-200 dark:border-gray-700 rounded-lg
-        ${isDragging ? 'shadow-lg ring-2 ring-indigo-500' : ''}
+        flex flex-wrap items-center gap-3 p-3 bg-panel
+        border border-line rounded-lg
+        ${isDragging ? 'bg-selected shadow-popover' : ''}
         ${!item.isVisible ? 'opacity-60' : ''}
       `}
     >
       {/* Drag Handle */}
       <button
         type="button"
-        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
+        className="p-1 text-fg-hint hover:text-fg-label cursor-grab active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
-        <GripVertical size={20} />
+        <GripVertical size={16} strokeWidth={1.5} />
       </button>
 
       {/* Icon */}
@@ -137,66 +142,75 @@ export function SidebarItemCard({
           <Icon size={18} className={iconColorClasses.text} />
         </div>
       ) : (
-        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-          <Icon size={18} />
+        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-fg-label">
+          <Icon size={16} strokeWidth={1.5} />
         </div>
       )}
 
-      {/* Label and Type Badge */}
+      {/* Label, then its type badge and shortcuts under it */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-white truncate">
-            {label}
-          </span>
+        <span className="block text-sm font-medium text-fg truncate">
+          {label}
+        </span>
+        <div className="mt-0.5 flex flex-wrap items-center gap-1">
           <span
             className={`
-              text-xs px-1.5 py-0.5 rounded
-              ${isBuiltin ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' : 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'}
+              text-xs text-fg-hint
             `}
           >
             {isBuiltin
               ? t('settings:sections.sidebar.builtIn')
               : t('settings:sections.sidebar.custom')}
           </span>
+          {item.settings?.shortcuts?.map((shortcut) => (
+            <kbd
+              key={shortcut}
+              className={`
+                inline-flex h-[18px] min-w-5 items-center justify-center rounded-[5px] bg-keycap px-[5px] text-[11px] font-medium text-fg-label shadow-[inset_0_0_0_1px_var(--color-keycap-ring)]
+              `}
+            >
+              {formatShortcutForDisplay(shortcut)}
+            </kbd>
+          ))}
         </div>
         {isCustom && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate block">
+          <span className="text-xs text-fg-hint truncate block">
             {item.url}
           </span>
         )}
       </div>
 
-      {/* Shortcuts and Actions */}
-      <div className="flex items-center gap-1">
-        {/* Shortcuts display */}
-        {item.settings?.shortcuts && item.settings.shortcuts.length > 0 && (
-          <div className="flex items-center gap-1 mr-2">
-            {item.settings.shortcuts.map((shortcut) => (
-              <kbd
-                key={shortcut}
-                className={`
-                  text-xs px-1.5 py-0.5 rounded font-mono
-                  ${
-                    isMIDIShortcut(shortcut)
-                      ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400'
-                      : 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-                  }
-                `}
-              >
-                {formatShortcutForDisplay(shortcut)}
-              </kbd>
-            ))}
-          </div>
-        )}
+      {/* Which sidebar section the page sits in: inline from small tablets
+        up, on its own line on a phone so the page name keeps its room. */}
+      {onChangeGroup && (
+        <select
+          data-testid={`sidebar-item-group-${item.id}`}
+          aria-label={t('sidebar:groups.label')}
+          title={t('sidebar:groups.label')}
+          value={groupOf(item)}
+          onChange={(event) =>
+            onChangeGroup(event.target.value as SidebarGroupId)
+          }
+          className="order-last basis-full sm:order-none sm:basis-auto h-8 sm:max-w-40 cursor-pointer rounded-lg border-0 bg-field px-2 text-sm text-fg-body outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          {SIDEBAR_GROUPS.map((group) => (
+            <option key={group} value={group}>
+              {t(`sidebar:groups.${group}`)}
+            </option>
+          ))}
+        </select>
+      )}
+      {/* Actions */}
+      <div className="flex shrink-0 items-center gap-1">
         {/* Delete Button (custom pages only) */}
         {isCustom && onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            className="flex h-8 w-8 items-center justify-center text-fg-label hover:text-red-600 dark:hover:text-red-400 hover:bg-hover rounded-lg transition-colors"
             title={t('common:buttons.delete', { defaultValue: 'Delete' })}
           >
-            <Trash2 size={18} />
+            <Trash2 size={16} strokeWidth={1.5} />
           </button>
         )}
 
@@ -205,12 +219,8 @@ export function SidebarItemCard({
           type="button"
           onClick={onToggleVisibility}
           className={`
-            p-2 rounded-lg transition-colors
-            ${
-              item.isVisible
-                ? 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }
+            flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-hover hover:text-fg
+            ${item.isVisible ? 'text-fg-label' : 'text-fg-hint'}
           `}
           title={
             item.isVisible
@@ -218,17 +228,21 @@ export function SidebarItemCard({
               : t('settings:sections.sidebar.hidden')
           }
         >
-          {item.isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
+          {item.isVisible ? (
+            <Eye size={16} strokeWidth={1.5} />
+          ) : (
+            <EyeOff size={16} strokeWidth={1.5} />
+          )}
         </button>
 
         {/* Settings Button (all items) */}
         <button
           type="button"
           onClick={onOpenSettings}
-          className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+          className="flex h-8 w-8 items-center justify-center text-fg-label hover:text-fg hover:bg-hover rounded-lg transition-colors"
           title={t('common:buttons.settings')}
         >
-          <Settings size={18} />
+          <Settings size={16} strokeWidth={1.5} />
         </button>
       </div>
     </div>

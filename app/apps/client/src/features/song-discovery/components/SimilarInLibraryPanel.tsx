@@ -31,14 +31,14 @@ function SimilarRow({
   )
 
   return (
-    <li className="rounded-md bg-white/60 px-2 py-1.5 dark:bg-gray-900/40">
+    <li className="rounded-lg px-2 py-1.5 hover:bg-hover">
       <div className="flex items-center justify-between gap-2 text-sm">
         <div className="min-w-0">
-          <span className="block truncate text-gray-900 dark:text-white">
+          <span className="block truncate font-medium text-fg">
             {suggestion.title}
           </span>
           {(suggestion.author || suggestion.categoryName) && (
-            <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+            <span className="block truncate text-xs text-fg-hint">
               {[suggestion.author, suggestion.categoryName]
                 .filter(Boolean)
                 .join(' · ')}
@@ -46,13 +46,13 @@ function SimilarRow({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+          <span className="text-xs text-fg-hint tabular-nums">
             {Math.round(suggestion.score * 100)}%
           </span>
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
+            className="inline-flex h-7 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-label transition-colors hover:bg-selected hover:text-fg"
           >
             {open ? (
               <ChevronDown className="h-3 w-3" />
@@ -66,7 +66,7 @@ function SimilarRow({
       </div>
       {open &&
         (isLoading || !song ? (
-          <div className="mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-2 flex items-center gap-2 text-xs text-fg-hint">
             <Loader2 className="h-3 w-3 animate-spin" />
             {t('diff.loading')}
           </div>
@@ -94,11 +94,11 @@ export function SimilarInLibraryPanel({
   if (similar.length === 0) return null
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-      <h3 className="mb-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+    <div className="rounded-xl border border-line bg-panel p-3">
+      <h3 className="mb-1.5 px-2 text-sm font-medium text-fg">
         {t('similar.title', { count: similar.length })}
       </h3>
-      <ul className="space-y-1.5">
+      <ul className="space-y-0.5">
         {similar.map((s) => (
           <SimilarRow
             key={s.songId}

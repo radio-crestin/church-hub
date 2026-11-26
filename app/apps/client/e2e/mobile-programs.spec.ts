@@ -104,7 +104,7 @@ test.describe('A program on a phone', () => {
     await expect.poll(() => presentedSlideIndex(request)).toBeNull()
   })
 
-  test("the header shows the program's whole name, its file and delete actions in the menu", async ({
+  test("the header shows the presentation's whole name; Run, file and delete actions are in the menu", async ({
     page,
   }) => {
     await onPhone(page)
@@ -116,9 +116,13 @@ test.describe('A program on a phone', () => {
     const titleBox = await title.boundingBox()
     expect(titleBox?.width ?? 0).toBeGreaterThan(250)
 
+    await expect(page.getByTestId('schedule-run-button')).toHaveCount(0)
     await page.getByTestId('schedule-presenter-actions-menu').click()
-    await expect(page.getByTestId('schedule-load-file-action')).toBeVisible()
-    await expect(page.getByTestId('schedule-save-file-action')).toBeVisible()
+    await expect(page.getByTestId('schedule-run-action')).toBeVisible()
+    await expect(
+      page.getByTestId('schedule-load-from-file-action'),
+    ).toBeVisible()
+    await expect(page.getByTestId('schedule-save-to-file-action')).toBeVisible()
     await page.getByTestId('schedule-delete-action').click()
     await expect(page.getByRole('dialog')).toBeVisible()
   })
@@ -141,15 +145,17 @@ test.describe('A program on a phone', () => {
     await expect(page.getByRole('button', { name: /gama|key/i })).toBeVisible()
   })
 
-  test('a desktop keeps its buttons and columns, with no phone bar', async ({
+  test('a desktop keeps its columns and its file actions, with no phone bar', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1600, height: 1000 })
     await page.goto(`/schedules/${scheduleId}`)
     await expect(page.getByTestId('workspace-panel-preview')).toBeVisible()
     await expect(page.getByTestId('schedule-phone-controls')).toHaveCount(0)
-    await expect(
-      page.getByRole('button', { name: /Save to File|Salvează în fișier/ }),
-    ).toBeVisible()
+    await expect(page.getByTestId('schedule-run-button')).toBeVisible()
+    // Saving to a file lives in the program's menu on every screen size.
+    await page.getByTestId('schedule-presenter-actions-menu').click()
+    await expect(page.getByTestId('schedule-save-to-file-action')).toBeVisible()
+    await expect(page.getByTestId('schedule-run-action')).toHaveCount(0)
   })
 })

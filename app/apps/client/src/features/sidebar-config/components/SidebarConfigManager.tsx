@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { ConfirmModal } from '~/ui/modal'
+import { SectionHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
 import { CustomPageFormModal } from './CustomPageFormModal'
 import { SidebarItemCard } from './SidebarItemCard'
@@ -30,8 +31,10 @@ import { generateCustomPageId } from '../service/sidebarConfig'
 import type {
   CustomPageInput,
   CustomPageMenuItem,
+  SidebarGroupId,
   SidebarMenuItem,
 } from '../types'
+import { isGroupable } from '../utils/sidebarGroups'
 
 /**
  * Main component for managing sidebar configuration in settings
@@ -96,6 +99,26 @@ export function SidebarConfigManager() {
 
     const updatedItems = config.items.map((item) =>
       item.id === itemId ? { ...item, isVisible: !item.isVisible } : item,
+    )
+
+    updateConfig.mutate(
+      { ...config, items: updatedItems },
+      {
+        onSuccess: () => {
+          showToast(t('sections.sidebar.toast.saved'), 'success')
+        },
+        onError: () => {
+          showToast(t('sections.sidebar.toast.error'), 'error')
+        },
+      },
+    )
+  }
+
+  const handleChangeGroup = (itemId: string, group: SidebarGroupId) => {
+    if (!config) return
+
+    const updatedItems = config.items.map((item) =>
+      item.id === itemId ? { ...item, group } : item,
     )
 
     updateConfig.mutate(
@@ -226,33 +249,31 @@ export function SidebarConfigManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+        <Loader2
+          strokeWidth={1.5}
+          className="w-6 h-6 animate-spin text-fg-hint"
+        />
       </div>
     )
   }
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <PanelLeft className="w-5 h-5" />
-            {t('sections.sidebar.title')}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {t('sections.sidebar.description')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <Plus size={16} />
-          {t('sections.sidebar.addCustomPage')}
-        </button>
-      </div>
+      <SectionHeader
+        title={t('sections.sidebar.title')}
+        description={t('sections.sidebar.description')}
+        icon={PanelLeft}
+        actions={
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 h-8 px-3 bg-primary hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus strokeWidth={1.5} size={16} />
+            {t('sections.sidebar.addCustomPage')}
+          </button>
+        }
+      />
 
       {/* Items List with Drag and Drop */}
       <DndContext
@@ -270,6 +291,11 @@ export function SidebarConfigManager() {
                 key={item.id}
                 item={item}
                 onToggleVisibility={() => handleToggleVisibility(item.id)}
+                onChangeGroup={
+                  isGroupable(item.id)
+                    ? (group) => handleChangeGroup(item.id, group)
+                    : undefined
+                }
                 onOpenSettings={() => setSettingsItem(item)}
                 onDelete={
                   item.type === 'custom'

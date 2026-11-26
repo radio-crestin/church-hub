@@ -2,15 +2,13 @@ import { Loader2, Server, Wifi, WifiOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  getStoredApiUrl,
-  isValidApiUrl,
-  setApiUrl,
-  testApiConnection,
-} from '~/service/api-url'
+import { isMobile } from '~/config'
+import { getStoredApiUrl, setApiUrl } from '~/service/api-url'
 import { Button } from '~/ui/button'
 import { Input } from '~/ui/input'
 import { useToast } from '~/ui/toast'
+import { ScanPairingCodeButton } from './ScanPairingCodeButton'
+import { useConnectionTest } from '../hooks/useConnectionTest'
 
 /**
  * Settings section for managing the API URL on mobile
@@ -21,11 +19,14 @@ export function ApiUrlSettings() {
 
   const [url, setUrl] = useState('')
   const [originalUrl, setOriginalUrl] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<
-    'idle' | 'testing' | 'success' | 'error'
-  >('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+  const {
+    status: connectionStatus,
+    isLoading,
+    errorMessage,
+    setErrorMessage,
+    test,
+    reset,
+  } = useConnectionTest()
 
   useEffect(() => {
     const storedUrl = getStoredApiUrl()
@@ -37,31 +38,18 @@ export function ApiUrlSettings() {
 
   const hasChanges = url !== originalUrl
 
-  const handleTestConnection = async () => {
-    if (!url.trim()) {
-      setErrorMessage(t('sections.apiUrl.errors.emptyUrl'))
-      return
-    }
+  const handleTestConnection = () => test(url)
 
-    if (!isValidApiUrl(url)) {
-      setErrorMessage(t('sections.apiUrl.errors.invalidUrl'))
-      return
-    }
+  // A scanned code is tested and, once it answers, saved.
+  const handleScanned = async (scanned: string) => {
+    setUrl(scanned)
+    if (await test(scanned)) save(scanned)
+  }
 
-    setIsLoading(true)
-    setConnectionStatus('testing')
-    setErrorMessage('')
-
-    const isConnected = await testApiConnection(url)
-
-    if (isConnected) {
-      setConnectionStatus('success')
-    } else {
-      setConnectionStatus('error')
-      setErrorMessage(t('sections.apiUrl.errors.connectionFailed'))
-    }
-
-    setIsLoading(false)
+  const save = (target: string) => {
+    setApiUrl(target)
+    setOriginalUrl(target)
+    showToast(t('sections.apiUrl.saved'), 'success')
   }
 
   const handleSave = () => {
@@ -70,29 +58,35 @@ export function ApiUrlSettings() {
       return
     }
 
-    setApiUrl(url)
-    setOriginalUrl(url)
-    showToast(t('sections.apiUrl.saved'), 'success')
+    save(url)
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Server className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+        <Server strokeWidth={1.5} className="w-4 h-4 text-fg-label" />
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.apiUrl.title')}
         </h3>
       </div>
 
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-sm text-fg-label">
         {t('sections.apiUrl.settingsDescription')}
       </p>
 
       <div className="space-y-3">
+        {isMobile() && (
+          <ScanPairingCodeButton
+            onScanned={handleScanned}
+            onError={setErrorMessage}
+            disabled={isLoading}
+          />
+        )}
+
         <div className="space-y-2">
           <label
             htmlFor="settings-api-url"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            className="block text-sm font-medium text-fg-body"
           >
             {t('sections.apiUrl.label')}
           </label>
@@ -103,8 +97,7 @@ export function ApiUrlSettings() {
             value={url}
             onChange={(e) => {
               setUrl(e.target.value)
-              setConnectionStatus('idle')
-              setErrorMessage('')
+              reset()
             }}
             disabled={isLoading}
           />
@@ -117,8 +110,8 @@ export function ApiUrlSettings() {
         )}
 
         {connectionStatus === 'success' && (
-          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-            <Wifi className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-sm text-fg-body">
+            <Wifi strokeWidth={1.5} className="w-4 h-4 text-ok" />
             <span>{t('sections.apiUrl.connectionSuccess')}</span>
           </div>
         )}
@@ -132,17 +125,20 @@ export function ApiUrlSettings() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2
+                  strokeWidth={1.5}
+                  className="w-4 h-4 mr-2 animate-spin"
+                />
                 {t('sections.apiUrl.testing')}
               </>
             ) : connectionStatus === 'error' ? (
               <>
-                <WifiOff className="w-4 h-4 mr-2" />
+                <WifiOff strokeWidth={1.5} className="w-4 h-4 mr-2" />
                 {t('sections.apiUrl.retry')}
               </>
             ) : (
               <>
-                <Wifi className="w-4 h-4 mr-2" />
+                <Wifi strokeWidth={1.5} className="w-4 h-4 mr-2" />
                 {t('sections.apiUrl.testConnection')}
               </>
             )}

@@ -1,10 +1,13 @@
 import { Loader2, Music, SearchX } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useDebouncedValue } from '~/hooks/useDebouncedValue'
 import { EmptyState } from '~/ui/page'
+import { MusicSection } from './MusicSection'
+import { PlaylistPickerModal } from './PlaylistPickerModal'
 import { RecentSearches } from './RecentSearches'
+import { Scrollable } from './Scrollable'
 import { SearchInput } from './SearchInput'
 import { TrackList } from './TrackList'
 import { ViewActionsMenu } from './ViewActionsMenu'
@@ -27,6 +30,8 @@ interface TrackPanelProps {
   onAddToQueue: (tracks: LibraryTrack[]) => void
   onCreatePlaylistWith: (track: LibraryTrack) => void
   onViewRemoved: () => void
+  /** The list scrolls under a fixed search and title (large screens). */
+  scrollable: boolean
 }
 
 /** The chosen view's tracks, with a search over the whole library. */
@@ -41,6 +46,7 @@ export function TrackPanel({
   onAddToQueue,
   onCreatePlaylistWith,
   onViewRemoved,
+  scrollable,
 }: TrackPanelProps) {
   const { t } = useTranslation('music')
   const query = useDebouncedValue(search.trim(), 250).debouncedValue
@@ -49,6 +55,7 @@ export function TrackPanel({
   const { tracks, isLoading } = useLibraryTracks(view, query)
   const addToPlaylist = useAddToPlaylist()
   const removeFromPlaylist = useRemoveFromPlaylist()
+  const [pickingFor, setPickingFor] = useState<LibraryTrack | null>(null)
 
   // A search the operator stopped typing at is worth offering again.
   useEffect(() => {
@@ -62,73 +69,82 @@ export function TrackPanel({
     ? t('tracks.empty.search')
     : t(`tracks.empty.${view.kind}`)
 
+  const results = isLoading ? (
+    <div className="flex justify-center py-8">
+      <Loader2 className="h-6 w-6 animate-spin text-fg-hint" />
+    </div>
+  ) : tracks.length === 0 ? (
+    <EmptyState
+      icon={isSearching ? SearchX : Music}
+      title={emptyTitle}
+      hint={isSearching ? undefined : t(`tracks.emptyHint.${view.kind}`)}
+    />
+  ) : (
+    <>
+      <TrackList
+        tracks={tracks}
+        playingFileId={playingFileId}
+        onPlay={onPlay}
+        onAddToQueue={(track) => onAddToQueue([track])}
+        onPickPlaylist={setPickingFor}
+        onCreatePlaylistWith={onCreatePlaylistWith}
+        onRemoveFromPlaylist={
+          playlistId === null
+            ? undefined
+            : (track) =>
+                track.playlistItemId !== undefined &&
+                removeFromPlaylist.mutate({
+                  playlistId,
+                  itemId: track.playlistItemId,
+                })
+        }
+      />
+      <p className="px-3 pt-2 text-xs text-fg-hint">{t('tracks.hint')}</p>
+    </>
+  )
+
   return (
     <div
-      className="flex h-full min-w-0 flex-col gap-3"
+      className="flex min-w-0 flex-col divide-y divide-line lg:flex-1 lg:min-h-0"
       data-testid="music-track-panel"
     >
-      <SearchInput
-        value={search}
-        onChange={onSearchChange}
-        onSubmit={remember}
-        placeholder={t('tracks.search')}
-      />
-      <RecentSearches searches={searches} onPick={onSearchChange} />
-      <div className="flex items-center gap-2">
-        <h2
-          className="min-w-0 flex-1 truncate font-semibold text-gray-900 dark:text-white"
-          data-testid="music-view-title"
-        >
-          {isSearching ? t('tracks.resultsFor', { query }) : viewName}
-        </h2>
-        {!isSearching && (
-          <ViewActionsMenu
-            view={view}
-            name={viewName}
-            tracks={tracks}
-            onAddToQueue={onAddToQueue}
-            onRemoved={onViewRemoved}
-          />
-        )}
-      </div>
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-        </div>
-      ) : tracks.length === 0 ? (
-        <EmptyState
-          icon={isSearching ? SearchX : Music}
-          title={emptyTitle}
-          hint={isSearching ? undefined : t(`tracks.emptyHint.${view.kind}`)}
+      <div className="flex shrink-0 flex-col gap-2 p-2.5">
+        <SearchInput
+          value={search}
+          onChange={onSearchChange}
+          onSubmit={remember}
+          placeholder={t('tracks.search')}
         />
-      ) : (
-        <>
-          <TrackList
-            tracks={tracks}
-            playingFileId={playingFileId}
-            playlists={playlists}
-            onPlay={onPlay}
-            onAddToQueue={(track) => onAddToQueue([track])}
-            onAddToPlaylist={(track, id) =>
-              addToPlaylist.mutate({ playlistId: id, fileId: track.id })
-            }
-            onCreatePlaylistWith={onCreatePlaylistWith}
-            onRemoveFromPlaylist={
-              playlistId === null
-                ? undefined
-                : (track) =>
-                    track.playlistItemId !== undefined &&
-                    removeFromPlaylist.mutate({
-                      playlistId,
-                      itemId: track.playlistItemId,
-                    })
-            }
-          />
-          <p className="px-3 text-xs text-gray-500 dark:text-gray-400">
-            {t('tracks.hint')}
-          </p>
-        </>
-      )}
+        <RecentSearches searches={searches} onPick={onSearchChange} />
+      </div>
+      <MusicSection
+        title={isSearching ? t('tracks.resultsFor', { query }) : viewName}
+        count={isLoading ? undefined : tracks.length}
+        countLabel={t('tracks.count', { count: tracks.length })}
+        actions={
+          !isSearching && (
+            <ViewActionsMenu
+              view={view}
+              name={viewName}
+              tracks={tracks}
+              onAddToQueue={onAddToQueue}
+              onRemoved={onViewRemoved}
+            />
+          )
+        }
+        className="lg:flex-1 lg:min-h-0"
+        testId="music-view"
+      >
+        <Scrollable enabled={scrollable}>{results}</Scrollable>
+      </MusicSection>
+      <PlaylistPickerModal
+        track={pickingFor}
+        playlists={playlists}
+        onPick={(track, playlistId) =>
+          addToPlaylist.mutate({ playlistId, fileId: track.id })
+        }
+        onClose={() => setPickingFor(null)}
+      />
     </div>
   )
 }

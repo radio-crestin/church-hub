@@ -1,8 +1,8 @@
-import { ClientOptions, fetch as tauriFetch } from '@tauri-apps/plugin-http'
+import type { ClientOptions } from '@tauri-apps/plugin-http'
 
-import { getServerPort, isMobile } from '~/config'
+import { getApiUrl } from '~/config'
 import { trackServerDatabase } from '~/features/server-identity/utils/trackServerDatabase'
-import { getStoredApiUrl } from '~/service/api-url'
+import { apiFetch } from '~/utils/apiFetch'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
 import { createLogger } from '~/utils/logger'
 
@@ -10,40 +10,6 @@ const logger = createLogger('app:fetcher')
 
 // Default timeout for all fetch requests (15 seconds)
 const DEFAULT_FETCH_TIMEOUT_MS = 15_000
-
-// Check if we're running in Tauri mode
-const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch ONLY on mobile (iOS WKWebView blocks HTTP fetch to non-HTTPS origins)
-// On desktop Tauri, use window.fetch which shares the webview's cookie jar and HTTP context
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
-
-/**
- * Gets the API base URL
- * - On mobile: use the stored API URL from localStorage
- * - In Tauri desktop: use localhost with the sidecar port
- * - In browser: use the page's own origin (the API server is what serves
- *   the page — it proxies Vite in dev and serves the built client in prod)
- */
-function getApiBaseUrl(): string {
-  // On mobile, use stored API URL
-  if (isMobile()) {
-    const storedUrl = getStoredApiUrl()
-    if (storedUrl) return storedUrl
-  }
-
-  // Plain browser: the page origin IS the API origin, whatever the port —
-  // installed app on 3000, dev on 3001, worktrees on 3002 — no env needed.
-  if (!isTauri) {
-    return window.location.origin
-  }
-
-  // Tauri desktop loads the frontend at `http://tauri.localhost` but the
-  // sidecar binds to localhost — using `tauri.localhost` here makes every
-  // fetch fail the document CSP (`connect-src http://localhost:*`). Force
-  // `localhost` so the URL matches CSP; CORS handles cross-origin allow.
-  return `http://localhost:${getServerPort()}`
-}
 
 type FetcherOptions = RequestInit & ClientOptions & { timeout?: number }
 
@@ -68,7 +34,7 @@ export async function fetchJsonWithStatus<T>(
     ...getAuthHeaders(),
   }
 
-  const fullUrl = `${getApiBaseUrl()}${url}`
+  const fullUrl = `${getApiUrl() ?? window.location.origin}${url}`
   const startTime = performance.now()
 
   const timeoutMs = options?.timeout ?? DEFAULT_FETCH_TIMEOUT_MS
@@ -81,7 +47,7 @@ export async function fetchJsonWithStatus<T>(
   }
 
   try {
-    const res = await fetchFn(fullUrl, {
+    const res = await apiFetch(fullUrl, {
       ...(options ?? {}),
       credentials: 'include',
       headers,

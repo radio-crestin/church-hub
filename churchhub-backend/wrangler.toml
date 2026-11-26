@@ -17,29 +17,61 @@ routes = [
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
-invocation_logs = true
+# Off: an invocation log records each request's full URL, and the signaling
+# routes carry room secrets in the path. The app's own request logger
+# (src/middleware/requestLogger.ts) logs the route pattern of every request.
+invocation_logs = false
 
-# KV namespace for WebRTC signaling relay; also holds the per-IP (hashed)
-# rolling 24h quota of POST /feature-requests.
+# KV namespace for WebRTC signaling relay.
 [[kv_namespaces]]
 binding = "SIGNALING_KV"
 id = "bc1b72f2df754e88a81e8e8c99ccee50"
 
-# "Request a feature" screenshots, embedded in the public GitHub issue through
-# GET /feature-requests/screenshots/:id. Create once before the first deploy:
-#   npx wrangler r2 bucket create church-hub-feature-requests
-[[r2_buckets]]
-binding = "FEATURE_REQUEST_SCREENSHOTS"
-bucket_name = "church-hub-feature-requests"
-
-# Abuse guard for POST /feature-requests: 3 requests per minute per IP.
+# Abuse guard for POST /sync/churches (registering a church server): 3 per
+# minute per IP. A church registers once, so this never limits real use.
 [[ratelimits]]
-name = "FEATURE_REQUEST_RATE_LIMITER"
-namespace_id = "1001"
+name = "SYNC_RATE_LIMITER"
+namespace_id = "1002"
 
   [ratelimits.simple]
   limit = 3
   period = 60
+
+# Abuse guard for POST /sync/library/submissions (a song sent to the curated
+# Church Hub Library): 5 per minute per IP.
+[[ratelimits]]
+name = "LIBRARY_RATE_LIMITER"
+namespace_id = "1003"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+# Church Hub Cloud backup (/backup): every request, 60 per minute per IP
+# (hashed into the key by the binding) ...
+[[ratelimits]]
+name = "BACKUP_RATE_LIMITER"
+namespace_id = "1010"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60
+
+# ... and every signed-in request, 30 per minute per account. Uploads per
+# day are counted in the account's record (BACKUP_UPLOADS_PER_DAY).
+[[ratelimits]]
+name = "BACKUP_ACCOUNT_RATE_LIMITER"
+namespace_id = "1011"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+# Cloud backup upkeep (src/backup/runBackupMaintenance.ts): every hour,
+# abort multipart uploads left unfinished and expire backups past 30 days;
+# daily at 03:43 UTC, also recompute every account from the bucket.
+[triggers]
+crons = ["17 * * * *", "43 3 * * *"]
 
 # Non-sensitive environment variables
 [vars]
@@ -49,6 +81,10 @@ YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
 # must be registered on the OAuth client in Google Cloud Console.
 DRIVE_SCOPE = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/drive.appdata"
 DRIVE_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/auth/drive/callback"
+# Cloud sync owner sign-in (T-172), same Google client; register this URI on it.
+OWNER_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/sync/owner/callback"
+# Cloud backup sign-in, same Google client; register this URI on it too.
+BACKUP_REDIRECT_URI = "https://churchub-backend.radiocrestin.ro/backup/callback"
 COOKIE_NAME = "yt_oauth_state"
 COOKIE_MAX_AGE = 600
 
@@ -60,8 +96,17 @@ COOKIE_MAX_AGE = 600
 # - COOKIE_ENCRYPTION_KEY (generate: openssl rand -hex 32)
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI
-# - GITHUB_TOKEN (fine-grained PAT, radio-crestin/church-hub only, Issues:
-#   read and write only; it opens the feature-request issues)
-# - WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID (+ optional WAHA_SESSION,
-#   WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) for the WhatsApp
-#   notice of each feature request. Unset = WhatsApp is skipped.
+# - Cloud sync (no database: each church's state is an encrypted object in
+#   the bucket): SYNC_SECRET, S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID,
+#   S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL (+ optional S3_REGION,
+#   S3_STATE_BUCKET, SYNC_COMPACT_AFTER). Unset = /sync/* answers 503.
+#   The curated Church Hub Library's curators: LIBRARY_CURATORS (Google
+#   emails or subs, comma-separated). Unset = nobody curates.
+# - Cloud backup (free, Google sign-in; a PRIVATE bucket of its own, never
+#   the public sync bucket): BACKUP_SECRET, BACKUP_KEY_SECRET (never rotate:
+#   it derives every account key), BACKUP_S3_ENDPOINT, BACKUP_S3_BUCKET,
+#   BACKUP_S3_ACCESS_KEY_ID, BACKUP_S3_SECRET_ACCESS_KEY (+ optional
+#   BACKUP_S3_REGION, BACKUP_S3_PRESIGN_ENDPOINT, BACKUP_MAX_BYTES,
+#   BACKUP_QUOTA_BYTES, BACKUP_RETENTION_DAYS, BACKUP_UPLOADS_PER_DAY).
+#   Unset = /backup/* answers 503. The admin panel (src/admin) is never on
+#   the Worker: only the Node runtime serves it, on ADMIN_PORT.

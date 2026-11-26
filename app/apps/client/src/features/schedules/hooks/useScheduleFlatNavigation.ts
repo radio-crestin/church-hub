@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { switchOBSScene } from '~/features/livestream/service'
 import {
@@ -15,12 +15,15 @@ import {
 } from '~/features/presentation'
 import { createLogger } from '~/utils/logger'
 import { useSchedule } from './useSchedule'
+import { usePresentScheduleStep } from '../media-items/hooks/usePresentScheduleStep'
+import { isBackgroundVideo } from '../media-items/isBackgroundVideo'
 import {
   readProgramPosition,
   rememberProgramPosition,
 } from '../service/lastProgramPosition'
 import type { ScheduleItem } from '../types'
 import { enqueueProgramNavigation } from '../utils/enqueueProgramNavigation'
+import { flattenScheduleItems } from '../utils/flattenScheduleItems'
 import { liveScheduleFlatIndex } from '../utils/liveScheduleFlatIndex'
 import { getNextScheduleItemPreview } from '../utils/nextScheduleItemPreview'
 import {
@@ -79,6 +82,9 @@ export interface ScheduleFlatNavigation {
   presentVerseteEntry: (item: ScheduleItem, entryIndex: number) => Promise<void>
   presentAnnouncement: (item: ScheduleItem) => Promise<void>
   presentScene: (item: ScheduleItem) => Promise<void>
+  presentVideo: (item: ScheduleItem) => Promise<void>
+  /** A Slides item's step `stepIndex` (a slide, with its clicks up to one). */
+  presentDeckStep: (item: ScheduleItem, stepIndex: number) => Promise<void>
   navigateToFlatItem: (
     flatItem: ScheduleFlatItem,
     flatIndex: number,
@@ -87,6 +93,13 @@ export interface ScheduleFlatNavigation {
   presentFlatIndex: (flatIndex: number) => Promise<void>
   goNext: () => Promise<void>
   goPrev: () => Promise<void>
+  /**
+   * The item the operator picked in the list, waiting for the next Down/Up:
+   * Down presents its first step, Up the step right before it. `null` once a
+   * step has been presented.
+   */
+  selectedItemId: number | null
+  selectItem: (item: ScheduleItem) => void
 }
 
 /**
@@ -115,6 +128,8 @@ export function useScheduleFlatNavigation({
   const presentTemporaryAnnouncement = usePresentTemporaryAnnouncement()
   const presentTemporaryScene = usePresentTemporaryScene()
   const clearTemporary = useClearTemporaryContent()
+  // `mutateAsync` stays the same function, so the callbacks using it do too.
+  const { mutateAsync: presentStep } = usePresentScheduleStep()
 
   // A plain mutation rather than `useOBSScenes`, whose 30s poll has no place on
   // the song or Bible page — the scene list itself is never read here.
@@ -127,9 +142,10 @@ export function useScheduleFlatNavigation({
     },
   })
 
-  const { data: schedule, isLoading } = useSchedule(
-    itemsOverride ? undefined : (scheduleId ?? undefined),
-  )
+  // Fetched even with the items given: its loop setting is read below (the
+  // query is shared, so this is cheap).
+  const { data: schedule, isLoading } = useSchedule(scheduleId ?? undefined)
+  const loop = schedule?.automation.loop ?? false
 
   const items = useMemo(
     () => itemsOverride ?? schedule?.items ?? [],
@@ -137,9 +153,32 @@ export function useScheduleFlatNavigation({
   )
 
   const flatItems = useMemo(() => buildScheduleFlatItems(items), [items])
+  // The items as they run, presentations inside it opened in place.
+  const runItems = useMemo(() => flattenScheduleItems(items), [items])
   const itemStartFlatIndex = useMemo(
     () => buildItemStartFlatIndex(items),
     [items],
+  )
+
+  // An item picked in the list is where the next Down/Up starts from, ahead
+  // of whatever is on screen. The ref is what a queued press reads.
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null)
+  const selectedItemIdRef = useRef<number | null>(null)
+  const selectItem = useCallback((item: ScheduleItem) => {
+    selectedItemIdRef.current = item.id
+    setSelectedItemId(item.id)
+  }, [])
+  const clearSelection = useCallback(() => {
+    selectedItemIdRef.current = null
+    setSelectedItemId(null)
+  }, [])
+  // Every step that goes up, by any route, uses up the picked item.
+  const beforeNavigate = useCallback(
+    (flatIndex: number, flatItem: ScheduleFlatItem) => {
+      clearSelection()
+      onBeforeNavigate?.(flatIndex, flatItem)
+    },
+    [clearSelection, onBeforeNavigate],
   )
 
   const presentedInfo = useMemo(
@@ -173,13 +212,20 @@ export function useScheduleFlatNavigation({
     readProgramPosition(scheduleId),
   )
 
-  const canNavigatePrev = navigationFlatIndex > 0
+  const selectedFlatIndex =
+    selectedItemId === null
+      ? null
+      : (itemStartFlatIndex[selectedItemId] ?? null)
+
+  const canNavigatePrev =
+    selectedFlatIndex !== null ? selectedFlatIndex > 0 : navigationFlatIndex > 0
   // Next is still allowed on the last step: it hides the projection, which is
   // how a service ends.
   const isOnLastStep =
     navigationFlatIndex >= 0 && navigationFlatIndex === flatItems.length - 1
   const hasContent = !!presentationState?.temporaryContent
   const canNavigateNext =
+    (selectedFlatIndex !== null && selectedFlatIndex < flatItems.length) ||
     (navigationFlatIndex >= 0 && navigationFlatIndex < flatItems.length - 1) ||
     (isOnLastStep && hasContent)
 
@@ -196,20 +242,20 @@ export function useScheduleFlatNavigation({
       if (item.itemType !== 'song' || !item.songId) return
 
       const flatIndex = getFlatItemIndex(item, slideIndex)
-      onBeforeNavigate?.(flatIndex, { item, type: 'slide', index: slideIndex })
+      beforeNavigate(flatIndex, { item, type: 'slide', index: slideIndex })
 
       await presentTemporarySong.mutateAsync({
         songId: item.songId,
         slideIndex,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
-      onBeforeNavigate,
+      runItems,
+      beforeNavigate,
       presentTemporarySong,
       scheduleId,
     ],
@@ -250,7 +296,7 @@ export function useScheduleFlatNavigation({
       }))
 
       const flatIndex = getFlatItemIndex(item, verseIndex)
-      onBeforeNavigate?.(flatIndex, { item, type: 'verse', index: verseIndex })
+      beforeNavigate(flatIndex, { item, type: 'verse', index: verseIndex })
 
       await presentTemporaryBiblePassage.mutateAsync({
         translationId: 0, // Not stored in the schedule, use 0
@@ -263,15 +309,15 @@ export function useScheduleFlatNavigation({
         endVerse: parsedLast.verse,
         verses,
         currentVerseIndex: verseIndex,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
-      onBeforeNavigate,
+      runItems,
+      beforeNavigate,
       presentTemporaryBiblePassage,
       scheduleId,
     ],
@@ -279,11 +325,9 @@ export function useScheduleFlatNavigation({
 
   const presentVerseteEntry = useCallback(
     async (item: ScheduleItem, entryIndex: number) => {
-      if (
-        item.itemType !== 'slide' ||
-        item.slideType !== 'versete_tineri' ||
-        !item.verseteTineriEntries.length
-      ) {
+      const isEntries =
+        item.slideType === 'versete_tineri' || item.itemType === 'verses'
+      if (!isEntries || !item.verseteTineriEntries.length) {
         return
       }
 
@@ -302,20 +346,20 @@ export function useScheduleFlatNavigation({
       }))
 
       const flatIndex = getFlatItemIndex(item, entryIndex)
-      onBeforeNavigate?.(flatIndex, { item, type: 'entry', index: entryIndex })
+      beforeNavigate(flatIndex, { item, type: 'entry', index: entryIndex })
 
       await presentTemporaryVerseteTineri.mutateAsync({
         entries,
         currentEntryIndex: entryIndex,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
-      onBeforeNavigate,
+      runItems,
+      beforeNavigate,
       presentTemporaryVerseteTineri,
       scheduleId,
     ],
@@ -332,19 +376,19 @@ export function useScheduleFlatNavigation({
       }
 
       const flatIndex = getFlatItemIndex(item, 0)
-      onBeforeNavigate?.(flatIndex, { item, type: 'announcement', index: 0 })
+      beforeNavigate(flatIndex, { item, type: 'announcement', index: 0 })
 
       await presentTemporaryAnnouncement.mutateAsync({
         content: item.slideContent,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
-      onBeforeNavigate,
+      runItems,
+      beforeNavigate,
       presentTemporaryAnnouncement,
       scheduleId,
     ],
@@ -361,7 +405,7 @@ export function useScheduleFlatNavigation({
       }
 
       const flatIndex = getFlatItemIndex(item, 0)
-      onBeforeNavigate?.(flatIndex, { item, type: 'scene', index: 0 })
+      beforeNavigate(flatIndex, { item, type: 'scene', index: 0 })
 
       try {
         await switchScene.mutateAsync(item.obsSceneName)
@@ -372,19 +416,44 @@ export function useScheduleFlatNavigation({
 
       await presentTemporaryScene.mutateAsync({
         obsSceneName: item.obsSceneName,
-        nextItemPreview: getNextScheduleItemPreview(items, item),
+        nextItemPreview: getNextScheduleItemPreview(runItems, item),
         scheduleId: scheduleId ?? undefined,
         scheduleItemIndex: flatIndex,
       })
     },
     [
       getFlatItemIndex,
-      items,
-      onBeforeNavigate,
+      runItems,
+      beforeNavigate,
       presentTemporaryScene,
       scheduleId,
       switchScene,
     ],
+  )
+
+  // A video goes up through the server, which builds it as its runner does.
+  const presentVideo = useCallback(
+    async (item: ScheduleItem) => {
+      // A background video has no step: the steps after it show it.
+      if (item.itemType !== 'video' || !item.video || !scheduleId) return
+      if (isBackgroundVideo(item)) return
+      const flatIndex = getFlatItemIndex(item, 0)
+      onBeforeNavigate?.(flatIndex, { item, type: 'video', index: 0 })
+      await presentStep({ scheduleId, stepIndex: flatIndex })
+    },
+    [getFlatItemIndex, onBeforeNavigate, presentStep, scheduleId],
+  )
+
+  // A deck's step goes up through the server too: it holds the deck.
+  const presentDeckStep = useCallback(
+    async (item: ScheduleItem, stepIndex: number) => {
+      if (item.itemType !== 'slides' || !scheduleId) return
+      const flatIndex = getFlatItemIndex(item, stepIndex)
+      if (flatIndex < 0) return
+      beforeNavigate(flatIndex, { item, type: 'deck', index: stepIndex })
+      await presentStep({ scheduleId, stepIndex: flatIndex })
+    },
+    [getFlatItemIndex, beforeNavigate, presentStep, scheduleId],
   )
 
   const navigateToFlatItem = useCallback(
@@ -401,12 +470,18 @@ export function useScheduleFlatNavigation({
           return presentAnnouncement(item)
         case 'scene':
           return presentScene(item)
+        case 'video':
+          return presentVideo(item)
+        case 'deck':
+          return presentDeckStep(item, index)
       }
     },
     [
       presentAnnouncement,
+      presentDeckStep,
       presentPassageVerse,
       presentScene,
+      presentVideo,
       presentSongSlide,
       presentVerseteEntry,
     ],
@@ -438,20 +513,38 @@ export function useScheduleFlatNavigation({
     [flatItems, queryClient, scheduleId],
   )
 
+  // Where a picked item puts the next press: its first step, or -1 for none.
+  const takeSelectedFlatIndex = useCallback((): number => {
+    const id = selectedItemIdRef.current
+    if (id === null) return -1
+    clearSelection()
+    return itemStartFlatIndex[id] ?? -1
+  }, [clearSelection, itemStartFlatIndex])
+
   const goPrev = useCallback(
     () =>
       enqueueProgramNavigation(async () => {
+        const selected = takeSelectedFlatIndex()
+        if (selected >= 0) {
+          await presentFlatIndex(selected - 1)
+          return
+        }
         const flatIndex = readNavigationFlatIndex()
         if (flatIndex <= 0) return
         await presentFlatIndex(flatIndex - 1)
       }),
-    [readNavigationFlatIndex, presentFlatIndex],
+    [readNavigationFlatIndex, presentFlatIndex, takeSelectedFlatIndex],
   )
 
   const goNext = useCallback(() => {
     // Whether this press starts the program: nothing of it is on the projector.
     const startsProgram = navigationFlatIndex < 0
     return enqueueProgramNavigation(async () => {
+      const selected = takeSelectedFlatIndex()
+      if (selected >= 0) {
+        await presentFlatIndex(selected)
+        return
+      }
       const flatIndex = readNavigationFlatIndex()
       if (flatIndex < 0) {
         // Nothing of the program up yet — start it from the top. A press made
@@ -461,9 +554,11 @@ export function useScheduleFlatNavigation({
         return
       }
 
-      // Past the last step there is nothing left to show; hide the projection.
+      // Past the last step: start over when the presentation loops, else
+      // there is nothing left to show; hide the projection.
       if (flatIndex >= flatItems.length - 1) {
-        await clearTemporary.mutateAsync()
+        if (loop) await presentFlatIndex(0)
+        else await clearTemporary.mutateAsync()
         return
       }
 
@@ -472,9 +567,11 @@ export function useScheduleFlatNavigation({
   }, [
     clearTemporary,
     flatItems.length,
+    loop,
     navigationFlatIndex,
     presentFlatIndex,
     readNavigationFlatIndex,
+    takeSelectedFlatIndex,
   ])
 
   return {
@@ -493,9 +590,13 @@ export function useScheduleFlatNavigation({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
+    presentDeckStep,
     navigateToFlatItem,
     presentFlatIndex,
     goNext,
     goPrev,
+    selectedItemId,
+    selectItem,
   }
 }

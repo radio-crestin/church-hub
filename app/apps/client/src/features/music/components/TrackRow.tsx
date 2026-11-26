@@ -2,7 +2,7 @@ import { ListMinus, ListMusic, ListPlus, Play, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { ActionMenu, type ActionMenuItem } from '~/ui/menu'
-import type { LibraryTrack, MusicPlaylist } from '../types'
+import type { LibraryTrack } from '../types'
 import { formatLastPlayed } from '../utils'
 
 /**
@@ -16,10 +16,9 @@ export const TRACK_GRID =
 interface TrackRowProps {
   track: LibraryTrack
   isPlaying: boolean
-  playlists: MusicPlaylist[]
   onPlay: (track: LibraryTrack) => void
   onAddToQueue: (track: LibraryTrack) => void
-  onAddToPlaylist: (track: LibraryTrack, playlistId: number) => void
+  onPickPlaylist: (track: LibraryTrack) => void
   onCreatePlaylistWith: (track: LibraryTrack) => void
   onRemoveFromPlaylist?: (track: LibraryTrack) => void
 }
@@ -28,10 +27,9 @@ interface TrackRowProps {
 export function TrackRow({
   track,
   isPlaying,
-  playlists,
   onPlay,
   onAddToQueue,
-  onAddToPlaylist,
+  onPickPlaylist,
   onCreatePlaylistWith,
   onRemoveFromPlaylist,
 }: TrackRowProps) {
@@ -42,17 +40,17 @@ export function TrackRow({
     : '—'
 
   const menuItems: ActionMenuItem[] = [
-    ...playlists.map((playlist) => ({
-      id: `playlist-${playlist.id}`,
-      label: t('tracks.addToPlaylist', { name: playlist.name }),
-      icon: <ListMusic className="h-4 w-4" />,
-      onSelect: () => onAddToPlaylist(track, playlist.id),
-      testId: `music-add-to-playlist-${playlist.id}`,
-    })),
+    {
+      id: 'add-to-playlist',
+      label: t('playlist.addTo'),
+      icon: <ListMusic className="h-4 w-4" strokeWidth={1.5} />,
+      onSelect: () => onPickPlaylist(track),
+      testId: 'music-add-to-playlist',
+    },
     {
       id: 'new-playlist',
       label: t('tracks.newPlaylistWith'),
-      icon: <Plus className="h-4 w-4" />,
+      icon: <Plus className="h-4 w-4" strokeWidth={1.5} />,
       onSelect: () => onCreatePlaylistWith(track),
       testId: 'music-new-playlist-with-track',
     },
@@ -61,8 +59,7 @@ export function TrackRow({
           {
             id: 'remove-from-playlist',
             label: t('tracks.removeFromPlaylist'),
-            icon: <ListMinus className="h-4 w-4" />,
-            iconClassName: 'text-red-600 dark:text-red-400',
+            icon: <ListMinus className="h-4 w-4" strokeWidth={1.5} />,
             onSelect: () => onRemoveFromPlaylist(track),
             testId: 'music-remove-from-playlist',
           },
@@ -86,36 +83,46 @@ export function TrackRow({
       }}
       className={`grid ${TRACK_GRID} cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors ${
         isPlaying
-          ? 'bg-indigo-600 text-white'
-          : 'text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700/60'
+          ? 'bg-live-tint text-fg ring-1 ring-inset ring-live'
+          : 'text-fg-body hover:bg-hover'
       }`}
     >
       <div className="flex min-w-0 items-center gap-2">
-        {isPlaying && <Play className="h-3.5 w-3.5 shrink-0 fill-current" />}
+        {isPlaying && (
+          <Play className="h-3.5 w-3.5 shrink-0 fill-current text-live" />
+        )}
         <div className="min-w-0">
           <p className="truncate font-medium" data-testid="music-track-title">
             {title}
           </p>
-          <p
-            className={`truncate text-xs @3xl:hidden ${isPlaying ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}
-          >
+          {/* Plain text, one line each, so nothing inside sticks out past
+              the row while it truncates: the full meta on a narrow row, the
+              artist alone once the plays and date have their own columns. */}
+          <p className="truncate text-xs text-fg-hint @md:hidden">
+            {[
+              track.artist,
+              t('tracks.plays', { count: track.playCount }),
+              lastPlayed,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+          <p className="hidden truncate text-xs text-fg-hint @md:block @3xl:hidden">
             {track.artist}
-            <span className="@md:hidden">
-              {track.artist ? ' · ' : ''}
-              {t('tracks.plays', { count: track.playCount })} · {lastPlayed}
-            </span>
           </p>
         </div>
       </div>
-      <span className="hidden truncate @3xl:block">{track.artist ?? '—'}</span>
+      <span className="hidden truncate text-fg-label @3xl:block">
+        {track.artist ?? '—'}
+      </span>
       <span
-        className="hidden tabular-nums @md:block"
+        className="hidden tabular-nums text-fg-label @md:block"
         data-testid="music-track-plays"
       >
         {track.playCount}
       </span>
       <span
-        className="hidden truncate @md:block"
+        className="hidden truncate text-fg-label @md:block"
         data-testid="music-track-last-played"
       >
         {lastPlayed}
@@ -128,13 +135,9 @@ export function TrackRow({
         }}
         title={t('files.addToQueue')}
         data-testid="music-track-queue"
-        className={`flex items-center justify-self-end gap-1 rounded-md px-2 py-1 text-xs font-medium ${
-          isPlaying
-            ? 'hover:bg-white/20'
-            : 'text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-600'
-        }`}
+        className="flex items-center justify-self-end gap-1 rounded-lg px-2 py-1 text-xs font-medium text-fg-label hover:bg-hover hover:text-fg"
       >
-        <ListPlus className="h-4 w-4" />
+        <ListPlus className="h-4 w-4" strokeWidth={1.5} />
         <span className="hidden @3xl:inline">{t('tracks.queue')}</span>
       </button>
       <div onClick={(e) => e.stopPropagation()}>

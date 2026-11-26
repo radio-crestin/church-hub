@@ -68,20 +68,20 @@ export function LoginPairingPrompt() {
       ref={dialogRef}
       aria-labelledby="login-pairing-title"
       onClose={() => setRequest(null)}
-      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-0 shadow-xl backdrop:bg-black/50 dark:bg-gray-800"
+      className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-sm rounded-xl border border-line bg-panel p-0 shadow-popover backdrop:bg-black/50"
     >
       {request ? (
         <div className="flex flex-col items-center gap-4 p-6 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300">
-            <KeyRound className="h-6 w-6" />
+          <div className="flex items-center justify-center text-fg-label">
+            <KeyRound strokeWidth={1.5} className="h-6 w-6" />
           </div>
           <h2
             id="login-pairing-title"
-            className="text-lg font-semibold text-gray-900 dark:text-white"
+            className="text-base font-semibold text-fg"
           >
             {t('pairing.title')}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-fg-label">
             {t('pairing.description', {
               name: request.userName,
               ip: request.requesterIp,
@@ -89,11 +89,11 @@ export function LoginPairingPrompt() {
           </p>
           <p
             data-testid="login-pairing-code"
-            className="font-mono text-4xl font-bold tracking-[0.3em] text-gray-900 dark:text-white"
+            className="font-mono text-4xl font-semibold tabular-nums tracking-[0.3em] text-fg"
           >
             {request.code}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-hint">
             {t('pairing.expires', { seconds })}
           </p>
           <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -102,7 +102,7 @@ export function LoginPairingPrompt() {
           <button
             type="button"
             onClick={() => setRequest(null)}
-            className="w-full rounded-xl border border-gray-300 px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="h-9 w-full rounded-lg bg-field px-4 text-sm font-medium text-fg transition-colors hover:bg-hover"
           >
             {t('pairing.dismiss')}
           </button>

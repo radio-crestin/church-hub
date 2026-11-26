@@ -1,4 +1,4 @@
-import { resolveMediaUrl } from '~/features/background-media/utils/resolveMediaUrl'
+import { useMediaUrl } from '~/features/background-media/hooks/useMediaUrl'
 import { ScreenBackgroundStill } from './ScreenBackgroundStill'
 import { ScreenBackgroundVideo } from './ScreenBackgroundVideo'
 import type { ScreenBackgroundConfig } from '../../types'
@@ -15,6 +15,8 @@ interface ScreenBackgroundProps {
    * one capture shared by every thumbnail instead of a player each
    */
   playVideo?: boolean
+  /** A background being covered by the next one is no longer the screen's */
+  testId?: string
 }
 
 /**
@@ -27,19 +29,20 @@ interface ScreenBackgroundProps {
 export function ScreenBackground({
   background,
   playVideo = true,
+  testId = 'screen-background',
 }: ScreenBackgroundProps) {
   const type = background?.type ?? 'color'
   const opacity = background?.opacity ?? 1
+  const src = useMediaUrl(
+    type === 'image' ? background?.imageUrl : background?.videoUrl,
+  )
 
   if (type === 'transparent') return null
 
   if (type === 'image' || type === 'video') {
-    const url = type === 'image' ? background?.imageUrl : background?.videoUrl
-    const src = url ? resolveMediaUrl(url) : null
-
     return (
       <div
-        data-testid="screen-background"
+        data-testid={testId}
         data-background-type={type}
         className={LAYER_CLASS}
         style={{ backgroundColor: background?.color ?? DEFAULT_COLOR }}
@@ -70,7 +73,7 @@ export function ScreenBackground({
   // 'color', a missing config, or an unknown type: a solid colour (black)
   return (
     <div
-      data-testid="screen-background"
+      data-testid={testId}
       data-background-type="color"
       className={LAYER_CLASS}
       style={{

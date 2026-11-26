@@ -32,7 +32,7 @@ export interface FactoryResetResult {
  * Performs a factory reset by clearing configuration tables and re-seeding defaults.
  *
  * Always resets:
- * - Screens (screen_content_configs, screen_next_slide_configs, screens)
+ * - Screens and the church's own slide templates
  * - App settings
  *
  * Optionally resets (via options):
@@ -58,18 +58,18 @@ export function performFactoryReset(
     db.run('BEGIN TRANSACTION')
 
     // Clear screen-related tables (order matters due to foreign keys)
-    log('debug', 'Clearing screen_content_configs...')
-    db.run('DELETE FROM screen_content_configs')
-
-    log('debug', 'Clearing screen_next_slide_configs...')
-    db.run('DELETE FROM screen_next_slide_configs')
-
-    log('debug', 'Clearing screens...')
+    log('debug', 'Clearing screens and their own slide templates...')
+    db.run('DELETE FROM screen_scene_templates')
     db.run('DELETE FROM screens')
+    db.run('DELETE FROM slide_templates WHERE bundled_key IS NULL')
+    db.run('UPDATE schedules SET template_id = NULL')
+    db.run('UPDATE schedule_items SET template_id = NULL')
 
     // Clear app settings
     log('debug', 'Clearing app_settings...')
     db.run('DELETE FROM app_settings')
+    // New signaling host keys: links and pairing codes shared before stop
+    db.run('DELETE FROM server_secrets')
 
     // Optionally clear and reseed Bible translations
     if (includeBibles) {

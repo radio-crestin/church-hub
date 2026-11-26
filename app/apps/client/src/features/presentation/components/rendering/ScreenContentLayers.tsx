@@ -1,19 +1,21 @@
 import { ScreenContent, type ScreenContentProps } from './ScreenContent'
 import type { ContentData, NextSlideData } from './types'
 import type { ShownContent } from '../../hooks/useContentTypeHandoff'
-import { contentFamily } from '../../utils/contentFamily'
+import { slideLayerKey } from '../../utils/slideKind'
 
 interface ScreenContentLayersProps extends ScreenContentProps {
-  /** The previous content type's content, fading out (usePresentationContent) */
+  /** The previous kind of slide, fading out with its own template (useContentTypeHandoff) */
   leaving?: ShownContent<ContentData, NextSlideData | undefined> | null
 }
 
 const LAYER_STYLE: React.CSSProperties = { position: 'absolute', inset: 0 }
 
 /**
- * Draws the content and, while the content type changes (a song, then a
- * verse), the old content fading out under it. Each content family keeps its
- * own ScreenContent, so the old one plays its exit as the new one enters.
+ * Draws the content and, while a new kind of slide comes (a song, then a
+ * verse, or another template), the old one fading out before it, drawn with
+ * the template it was shown in. Each kind keeps its own ScreenContent, so the
+ * old one plays its exit while the new one waits hidden
+ * (useContentTypeHandoff), then enters.
  */
 export function ScreenContentLayers({
   leaving,
@@ -26,22 +28,27 @@ export function ScreenContentLayers({
     >
       {leaving && (
         <div
-          key={contentFamily(leaving.contentType)}
+          key={slideLayerKey(leaving.contentType, leaving.screen)}
           style={LAYER_STYLE}
           aria-hidden="true"
         >
           <ScreenContent
             {...props}
+            screen={leaving.screen ?? props.screen}
             contentType={leaving.contentType}
             contentData={leaving.contentData}
             contentKey={leaving.contentKey}
             nextSlideData={leaving.nextSlideData}
             styleRanges={undefined}
             isVisible={false}
+            videoSound={false}
           />
         </div>
       )}
-      <div key={contentFamily(props.contentType)} style={LAYER_STYLE}>
+      <div
+        key={slideLayerKey(props.contentType, props.screen)}
+        style={LAYER_STYLE}
+      >
         <ScreenContent {...props} />
       </div>
     </div>

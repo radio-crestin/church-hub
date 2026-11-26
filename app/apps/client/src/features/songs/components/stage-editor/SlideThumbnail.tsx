@@ -86,22 +86,20 @@ export function SlideThumbnail({
       {/* Drag handle + slide number */}
       <div className="flex flex-col items-center gap-1 pt-1 shrink-0">
         <span
-          className={`text-xs font-semibold tabular-nums ${
-            isActive
-              ? 'text-indigo-600 dark:text-indigo-400'
-              : 'text-gray-400 dark:text-gray-500'
+          className={`text-xs font-medium tabular-nums ${
+            isActive ? 'text-fg' : 'text-fg-hint'
           }`}
         >
           {index + 1}
         </span>
         <button
           type="button"
-          className="p-0.5 text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 cursor-grab touch-none"
+          className="p-0.5 text-fg-hint hover:text-fg-label cursor-grab touch-none"
           aria-label={t('stageEditor.dragToReorder')}
           {...attributes}
           {...listeners}
         >
-          <GripVertical size={14} />
+          <GripVertical size={14} strokeWidth={1.75} />
         </button>
       </div>
 
@@ -111,10 +109,10 @@ export function SlideThumbnail({
         type="button"
         data-testid="stage-thumbnail"
         onClick={onSelect}
-        className={`relative flex-1 aspect-video rounded-md overflow-hidden border-2 transition-all ${
+        className={`relative flex-1 aspect-video rounded-lg overflow-hidden border transition-colors ${
           isActive
-            ? 'border-indigo-500 ring-2 ring-indigo-500/30'
-            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            ? 'border-fg-label ring-1 ring-fg-label'
+            : 'border-line hover:border-line-strong'
         }`}
         aria-current={isActive}
       >
@@ -140,7 +138,7 @@ export function SlideThumbnail({
         {isPresented && (
           <span
             data-testid="stage-thumbnail-live"
-            className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500 ring-2 ring-white/70"
+            className="absolute top-1 right-1 w-2 h-2 rounded-full bg-live ring-2 ring-black/40"
           />
         )}
 
@@ -154,7 +152,7 @@ export function SlideThumbnail({
               e.stopPropagation()
               onProject()
             }}
-            className="absolute bottom-1 left-1 p-1 rounded text-white bg-green-600 hover:bg-green-700 transition-colors"
+            className="absolute bottom-1 left-1 p-1 rounded-md text-white bg-black/60 hover:bg-black/80 transition-colors"
             title={t('stageEditor.projectSlide')}
           >
             <MonitorPlay size={12} />
@@ -171,7 +169,7 @@ export function SlideThumbnail({
               e.stopPropagation()
               onClone()
             }}
-            className="p-1 rounded bg-blue-600 text-white hover:bg-blue-700"
+            className="p-1 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
             title={t('stageEditor.cloneSlide')}
           >
             <Copy size={12} />
@@ -183,7 +181,7 @@ export function SlideThumbnail({
               e.stopPropagation()
               onDelete()
             }}
-            className="p-1 rounded bg-red-600 text-white hover:bg-red-700"
+            className="p-1 rounded-md bg-black/60 text-white hover:bg-red-600 transition-colors"
             title={t('stageEditor.deleteSlide')}
           >
             <Trash2 size={12} />

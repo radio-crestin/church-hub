@@ -12,7 +12,10 @@ import { label } from './helpers/background-media'
  * Settings → Screens says what each setting does and what the projector
  * shows when nothing is live (T-159). On the Adunare PC the clock was
  * missing on the projector because "close the window when nothing is shown"
- * was on, and nothing on the page said so. Each test makes its own screen.
+ * was on, and nothing on the page said so. The page is a tab per screen, and
+ * the chosen screen shows its look, what it shows when nothing is live and
+ * where it appears; the rest waits under "More options" (CH-184). Each test
+ * makes its own screen.
  */
 
 const TIME_TEXT = /^\d{1,2}:\d{2}(:\d{2})?$/
@@ -43,7 +46,7 @@ async function readScreen(
 }
 
 async function openCard(page: Page, id: number): Promise<Locator> {
-  await page.goto('/settings/screens')
+  await page.goto(`/settings/screens?screen=${id}`)
   const card = page.locator(
     `[data-testid="screen-card"][data-screen-id="${id}"]`,
   )
@@ -80,20 +83,31 @@ test.describe('Screen settings are grouped and explained', () => {
     page,
   }) => {
     const card = await openCard(page, screenId)
+    await expect(
+      page.locator(`[data-testid="screen-tab"][data-screen-id="${screenId}"]`),
+    ).toHaveAttribute('aria-selected', 'true')
 
+    const look = card.getByTestId('screen-group-look')
     const idle = card.getByTestId('screen-group-idle')
     const window = card.getByTestId('screen-group-window')
+    for (const [group, key] of [
+      [look, 'look'],
+      [idle, 'idle'],
+      [window, 'where'],
+    ] as const) {
+      await expect(
+        group.getByText(label('settings', `sections.screens.groups.${key}`)),
+      ).toBeVisible()
+    }
+    // How it looks: every template, drawn, one click away.
     await expect(
-      idle.getByText(label('settings', 'sections.screens.groups.idle')),
-    ).toBeVisible()
-    await expect(
-      window.getByText(label('settings', 'sections.screens.groups.window')),
-    ).toBeVisible()
-    await expect(idle.getByTestId('screen-idle-preview')).toBeVisible()
+      look
+        .getByTestId('screen-template-gallery')
+        .getByTestId('template-thumbnail'),
+    ).not.toHaveCount(0)
 
     for (const [group, key] of [
       [idle, 'closeOnEscape'],
-      [window, 'window'],
       [window, 'openOnStartup'],
     ] as const) {
       const toggle = group.getByRole('switch', {
@@ -104,56 +118,49 @@ test.describe('Screen settings are grouped and explained', () => {
         label('settings', `sections.screens.${key}.description`),
       )
     }
+    await expect(
+      idle.getByRole('switch', {
+        name: label('settings', 'sections.screens.idle.clock.label'),
+      }),
+    ).toBeVisible()
+    // The window opens and closes from one button by the screen's name.
+    await expect(card.getByTestId('screen-window-toggle')).toHaveText(
+      label('settings', 'sections.screens.window.open'),
+    )
+
+    // The rarely changed options wait behind "More options".
+    const advanced = card.getByTestId('screen-group-advanced')
+    await expect(card.getByTestId('screen-fullscreen')).toBeHidden()
+    await advanced
+      .getByText(label('settings', 'sections.screens.groups.more'))
+      .click()
+    await expect(card.getByTestId('screen-fullscreen')).toBeVisible()
+    await expect(card.getByTestId('screen-always-on-top')).toBeVisible()
     // One screen at a time is shown in the previews: a radio, not a switch.
-    const shownInPreviews = window.getByRole('radio', {
+    const shownInPreviews = advanced.getByRole('radio', {
       name: label('settings', 'sections.screens.previewScreen.label'),
     })
     await expect(shownInPreviews).toBeVisible()
     await expect(shownInPreviews).toHaveAccessibleDescription(
       label('settings', 'sections.screens.previewScreen.description'),
     )
-    await expect(
-      idle.getByRole('switch', {
-        name: label('settings', 'sections.screens.idle.clock.label'),
-      }),
-    ).toBeVisible()
-
-    // The rarely changed window options wait behind "More window options".
-    const advanced = card.getByTestId('screen-group-advanced')
-    await expect(card.getByTestId('screen-fullscreen')).toBeHidden()
-    await advanced
-      .getByText(label('settings', 'sections.screens.groups.advanced'))
-      .click()
-    await expect(card.getByTestId('screen-fullscreen')).toBeVisible()
-    await expect(card.getByTestId('screen-always-on-top')).toBeVisible()
   })
 
-  test('close-when-empty saves and the thumbnail says the window closes', async ({
+  test('close-when-empty sits beside the clock, and saves', async ({
     page,
     request,
   }) => {
     const card = await openCard(page, screenId)
-    const preview = card.getByTestId('screen-idle-preview')
-    await expect(preview).toHaveAttribute('data-closes', 'false')
+    // Not hidden away: it is why a projector shows no clock.
     await expect(
-      card.getByText(label('settings', 'sections.screens.idle.summaryOpen')),
+      card
+        .getByTestId('screen-group-idle')
+        .getByTestId('screen-close-on-escape'),
     ).toBeVisible()
-
     const closes = async () =>
       (await readScreen(request, screenId)).closeOnEscape
     await flip(card, 'screen-close-on-escape', true, closes)
-    await expect(preview).toHaveAttribute('data-closes', 'true')
-    await expect(
-      preview.getByText(
-        label('settings', 'sections.screens.idle.windowCloses'),
-      ),
-    ).toBeVisible()
-    await expect(
-      card.getByText(label('settings', 'sections.screens.idle.summaryClosed')),
-    ).toBeVisible()
-
     await flip(card, 'screen-close-on-escape', false, closes)
-    await expect(preview).toHaveAttribute('data-closes', 'false')
   })
 
   test('the clock on the empty slide saves and shows on the projector', async ({
@@ -173,18 +180,12 @@ test.describe('Screen settings are grouped and explained', () => {
     try {
       await projector.goto(`/screen/${screenId}`)
       const clock = projector.getByText(TIME_TEXT).filter({ visible: true })
-      const thumbnailClock = card
-        .getByTestId('screen-idle-preview')
-        .getByText(TIME_TEXT)
-        .filter({ visible: true })
 
       await flip(card, 'screen-idle-clock', !initially, clockOn)
       await expect(clock).toHaveCount(initially ? 0 : 1, { timeout: 10000 })
-      await expect(thumbnailClock).toHaveCount(initially ? 0 : 1)
 
       await flip(card, 'screen-idle-clock', initially, clockOn)
       await expect(clock).toHaveCount(initially ? 1 : 0, { timeout: 10000 })
-      await expect(thumbnailClock).toHaveCount(initially ? 1 : 0)
     } finally {
       await projector.close()
     }
@@ -197,7 +198,7 @@ test.describe('Screen settings are grouped and explained', () => {
     const card = await openCard(page, screenId)
     await card
       .getByTestId('screen-group-advanced')
-      .getByText(label('settings', 'sections.screens.groups.advanced'))
+      .getByText(label('settings', 'sections.screens.groups.more'))
       .click()
     const onTop = async () => (await readScreen(request, screenId)).alwaysOnTop
     const initially = await onTop()
@@ -209,20 +210,15 @@ test.describe('Screen settings are grouped and explained', () => {
     page,
   }) => {
     const card = await openCard(page, screenId)
-    // The thumbnail opens the empty slide's layout.
-    await card.getByTestId('screen-idle-preview').click()
-    await expect(page.getByTestId('screen-editor-content-type')).toHaveText(
-      label('presentation', 'screens.contentTypes.empty'),
-    )
+    await card
+      .getByRole('button', {
+        name: label('settings', 'sections.screens.actions.edit'),
+      })
+      .click()
 
     // On a song: the slide type's own settings, then the whole screen's.
-    await page.getByTestId('screen-editor-content-type').click()
-    await page
-      .getByTestId('screen-editor-content-type-option')
-      .filter({ hasText: label('presentation', 'screens.contentTypes.song') })
-      .locator('button')
-      .first()
-      .click()
+    // The slide, from the theme's slides on the left.
+    await page.getByTestId('screen-editor-slide-song').click()
     const slideType = page.getByTestId('screen-editor-slide-type-settings')
     const wholeScreen = page.getByTestId('screen-editor-whole-screen-settings')
     await expect(slideType).toBeVisible()
@@ -274,7 +270,7 @@ test.describe('Screen settings are grouped and explained', () => {
     await expect(page.getByTestId('screen-editor-save')).toBeVisible({
       timeout: 10000,
     })
-    for (const testId of ['screen-editor-save', 'screen-editor-content-type']) {
+    for (const testId of ['screen-editor-save', 'screen-editor-tab-design']) {
       const box = await page.getByTestId(testId).boundingBox()
       expect(box!.x + box!.width, testId).toBeLessThanOrEqual(390)
     }

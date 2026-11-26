@@ -6,6 +6,10 @@ import {
   broadcastOBSStreamingStatus,
   setOBSStatusProvider,
 } from '../../../websocket'
+import {
+  onOutputsChanged,
+  onSceneSelected,
+} from '../../schedule-automation/automationEvents'
 import { handleSceneMixerActions } from '../mixer/scene-handler'
 
 export { getOBSConfig, updateOBSConfig } from './config'
@@ -38,6 +42,7 @@ export { broadcastOBSCurrentScene, obsConnection }
 export function initializeOBSCallbacks() {
   obsConnection.setCurrentSceneCallback(async (sceneName) => {
     broadcastOBSCurrentScene(sceneName)
+    onSceneSelected(sceneName)
     // Trigger mixer automation when scene changes
     try {
       await handleSceneMixerActions(sceneName)
@@ -59,6 +64,7 @@ export function initializeOBSCallbacks() {
       ...status,
       updatedAt: Date.now(),
     })
+    onOutputsChanged(status, obsConnection.isConnected())
   })
 
   // Register status provider for new WebSocket clients

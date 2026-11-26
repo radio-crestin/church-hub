@@ -2,7 +2,7 @@
   "navigation": {
     "home": "Home",
     "dashboard": "Dashboard",
-    "schedules": "Schedules",
+    "schedules": "Presentations",
     "songs": "Songs",
     "gallery": "Gallery",
     "bible": "Bible",
@@ -12,8 +12,7 @@
     "songKey": "Song Keys",
     "liveTranslation": "Live Translation",
     "kiosk": "Kiosk",
-    "settings": "Settings",
-    "feedback": "Feedback"
+    "settings": "Settings"
   },
   "actions": {
     "collapse": "Collapse",
@@ -40,5 +39,11 @@
   "tabs": {
     "present": "Live",
     "more": "More"
+  },
+  "groups": {
+    "live": "Live",
+    "library": "Library",
+    "tools": "Tools",
+    "label": "Sidebar group"
   }
 }

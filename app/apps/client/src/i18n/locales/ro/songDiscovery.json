@@ -25,7 +25,9 @@
   },
   "verdict": {
     "new": "Nouă",
-    "similar": "Există ceva similar",
+    "similar": "Există una similară",
+    "exact-source": "Deja în bibliotecă",
+    "exact-lyrics": "Deja în bibliotecă",
     "exact-title": "Deja în bibliotecă",
     "exact-filename": "Deja în bibliotecă"
   },
@@ -51,7 +53,7 @@
     "applySelected": "Aplică selecția ({{count}})"
   },
   "toast": {
-    "imported": "Au fost importate {{count}} cântări",
+    "imported": "Cântări importate: {{count}}",
     "importFailed": "Importul a eșuat: {{error}}",
     "updated_one": "{{count}} cântare actualizată",
     "updated_few": "{{count}} cântări actualizate",
@@ -62,11 +64,11 @@
     "updateFailed": "Alegerea nu a putut fi salvată: {{error}}"
   },
   "settings": {
-    "title": "Cântări noi",
+    "title": "Actualizări cântări",
     "description": "La scurt timp după pornire, apoi zilnic, Church Hub verifică sursele tale de cântări când ai internet. Cântările noi și versiunile mai recente ale celor pe care nu le-ai modificat se sincronizează automat. Cântările modificate de tine nu sunt înlocuite. Cele pe care s-ar putea să le ai deja sub alt titlu așteaptă la „Descarcă cântări”.",
     "enableLabel": "Sincronizează automat cântările noi și actualizările",
     "checkNow": "Verifică acum",
-    "enableHint": "Când oprești opțiunea, cântările te așteaptă: le poți sincroniza pe toate din notificare sau poți verifica fiecare modificare la „Descarcă cântări”.",
+    "enableHint": "Când e oprită, cântările te așteaptă: le poți sincroniza pe toate din notificare sau poți verifica fiecare modificare la „Descarcă cântări”.",
     "pendingCount_one": "{{count}} cântare de aprobat",
     "pendingCount_few": "{{count}} cântări de aprobat",
     "pendingCount_other": "{{count}} de cântări de aprobat"
@@ -76,16 +78,16 @@
   },
   "songSources": {
     "title": "Surse de cântări",
-    "description": "De unde vin cântările noi la Descarcă cântări. Adaugă surse din linkurile primite și distribuie categoriile tale ca fișier sau prin link.",
+    "description": "De unde vin cântările noi la „Descarcă cântări”. Adaugă surse din linkurile primite și distribuie categoriile tale ca fișier sau prin link.",
     "builtIn": "Surse incluse",
     "links": {
       "title": "Surse adăugate prin link",
-      "description": "Lipește un link primit către un fișier .chsongs sau manifest.json. Cântările din sursă vor apărea la Descarcă cântări.",
+      "description": "Lipește un link primit către un fișier .chsongs sau manifest.json. Cântările din sursă vor apărea la „Descarcă cântări”.",
       "placeholder": "https://…/manifest.json",
       "add": "Adaugă sursa",
       "remove": "Elimină",
       "empty": "Nu ai adăugat încă surse prin link.",
-      "added": "Sursa {{name}} a fost adăugată la Descarcă cântări",
+      "added": "Sursa {{name}} a fost adăugată la „Descarcă cântări”",
       "addFailed": "Nu s-a putut adăuga sursa: {{error}}"
     },
     "export": {
@@ -138,6 +140,24 @@
       "syncNow": "Sincronizează acum",
       "stop": "Oprește distribuirea",
       "failed": "Distribuirea a eșuat: {{error}}"
+    },
+    "share": {
+      "title": "Partajează cântările mele",
+      "description": "Publică cântările prin sincronizarea în cloud Church Hub, fără chei S3 proprii. Alte biserici le adaugă prin link sau din catalog, dacă le listezi. Se sincronizează la fiecare 5 minute.",
+      "needsCloudSync": "Pornește mai întâi sincronizarea în cloud: partajarea trece prin ea.",
+      "name": "Nume",
+      "namePlaceholder": "de ex. Cântările bisericii noastre",
+      "scope": "Ce partajezi",
+      "wholeLibrary": "Toată biblioteca",
+      "someCategories": "Categoriile alese",
+      "listed": "Listează în catalogul public",
+      "listedHint": "Nelistată, o găsesc doar cei care au linkul.",
+      "button": "Partajează",
+      "update": "Salvează",
+      "inCatalog": "în catalog",
+      "unlisted": "nelistată",
+      "stop": "Oprește partajarea",
+      "failed": "Partajarea a eșuat: {{error}}"
     }
   },
   "page": {
@@ -176,8 +196,8 @@
     "updatedList": "Actualizate ({{count}})",
     "toAddList": "De adăugat ({{count}})",
     "toUpdateList": "De actualizat ({{count}})",
-    "showAll": "Arată toate ({{count}})",
-    "showLess": "Arată mai puține",
+    "showAll": "Afișează toate ({{count}})",
+    "showLess": "Afișează mai puține",
     "andMore_one": "…și încă {{count}} cântare",
     "andMore_few": "…și încă {{count}} cântări",
     "andMore_other": "…și încă {{count}} de cântări",
@@ -195,12 +215,15 @@
   "changed": {
     "title": "Actualizări ({{count}})",
     "selectAll": "Selectează toate actualizările",
-    "select": "Selectează {{title}}",
+    "select": "Selectează „{{title}}”",
     "badge": "Versiune nouă",
-    "subtitle": "{{source}} · versiune nouă față de cea din biblioteca ta",
+    "subtitle": "{{source}} · o versiune mai nouă a cântării din biblioteca ta",
     "update": "Actualizează",
     "keep": "Păstrează-o pe a mea",
-    "editedNeverHere": "Cântările modificate de tine nu apar aici: nu sunt înlocuite niciodată."
+    "editedBadge": "Modificată aici · versiune nouă",
+    "editedSubtitle": "{{source}} · o versiune mai nouă a unei cântări pe care ai modificat-o aici",
+    "editedUpdate": "Actualizarea îți înlocuiește modificările cu această versiune.",
+    "followsSource": "O cântare nemodificată își urmează singură sursa."
   },
   "recoverTitles": {
     "description": "Cântările importate din Resurse Creștine în versiunile mai vechi sunt salvate cu primul vers ca titlu, iar numele sub care le știe sursa s-a pierdut. Recuperează-l, ca să le poți găsi din nou după acel nume.",
@@ -210,5 +233,16 @@
     "done_few": "{{count}} cântări și-au recăpătat titlul original",
     "done_other": "{{count}} de cântări și-au recăpătat titlul original",
     "failed": "Titlurile nu au putut fi recuperate: {{error}}"
+  },
+  "catalog": {
+    "title": "Biblioteci partajate",
+    "loading": "Se încarcă catalogul…",
+    "failed": "Catalogul nu a putut fi încărcat.",
+    "empty": "Nicio biserică nu a listat încă o bibliotecă.",
+    "meta_one": "{{publisher}} · {{count}} cântare",
+    "meta_few": "{{publisher}} · {{count}} cântări",
+    "meta_other": "{{publisher}} · {{count}} de cântări",
+    "add": "Adaugă",
+    "added": "Adăugată"
   }
 }

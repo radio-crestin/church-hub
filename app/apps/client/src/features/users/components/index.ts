@@ -1,3 +1,5 @@
+export * from './LinkQRCode'
+export * from './PairingQRCode'
 export * from './UserCard'
 export * from './UserForm'
 export * from './UserList'

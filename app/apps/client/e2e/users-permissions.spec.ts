@@ -78,7 +78,7 @@ test.describe('Users & permissions', () => {
 
       // But the sidebar configuration is readable without settings.view, so
       // limited users see the same hidden/shown nav items the owner configured
-      // (e.g. a hidden Feedback button stays hidden for everyone).
+      // (e.g. a hidden page stays hidden for everyone).
       const sidebarCfg = await guest.get(
         '/api/settings/app_settings/sidebar_configuration',
       )
@@ -223,7 +223,7 @@ test.describe('Users & permissions', () => {
       await page
         .getByPlaceholder(/enter password|introdu parola/i)
         .fill(PASSWORD)
-      await page.getByRole('button', { name: /sign in|autentificare/i }).click()
+      await page.getByRole('button', { name: /sign in|conectează-te/i }).click()
 
       // The switch finalizes via a top-level navigation that reloads the app.
       await page.waitForTimeout(3500)
@@ -275,7 +275,7 @@ test.describe('Users & permissions', () => {
       // persists across runs) don't make this a strict-mode violation.
       await page.getByRole('button', { name: new RegExp(wrongName) }).click()
       await page.locator('#login-password').fill('definitely-not-it')
-      await page.getByRole('button', { name: /sign in|autentificare/i }).click()
+      await page.getByRole('button', { name: /sign in|conectează-te/i }).click()
 
       // The alert appears and we stay on the password form (no redirect).
       await expect(page.getByRole('alert')).toBeVisible({ timeout: 5000 })

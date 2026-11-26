@@ -9,8 +9,7 @@ import {
 } from '../constants/shortcutActions'
 import { useShortcutPages } from '../hooks/useShortcutPages'
 
-const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900'
+const cardClass = 'rounded-xl border border-line bg-panel p-4 sm:p-6'
 
 /**
  * The consolidated Shortcuts settings page: every configurable keyboard/MIDI
@@ -29,20 +28,20 @@ export function AppShortcutsPanel() {
   return (
     <div className="space-y-6">
       <section className={cardClass}>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.shortcuts.groups.presentation')}
         </h3>
-        <p className="mb-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-4 mt-1 text-sm text-fg-label">
           {t('sections.shortcuts.groups.presentationDescription')}
         </p>
         <GlobalShortcutsSettings actions={PRESENTATION_SHORTCUT_ACTIONS} />
       </section>
 
       <section className={cardClass}>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-fg">
           {t('sections.shortcuts.groups.livestream')}
         </h3>
-        <p className="mb-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-4 mt-1 text-sm text-fg-label">
           {t('sections.shortcuts.groups.livestreamDescription')}
         </p>
         <GlobalShortcutsSettings actions={LIVESTREAM_SHORTCUT_ACTIONS} />
@@ -50,10 +49,8 @@ export function AppShortcutsPanel() {
 
       {slideKeyPages.map((page) => (
         <section key={page.itemId} className={cardClass}>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {page.label}
-          </h3>
-          <p className="mb-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h3 className="text-base font-semibold text-fg">{page.label}</h3>
+          <p className="mb-4 mt-1 text-sm text-fg-label">
             {t('sections.shortcuts.groups.pagesDescription')}
           </p>
           <PageShortcutsSettings page={page} />
@@ -62,18 +59,16 @@ export function AppShortcutsPanel() {
 
       {otherPages.length > 0 && (
         <section className={cardClass} data-testid="other-pages-shortcuts">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-base font-semibold text-fg">
             {t('sections.shortcuts.groups.otherPages')}
           </h3>
-          <p className="mb-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mb-4 mt-1 text-sm text-fg-label">
             {t('sections.shortcuts.groups.otherPagesDescription')}
           </p>
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-line">
             {otherPages.map((page) => (
               <div key={page.itemId} className="space-y-3 py-4 first:pt-0">
-                <h4 className="font-semibold text-gray-900 dark:text-white">
-                  {page.label}
-                </h4>
+                <h4 className="text-sm font-semibold text-fg">{page.label}</h4>
                 <PageShortcutsSettings page={page} />
               </div>
             ))}

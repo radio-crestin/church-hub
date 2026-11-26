@@ -134,9 +134,33 @@ export const screenSchemas = {
         description:
           'Name of the physical monitor this screen projects onto, as the OS reports it (e.g. "Built-in Retina Display", "\\\\.\\DISPLAY1", "HDMI-1"). Null opens the window wherever it lands. Written both by the operator and by the window itself when it is dragged to another monitor.',
       },
-      width: { type: 'integer', description: 'Screen width in pixels' },
-      height: { type: 'integer', description: 'Screen height in pixels' },
-      globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
+      templateId: {
+        type: 'integer',
+        description: 'The slide template the screen draws with',
+      },
+      followsPresentation: {
+        type: 'boolean',
+        description:
+          "A running presentation (or one of its items) restyles this screen with the presentation's template. On for primary and kiosk screens by default.",
+      },
+      sceneTemplates: {
+        type: 'object',
+        additionalProperties: { type: 'integer' },
+        description:
+          'OBS scene name → template id: while that scene is live, the screen draws with that template',
+      },
+      width: {
+        type: 'integer',
+        description: "The design canvas width in pixels (its template's)",
+      },
+      height: {
+        type: 'integer',
+        description: "The design canvas height in pixels (its template's)",
+      },
+      globalSettings: {
+        $ref: '#/components/schemas/ScreenGlobalSettings',
+        description: "The clock and fallback background (its template's)",
+      },
       sortOrder: { type: 'integer' },
       createdAt: { type: 'integer', description: 'Unix timestamp' },
       updatedAt: { type: 'integer', description: 'Unix timestamp' },
@@ -191,7 +215,16 @@ export const screenSchemas = {
         description:
           'Monitor to project onto, by the name the OS reports. Null opens the window wherever it lands.',
       },
-      width: { type: 'integer' },
+      templateId: {
+        type: 'integer',
+        description: 'Draw with this slide template',
+      },
+      followsPresentation: { type: 'boolean' },
+      width: {
+        type: 'integer',
+        description:
+          "Saved into the screen's template (a bundled one is copied first)",
+      },
       height: { type: 'integer' },
       globalSettings: { $ref: '#/components/schemas/ScreenGlobalSettings' },
       sortOrder: { type: 'integer' },

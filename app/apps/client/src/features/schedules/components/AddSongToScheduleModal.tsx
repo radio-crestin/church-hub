@@ -252,19 +252,19 @@ export function AddSongToScheduleModal({
     <dialog
       ref={dialogRef}
       data-testid="add-song-to-schedule-modal"
-      className="fixed inset-0 m-auto w-full max-w-2xl p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+      className="fixed inset-0 m-auto w-full max-w-2xl p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
       onClick={(e) => {
         if (e.target === dialogRef.current) handleClose()
       }}
     >
       <div className="flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-start justify-between gap-3 p-4 border-b border-line">
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-base font-semibold text-fg">
               {t('modal.addSongTitle')}
             </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-fg-hint">
               {t('modal.addSongDescription')}
             </p>
           </div>
@@ -274,16 +274,19 @@ export function AddSongToScheduleModal({
             disabled={isSaving}
             title={t('modal.cancel')}
             data-testid="add-song-to-schedule-close"
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-1 rounded hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Search + inline create */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-line">
           <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-hint"
+              strokeWidth={1.5}
+            />
             <input
               ref={searchInputRef}
               type="text"
@@ -291,14 +294,14 @@ export function AddSongToScheduleModal({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('modal.searchSchedules')}
               data-testid="add-song-to-schedule-search"
-              className="w-full pl-9 pr-8 py-2 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full pl-9 pr-8 py-2 text-sm bg-app border border-line rounded-lg text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
             />
             {searchQuery && (
               <ClearSearchButton
                 inputRef={searchInputRef}
                 onClear={() => setSearchQuery('')}
                 size={16}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg-label"
               />
             )}
           </div>
@@ -308,7 +311,7 @@ export function AddSongToScheduleModal({
             disabled={isSaving}
             title={t('modal.createNew')}
             data-testid="add-song-to-schedule-new"
-            className="shrink-0 p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 transition-colors disabled:opacity-50"
+            className="shrink-0 p-2 rounded-lg bg-primary text-white hover:bg-indigo-700 transition-colors disabled:opacity-50"
           >
             <Plus size={18} />
           </button>
@@ -328,9 +331,9 @@ export function AddSongToScheduleModal({
               <div
                 key={draft.key}
                 data-testid="schedule-draft-row"
-                className="flex items-center gap-2 rounded-lg border border-indigo-300 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/20 px-2 py-1.5"
+                className="flex items-center gap-2 rounded-lg border border-line-strong bg-selected px-2 py-1.5"
               >
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-indigo-500 bg-indigo-500 text-white">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line-strong bg-primary text-white">
                   <Check size={12} strokeWidth={3} />
                 </span>
                 <input
@@ -353,27 +356,27 @@ export function AddSongToScheduleModal({
                     }
                   }}
                   placeholder={t('modal.scheduleName')}
-                  className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-sm text-fg placeholder:text-fg-hint focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => removeDraft(draft.key)}
                   title={t('modal.cancel')}
-                  className="shrink-0 p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors"
+                  className="shrink-0 p-1 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded transition-colors"
                 >
-                  <X size={14} />
+                  <X size={14} strokeWidth={1.75} />
                 </button>
               </div>
             ))}
 
             {isLoading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-8 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : filteredSchedules.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-fg-hint" />
+                <p className="text-sm text-fg-hint">
                   {searchQuery.trim()
                     ? t('search.noResults', { query: searchQuery })
                     : t('noSchedules')}
@@ -391,24 +394,24 @@ export function AddSongToScheduleModal({
                     data-testid="schedule-option"
                     className={`flex items-center gap-2 rounded-lg border px-2 py-2 text-left transition-colors ${
                       isSelected
-                        ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10'
+                        ? 'border-line-strong bg-selected'
+                        : 'border-line bg-panel hover:border-line-strong hover:bg-hover'
                     }`}
                   >
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
                         isSelected
-                          ? 'border-indigo-500 bg-indigo-500 text-white'
-                          : 'border-gray-300 dark:border-gray-600 text-transparent'
+                          ? 'border-line-strong bg-primary text-white'
+                          : 'border-line text-transparent'
                       }`}
                     >
                       <Check size={12} strokeWidth={3} />
                     </span>
                     <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <span className="block text-sm font-medium text-fg truncate">
                         {schedule.title}
                       </span>
-                      <span className="block text-xs text-gray-500 dark:text-gray-400">
+                      <span className="block text-xs text-fg-hint">
                         {t('panel.songCount', { count: schedule.songCount })}
                       </span>
                     </span>
@@ -420,13 +423,13 @@ export function AddSongToScheduleModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between gap-3 p-4 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
             disabled={isSaving}
             data-testid="add-song-to-schedule-cancel"
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body bg-field hover:bg-selected rounded-lg transition-colors disabled:opacity-50"
           >
             {t('modal.cancel')}
           </button>
@@ -435,11 +438,11 @@ export function AddSongToScheduleModal({
             onClick={handleSave}
             disabled={!canSave || isSaving}
             data-testid="add-song-to-schedule-save"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors disabled:opacity-50"
           >
             {isSaving ? (
               <>
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
                 {t('modal.adding')}
               </>
             ) : (

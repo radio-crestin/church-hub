@@ -4,32 +4,40 @@
 
 import { responses, securitySchemes } from './components'
 import {
+  analyticsPaths,
   authPaths,
   backgroundMediaPaths,
   backupPaths,
   bibleBookmarksPaths,
   biblePaths,
+  bibleTopicsPaths,
   categoriesPaths,
+  cloudBackupPaths,
   conversionPaths,
   databasePaths,
   devicesPaths,
-  feedbackPaths,
   healthPaths,
   livestreamYouTubePaths,
+  liveTranslationPaths,
   logsPaths,
   musicPaths,
   notificationsPaths,
   presentationHighlightsPaths,
   presentationPaths,
+  remoteAccessPaths,
+  scheduleItemsPaths,
   schedulesPaths,
   screenSharePaths,
   screensPaths,
+  secretStorePaths,
   settingsPaths,
+  slideTemplatesPaths,
   songBookmarksPaths,
   songGroupsPaths,
   songHistoryPaths,
   songSourcesPaths,
   songsPaths,
+  syncOwnerPaths,
   syncPaths,
   usersPaths,
 } from './paths'
@@ -42,6 +50,7 @@ import {
   presentationSchemas,
   scheduleSchemas,
   screenSchemas,
+  slidesDeckSchemas,
   songHistorySchemas,
   songSchemas,
   songSourceSchemas,
@@ -57,7 +66,12 @@ export const openApiSpec = {
       'API for Church Hub application - manage songs, schedules, presentations, and device access.\n\n' +
       'Every API response carries `X-Church-Hub-Database`: a short, stable id of the database that answered. ' +
       'It stays the same across restarts and differs between Church Hub apps (installed app, dev server, review builds). ' +
-      'A client that sees it change is talking to another app, whose ids are not the ones it shows.',
+      'A client that sees it change is talking to another app, whose ids are not the ones it shows.\n\n' +
+      "Cross-origin calls: the server answers with CORS only the app's own origins (the desktop and phone webviews " +
+      '`tauri://localhost` and `http(s)://tauri.localhost`, pages on this machine, the server itself as the request reached it) ' +
+      'and the origins listed in the `trusted_origins` app setting (comma or space separated). Any other `Origin` is refused with 403, ' +
+      'and so is a write without `Origin` that the browser marks cross-site, or a form-encoded or text/plain write without ' +
+      'one of `X-User-Auth`, `Authorization` or `X-Requested-With`. Clients that are not browsers send no `Origin` and are not affected.',
   },
   servers: [
     {
@@ -72,6 +86,10 @@ export const openApiSpec = {
   tags: [
     { name: 'Health', description: 'Health check endpoints' },
     { name: 'Settings', description: 'Application and user settings' },
+    {
+      name: 'Live Translation',
+      description: 'The listener link of live translation',
+    },
     { name: 'Database', description: 'Database management and backup' },
     {
       name: 'Backup',
@@ -102,6 +120,11 @@ export const openApiSpec = {
       description: 'Screen configuration and rendering settings',
     },
     {
+      name: 'Remote Access',
+      description:
+        'Phones reaching this computer from anywhere: a WebRTC tunnel through the signaling relay',
+    },
+    {
       name: 'Screen Share',
       description:
         'Native screen sharing: start/stop, frame ingest, MJPEG stream for the screens',
@@ -117,8 +140,8 @@ export const openApiSpec = {
     },
     { name: 'Conversion', description: 'File format conversion utilities' },
     {
-      name: 'Feedback',
-      description: 'Feature requests and user feedback submission',
+      name: 'Analytics',
+      description: 'Anonymous usage data: on/off and the install id',
     },
     { name: 'Logs', description: 'Application logs access' },
     {
@@ -126,8 +149,18 @@ export const openApiSpec = {
       description: 'YouTube broadcasts and the settings they are created with',
     },
     {
+      name: 'Bible Topics',
+      description:
+        'Bible verses by topic (OpenBible.info topical data, CC BY 4.0)',
+    },
+    {
       name: 'Notifications',
       description: 'The notifications history: song syncs and app updates',
+    },
+    {
+      name: 'Secret Store',
+      description:
+        'Saved passwords, API keys and tokens are sealed with a key kept outside the database',
     },
   ],
   paths: {
@@ -137,9 +170,13 @@ export const openApiSpec = {
     ...settingsPaths,
     ...databasePaths,
     ...backupPaths,
+    ...cloudBackupPaths,
     ...syncPaths,
+    ...syncOwnerPaths,
     ...devicesPaths,
     ...authPaths,
+    ...remoteAccessPaths,
+    ...liveTranslationPaths,
     ...usersPaths,
     ...songsPaths,
     ...songGroupsPaths,
@@ -149,16 +186,20 @@ export const openApiSpec = {
     ...categoriesPaths,
     ...biblePaths,
     ...bibleBookmarksPaths,
+    ...bibleTopicsPaths,
+    ...scheduleItemsPaths,
     ...schedulesPaths,
     ...screenSharePaths,
     ...screensPaths,
+    ...slideTemplatesPaths,
     ...backgroundMediaPaths,
     ...presentationPaths,
     ...presentationHighlightsPaths,
     ...musicPaths,
     ...conversionPaths,
-    ...feedbackPaths,
+    ...analyticsPaths,
     ...notificationsPaths,
+    ...secretStorePaths,
   },
   components: {
     securitySchemes,
@@ -170,6 +211,7 @@ export const openApiSpec = {
       ...songSourceSchemas,
       ...bibleSchemas,
       ...scheduleSchemas,
+      ...slidesDeckSchemas,
       ...screenSchemas,
       ...backgroundMediaSchemas,
       ...presentationSchemas,

@@ -1,11 +1,14 @@
 import { Book, Megaphone, Music, User } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 
+import { DeckSlideRenderer } from '~/features/slides-deck/components/DeckSlideRenderer'
 import { ChordDiagram } from '~/features/songs/components/ChordDiagram'
 import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
+import { ScreenImage } from './ScreenImage'
+import { ScreenVideo } from './ScreenVideo'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
 import { getClockOverrideLayout } from './utils/getClockOverrideLayout'
@@ -24,6 +27,7 @@ import type {
   ClockOverride,
   ContentType,
   ContentTypeConfig,
+  ReferenceTextConfig,
   ScreenWithConfigs,
   SongContentConfig,
   TextStyleRange,
@@ -33,6 +37,7 @@ import {
   resolveSlideFontScale,
 } from '../../utils/applySlideStyleOverride'
 import { formatReferenceWithWrapper } from '../../utils/formatReferenceWithWrapper'
+import { formatSongTitle } from '../../utils/formatSongTitle'
 import { offsetStyleRanges } from '../../utils/offsetStyleRanges'
 import { toTextStyleRanges } from '../../utils/toTextStyleRanges'
 
@@ -56,6 +61,11 @@ export interface ScreenContentProps {
   /** Identity-based key that changes only on slide navigation, not content edits */
   contentKey?: string
   /**
+   * The slide shares lines with the previous one (usePresentationContent):
+   * the main text, the verse and the reference animate only what changed.
+   */
+  morphLines?: boolean
+  /**
    * When true, the main lyrics element becomes editable in place (PowerPoint-style
    * slide editing). Only the stage editor sets this; projection is unaffected.
    */
@@ -72,6 +82,8 @@ export interface ScreenContentProps {
    * projections always render the screen's own clock settings.
    */
   clockOverride?: ClockOverride
+  /** A video item plays its sound here (a main display, not a preview). */
+  videoSound?: boolean
 }
 
 export function ScreenContent({
@@ -84,11 +96,13 @@ export function ScreenContent({
   nextSlideData,
   styleRanges,
   contentKey: externalContentKey,
+  morphLines = false,
   editableMainText = false,
   editPlaceholder,
   onMainTextEdit,
   textVersion,
   clockOverride,
+  videoSound = false,
 }: ScreenContentProps) {
   const [activeChord, setActiveChord] = useState<string | null>(null)
   const { data: presentationState } = usePresentationState()
@@ -250,6 +264,7 @@ export function ScreenContent({
         key="mainText"
         content={contentData?.mainText ?? ''}
         contentKey={`mainText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(mainStyle, fontScale)}
         width={scaledBounds.width}
@@ -310,6 +325,7 @@ export function ScreenContent({
         key="contentText"
         content={displayContent}
         contentKey={`contentText-${contentKey}`}
+        morphLines={morphLines}
         isVisible={elementVisible}
         style={scaleTextStyle(ct.style, fontScale)}
         width={scaledBounds.width}
@@ -356,6 +372,8 @@ export function ScreenContent({
         key="referenceText"
         content={contentData?.referenceText ?? ''}
         contentKey={`referenceText-${contentKey}`}
+        morphLines={morphLines}
+        splitBy="reference"
         isVisible={elementVisible}
         style={scaleTextStyle(rt.style, fontScale)}
         width={scaledBounds.width}
@@ -375,21 +393,24 @@ export function ScreenContent({
     )
   }
 
-  // Render the song key ("gama") — shown on the first slide. contentData.songKey
-  // is only populated on the first slide.
+  // Render a song element (gama, "Amin", title) from its layout.
   //
   // The element stays mounted on every slide and only its text comes and goes.
   // That way it takes the same slide-change path as the lyrics: the old key
   // fades out with the old verse and the new one fades in with the new verse.
   // Mounting it only when a key exists made it pop in at once and cut off the
   // moment the slide changed, out of step with the lyrics.
-  const renderSongKey = () => {
-    const sk = resolveSongElementConfig(config, songConfig, 'songKey')
-    if (!sk || sk.hidden) return null
+  const renderSongElement = (
+    name: 'songKey' | 'amen' | 'songTitle',
+    element: ReferenceTextConfig | undefined,
+    elementContentKey: string,
+    content = contentData?.[name] ?? '',
+  ) => {
+    if (!element || element.hidden) return null
 
     const bounds = calculatePixelBounds(
-      sk.constraints,
-      sk.size,
+      element.constraints,
+      element.size,
       canvasWidth,
       canvasHeight,
     )
@@ -397,56 +418,54 @@ export function ScreenContent({
 
     return (
       <AnimatedText
-        key="songKey"
-        content={contentData?.songKey ?? ''}
-        contentKey={`songKey-${contentKey}`}
+        key={name}
+        content={content}
+        contentKey={elementContentKey}
         isVisible={isVisible}
-        style={scaleTextStyle(sk.style, fontScale)}
+        style={scaleTextStyle(element.style, fontScale)}
         width={scaledBounds.width}
         height={scaledBounds.height}
         left={scaledBounds.x}
         top={scaledBounds.y}
         isHtml={false}
-        animationIn={sk.animationIn}
-        animationOut={sk.animationOut}
-        slideTransitionIn={sk.slideTransitionIn}
-        slideTransitionOut={sk.slideTransitionOut}
+        animationIn={element.animationIn}
+        animationOut={element.animationOut}
+        slideTransitionIn={element.slideTransitionIn}
+        slideTransitionOut={element.slideTransitionOut}
       />
     )
   }
 
-  // Render the "Amin" element — shown on the last slide. contentData.amen is
-  // only populated on the last slide. Mounted on every slide for the same
-  // reason as the song key above.
-  const renderAmen = () => {
-    const am = resolveSongElementConfig(config, songConfig, 'amen')
-    if (!am || am.hidden) return null
-
-    const bounds = calculatePixelBounds(
-      am.constraints,
-      am.size,
-      canvasWidth,
-      canvasHeight,
+  // The song key ("gama"): contentData.songKey is only set on the first slide.
+  const renderSongKey = () =>
+    renderSongElement(
+      'songKey',
+      resolveSongElementConfig(config, songConfig, 'songKey'),
+      `songKey-${contentKey}`,
     )
-    const scaledBounds = scaleBounds(bounds)
 
-    return (
-      <AnimatedText
-        key="amen"
-        content={contentData?.amen ?? ''}
-        contentKey={`amen-${contentKey}`}
-        isVisible={isVisible}
-        style={scaleTextStyle(am.style, fontScale)}
-        width={scaledBounds.width}
-        height={scaledBounds.height}
-        left={scaledBounds.x}
-        top={scaledBounds.y}
-        isHtml={false}
-        animationIn={am.animationIn}
-        animationOut={am.animationOut}
-        slideTransitionIn={am.slideTransitionIn}
-        slideTransitionOut={am.slideTransitionOut}
-      />
+  // "Amin": contentData.amen is only set on the last slide.
+  const renderAmen = () =>
+    renderSongElement(
+      'amen',
+      resolveSongElementConfig(config, songConfig, 'amen'),
+      `amen-${contentKey}`,
+    )
+
+  // The song's title, set on the `song` layout alone and shown on every slide
+  // of the song. Keyed by the title, so it stays put from verse to verse and
+  // only changes with the song.
+  const renderSongTitle = () => {
+    const title = formatSongTitle(
+      contentData?.songTitle,
+      contentData?.songTitleNumber,
+      songConfig?.songTitle?.showNumber,
+    )
+    return renderSongElement(
+      'songTitle',
+      songConfig?.songTitle,
+      `songTitle-${title}`,
+      title,
     )
   }
 
@@ -804,14 +823,35 @@ export function ScreenContent({
         height: containerHeight,
       }}
     >
+      {contentData?.deck && (
+        <DeckSlideRenderer
+          shown={contentData.deck}
+          containerWidth={containerWidth}
+          containerHeight={containerHeight}
+          withSound={videoSound}
+          isVisible={isVisible}
+        />
+      )}
       {/* First, so the content's text is drawn over it; the screen background
           belongs to the parent and stays below */}
+      {contentData?.videoUrl && (
+        <ScreenVideo
+          url={contentData.videoUrl}
+          loop={contentData.videoLoop === true}
+          withSound={videoSound}
+        />
+      )}
+      <ScreenImage
+        url={contentData?.imageUrl}
+        isVisible={isVisible && !!contentData?.imageUrl}
+      />
       {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}
       {renderReferenceText()}
       {renderSongKey()}
       {renderAmen()}
+      {renderSongTitle()}
       {renderPersonLabel()}
       {!clockOverride && renderClock()}
       {renderNextSlideSection()}

@@ -3,6 +3,7 @@ import { Eye, Plus } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { isWebApp } from '~/config'
 import { useFocusSearchEvent } from '~/features/keyboard-shortcuts/utils'
 import { getSongsLastVisited } from '~/features/navigation'
 import { usePresentationState } from '~/features/presentation'
@@ -431,10 +432,10 @@ function SongsPage() {
                 <button
                   type="button"
                   onClick={handleFocusPresentedSong}
-                  className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-700 rounded-lg transition-colors"
+                  className="flex h-8 items-center gap-2 px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg transition-colors"
                   title={t('bookmarks.focusPresentedSong')}
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-4 h-4 text-live" strokeWidth={1.5} />
                   <span className="hidden sm:inline truncate max-w-[200px]">
                     {presentedSong?.title}
                   </span>
@@ -442,10 +443,13 @@ function SongsPage() {
               )}
               {/* Discovering + importing from external sources is a create
                 operation — same gate as the create button, same route guard.
-                Songs waiting for approval add a small button that syncs them. */}
-              <PermissionGate permission="songs.create">
-                <DiscoverButton />
-              </PermissionGate>
+                Songs waiting for approval add a small button that syncs them.
+                The sources are the church PC's: the web app has none. */}
+              {!isWebApp && (
+                <PermissionGate permission="songs.create">
+                  <DiscoverButton />
+                </PermissionGate>
+              )}
               {/* Creating songs requires songs.create — hide the button entirely
                 for users without it (the /songs/new route is guarded too). */}
               <PermissionGate permission="songs.create">
@@ -457,9 +461,9 @@ function SongsPage() {
                       params: { songId: 'new' },
                     })
                   }
-                  className="flex items-center gap-2 px-3 py-2 lg:px-3 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+                  className="flex h-8 items-center gap-2 px-3 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4" strokeWidth={1.5} />
                   <span className="hidden sm:inline">
                     {t('actions.create')}
                   </span>

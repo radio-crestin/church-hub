@@ -1,6 +1,11 @@
 import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 
+import { childScheduleIds } from './childScheduleIds'
+import { MAX_EXPANDED_ITEMS, MAX_NESTING_DEPTH } from './nestingLimits'
+import { toScheduleAutomation } from './toScheduleAutomation'
+import { toScheduleItemMidi } from './toScheduleItemMidi'
 import type {
+  ChildSchedule,
   Schedule,
   ScheduleBiblePassageVerse,
   ScheduleItem,
@@ -16,10 +21,16 @@ import {
   songCategories,
   songs,
 } from '../../db/schema'
+import { type ItemConfig, withItemPicks } from '../schedule-items'
 import { getSlidesBySongId, getSlidesBySongIds } from '../songs'
 import { getTagsBySongIds } from '../songs/tags'
 
 const DEBUG = process.env.DEBUG === 'true'
+
+/** An item's stored settings; null when it has none. */
+function parseStoredConfig(json: string | null): ItemConfig | null {
+  return json ? (JSON.parse(json) as ItemConfig) : null
+}
 
 function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
@@ -184,7 +195,54 @@ function getVerseteTineriEntriesBatch(
 }
 
 /**
- * Gets all schedules with item counts
+ * One load of a presentation with the presentations inside it: those open
+ * around the one being built (a loop stops there), how deep it is, how many
+ * more items it may expand, and each nested presentation already built, so
+ * one held many times over is built once.
+ */
+export interface NestingContext {
+  path: ReadonlySet<number>
+  depth: number
+  budget: { remaining: number }
+  built: Map<number, { child: ChildSchedule; size: number }>
+}
+
+function newNestingContext(path: ReadonlySet<number> = new Set()) {
+  return {
+    path,
+    depth: 0,
+    budget: { remaining: MAX_EXPANDED_ITEMS },
+    built: new Map(),
+  } satisfies NestingContext
+}
+
+/**
+ * The presentation a `schedule` item plays, with its items; null where it is
+ * gone, one of the presentations being opened around it (a loop in old or
+ * synced data), deeper than the nesting limit, or past the item limit.
+ */
+function loadChildSchedule(
+  childId: number | null,
+  ctx: NestingContext,
+): ChildSchedule | null {
+  if (childId === null || ctx.path.has(childId)) return null
+  if (ctx.depth >= MAX_NESTING_DEPTH || ctx.budget.remaining <= 0) return null
+  const known = ctx.built.get(childId)
+  if (known) {
+    if (known.size > ctx.budget.remaining) return null
+    ctx.budget.remaining -= known.size
+    return known.child
+  }
+  const before = ctx.budget.remaining
+  const loaded = getScheduleById(childId, { ...ctx, depth: ctx.depth + 1 })
+  if (!loaded) return null
+  const child = { id: loaded.id, title: loaded.title, items: loaded.items }
+  ctx.built.set(childId, { child, size: before - ctx.budget.remaining })
+  return child
+}
+
+/**
+ * Gets all schedules with item counts, but the control room's queue
  */
 export function getSchedules(): Schedule[] {
   try {
@@ -196,6 +254,14 @@ export function getSchedules(): Schedule[] {
         id: schedules.id,
         title: schedules.title,
         description: schedules.description,
+        autoplaySeconds: schedules.autoplaySeconds,
+        autoplayByText: schedules.autoplayByText,
+        loop: schedules.loop,
+        musicVolume: schedules.musicVolume,
+        startOnAppStart: schedules.startOnAppStart,
+        templateId: schedules.templateId,
+        startTrigger: schedules.startTrigger,
+        stopTrigger: schedules.stopTrigger,
         createdAt: schedules.createdAt,
         updatedAt: schedules.updatedAt,
         itemCount: sql<number>`CAST(COUNT(${scheduleItems.id}) AS INTEGER)`,
@@ -203,16 +269,21 @@ export function getSchedules(): Schedule[] {
       })
       .from(schedules)
       .leftJoin(scheduleItems, eq(schedules.id, scheduleItems.scheduleId))
+      .where(eq(schedules.isQueue, false))
       .groupBy(schedules.id)
       .orderBy(desc(schedules.updatedAt))
       .all()
+    const children = childScheduleIds()
 
     return results.map((record) => ({
       id: record.id,
       title: record.title,
       description: record.description,
+      automation: toScheduleAutomation(record),
+      templateId: record.templateId,
       itemCount: record.itemCount,
       songCount: record.songCount,
+      childScheduleIds: children.get(record.id) ?? [],
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
     }))
@@ -223,9 +294,13 @@ export function getSchedules(): Schedule[] {
 }
 
 /**
- * Gets a single schedule by ID with all items
+ * Gets a single schedule by ID with all items; a `schedule` item carries its
+ * presentation's items too, within the nesting limits (see NestingContext).
  */
-export function getScheduleById(id: number): ScheduleWithItems | null {
+export function getScheduleById(
+  id: number,
+  ctx: NestingContext = newNestingContext(),
+): ScheduleWithItems | null {
   try {
     log('debug', `Getting schedule by ID: ${id}`)
 
@@ -258,6 +333,14 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         biblePassageReference: scheduleItems.biblePassageReference,
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
+        childScheduleId: scheduleItems.childScheduleId,
+        advanceSeconds: scheduleItems.advanceSeconds,
+        templateId: scheduleItems.templateId,
+        itemConfig: scheduleItems.itemConfig,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -299,8 +382,11 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
     // the bookmarks list uses, so no N+1 creeps in here.
     const tagsBySongId = getTagsBySongIds(songIds)
 
+    ctx.budget.remaining -= itemRecords.length
+    const childCtx: NestingContext = { ...ctx, path: new Set(ctx.path).add(id) }
+
     // Convert items with pre-loaded data
-    const items: ScheduleItem[] = itemRecords.map((record) => {
+    function toItem(record: (typeof itemRecords)[number]): ScheduleItem {
       const isSongItem = record.itemType === 'song' && record.songId !== null
       const slides =
         record.itemType === 'song' && record.songId
@@ -343,20 +429,39 @@ export function getScheduleById(id: number): ScheduleWithItems | null {
         biblePassageVerses,
         verseteTineriEntries,
         obsSceneName: record.obsSceneName,
+        advanceSeconds: record.advanceSeconds,
+        templateId: record.templateId,
+        itemConfig: parseStoredConfig(record.itemConfig),
+        allVerseteTineriEntries: null,
+        music: null,
+        video: null,
+        midi: toScheduleItemMidi(record),
+        childScheduleId: record.childScheduleId,
+        childSchedule: loadChildSchedule(record.childScheduleId, childCtx),
         sortOrder: record.sortOrder,
         createdAt: Math.floor(record.createdAt.getTime() / 1000),
         updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
       }
-    })
+    }
 
+    const items: ScheduleItem[] = itemRecords.map((record) =>
+      withItemPicks(toItem(record)),
+    )
     const songCount = items.filter((i) => i.itemType === 'song').length
 
     return {
       id: schedule.id,
       title: schedule.title,
       description: schedule.description,
+      automation: toScheduleAutomation(schedule),
+      templateId: schedule.templateId,
       itemCount: items.length,
       songCount,
+      childScheduleIds: items.flatMap((i) =>
+        i.itemType === 'schedule' && i.childScheduleId !== null
+          ? [i.childScheduleId]
+          : [],
+      ),
       createdAt: Math.floor(schedule.createdAt.getTime() / 1000),
       updatedAt: Math.floor(schedule.updatedAt.getTime() / 1000),
       items,
@@ -389,6 +494,14 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         biblePassageReference: scheduleItems.biblePassageReference,
         biblePassageTranslation: scheduleItems.biblePassageTranslation,
         obsSceneName: scheduleItems.obsSceneName,
+        childScheduleId: scheduleItems.childScheduleId,
+        advanceSeconds: scheduleItems.advanceSeconds,
+        templateId: scheduleItems.templateId,
+        itemConfig: scheduleItems.itemConfig,
+        midiFile: scheduleItems.midiFile,
+        midiFileName: scheduleItems.midiFileName,
+        midiDurationSeconds: scheduleItems.midiDurationSeconds,
+        midiVerseTimes: scheduleItems.midiVerseTimes,
         isSung: scheduleItems.isSung,
         sungAt: scheduleItems.sungAt,
         sortOrder: scheduleItems.sortOrder,
@@ -424,7 +537,7 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
         ? getVerseteTineriEntries(record.id)
         : []
 
-    return {
+    return withItemPicks({
       id: record.id,
       scheduleId: record.scheduleId,
       itemType: record.itemType,
@@ -450,10 +563,22 @@ export function getScheduleItemById(id: number): ScheduleItem | null {
       biblePassageVerses,
       verseteTineriEntries,
       obsSceneName: record.obsSceneName,
+      advanceSeconds: record.advanceSeconds,
+      templateId: record.templateId,
+      itemConfig: parseStoredConfig(record.itemConfig),
+      allVerseteTineriEntries: null,
+      music: null,
+      video: null,
+      midi: toScheduleItemMidi(record),
+      childScheduleId: record.childScheduleId,
+      childSchedule: loadChildSchedule(
+        record.childScheduleId,
+        newNestingContext(new Set([record.scheduleId])),
+      ),
       sortOrder: record.sortOrder,
       createdAt: Math.floor(record.createdAt.getTime() / 1000),
       updatedAt: Math.floor(record.updatedAt.getTime() / 1000),
-    }
+    })
   } catch (error) {
     log('error', `Failed to get schedule item: ${error}`)
     return null

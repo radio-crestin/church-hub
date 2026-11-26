@@ -87,6 +87,8 @@ export const usersPaths = {
     put: {
       tags: ['Users'],
       summary: 'Update a user',
+      description:
+        'Deactivating a user (isActive: false) signs out every cloud sync device joined as them, right after the response (the response does not wait for it); reactivating does not bring those devices back: they are added again.',
       parameters: [idParam],
       requestBody: {
         content: {
@@ -112,7 +114,8 @@ export const usersPaths = {
     delete: {
       tags: ['Users'],
       summary: 'Delete a user',
-      description: 'The super-admin account cannot be deleted.',
+      description:
+        'The super-admin account cannot be deleted. Every cloud sync device joined as the user is signed out right after the response (the response does not wait for it).',
       parameters: [idParam],
       responses: {
         '200': {

@@ -3,6 +3,8 @@ export interface AISearchConfig {
   provider: 'openai' | 'anthropic' | 'gemini' | 'custom'
   model: string
   apiKey: string
+  /** Sent instead of `apiKey` to users who may not change settings. */
+  apiKeySet?: boolean
   baseUrl?: string
   analyzeResults?: boolean
 }

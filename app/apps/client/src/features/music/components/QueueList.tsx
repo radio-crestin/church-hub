@@ -1,4 +1,4 @@
-import { Music, X } from 'lucide-react'
+import { Music, Play, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { EmptyState } from '~/ui/page'
@@ -35,10 +35,10 @@ export function QueueList({
       {queue.map((item, index) => (
         <div
           key={item.id}
-          className={`flex items-center gap-1 sm:gap-2 p-2 rounded-md cursor-pointer group overflow-hidden ${
+          className={`flex items-center gap-1 sm:gap-2 p-2 rounded-lg cursor-pointer group overflow-hidden ${
             index === currentIndex
-              ? 'bg-purple-100 dark:bg-purple-900/30'
-              : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+              ? 'bg-live-tint ring-1 ring-inset ring-live'
+              : 'hover:bg-hover'
           }`}
           onClick={() => onPlayAtIndex(index)}
           onKeyDown={(e) => {
@@ -52,26 +52,22 @@ export function QueueList({
           data-testid="music-queue-item"
           data-current={index === currentIndex || undefined}
         >
-          <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+          <div className="w-5 h-5 shrink-0 flex items-center justify-center text-xs font-medium tabular-nums text-fg-hint">
             {index === currentIndex ? (
-              <span className="text-purple-600 dark:text-purple-400">
-                {'\u25B6'}
-              </span>
+              <Play className="h-3 w-3 fill-current text-live" />
             ) : (
               index + 1
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            <p className="text-sm font-medium text-fg-body truncate">
               {item.title || item.filename}
             </p>
             {item.artist && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {item.artist}
-              </p>
+              <p className="text-xs text-fg-hint truncate">{item.artist}</p>
             )}
           </div>
-          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+          <span className="text-xs tabular-nums text-fg-hint shrink-0">
             {formatDuration(item.duration)}
           </span>
           <button
@@ -80,10 +76,11 @@ export function QueueList({
               e.stopPropagation()
               onRemoveFromQueue(item.id)
             }}
-            className="p-1 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-opacity hover:bg-hover lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
             title={t('player.removeFromQueue')}
+            aria-label={t('player.removeFromQueue')}
           >
-            <X className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+            <X className="h-3.5 w-3.5 text-fg-label" strokeWidth={1.75} />
           </button>
         </div>
       ))}

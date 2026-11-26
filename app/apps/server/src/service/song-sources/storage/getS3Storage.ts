@@ -1,5 +1,6 @@
 import type { S3Storage } from './types'
 import { getRawDatabase } from '../../../db'
+import { openSecret, secretPlaces } from '../../secret-store'
 
 interface StorageRow {
   endpoint: string
@@ -11,7 +12,10 @@ interface StorageRow {
   public_base_url: string
 }
 
-/** The configured S3 storage, or null when the user has not set one up. */
+/**
+ * The configured S3 storage, its secret key opened, or null when the user
+ * has not set one up.
+ */
 export function getS3Storage(): S3Storage | null {
   const row = getRawDatabase()
     .query<StorageRow, []>(
@@ -27,7 +31,9 @@ export function getS3Storage(): S3Storage | null {
     bucket: row.bucket,
     pathPrefix: row.path_prefix,
     accessKeyId: row.access_key_id,
-    secretAccessKey: row.secret_access_key,
+    // Unopenable (another computer's): asked for again, like a missing one.
+    secretAccessKey:
+      openSecret(row.secret_access_key, secretPlaces.s3SecretAccessKey) ?? '',
     publicBaseUrl: row.public_base_url,
   }
 }

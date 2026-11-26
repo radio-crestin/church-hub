@@ -1,14 +1,10 @@
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
+import { apiFetch } from '~/utils/apiFetch'
 import type { TextStyleRange } from '../types'
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 // Get headers with auth token for mobile
 function getHeaders(contentType?: string): Record<string, string> {
@@ -37,10 +33,13 @@ function getHeaders(contentType?: string): Record<string, string> {
  * Fetches the current slide highlights
  */
 export async function getSlideHighlights(): Promise<TextStyleRange[]> {
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/highlights`, {
-    credentials: 'include',
-    headers: getHeaders(),
-  })
+  const response = await apiFetch(
+    `${getApiUrl()}/api/presentation/highlights`,
+    {
+      credentials: 'include',
+      headers: getHeaders(),
+    },
+  )
 
   if (!response.ok) {
     throw new Error('Failed to fetch slide highlights')
@@ -56,12 +55,15 @@ export async function getSlideHighlights(): Promise<TextStyleRange[]> {
 export async function addSlideHighlight(
   highlight: TextStyleRange,
 ): Promise<TextStyleRange[]> {
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/highlights`, {
-    method: 'POST',
-    headers: getHeaders('application/json'),
-    body: JSON.stringify(highlight),
-    credentials: 'include',
-  })
+  const response = await apiFetch(
+    `${getApiUrl()}/api/presentation/highlights`,
+    {
+      method: 'POST',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify(highlight),
+      credentials: 'include',
+    },
+  )
 
   if (!response.ok) {
     throw new Error('Failed to add slide highlight')
@@ -80,12 +82,15 @@ export async function addSlideHighlight(
 export async function setSlideHighlights(
   ranges: TextStyleRange[],
 ): Promise<TextStyleRange[]> {
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/highlights`, {
-    method: 'PUT',
-    headers: getHeaders('application/json'),
-    body: JSON.stringify({ ranges }),
-    credentials: 'include',
-  })
+  const response = await apiFetch(
+    `${getApiUrl()}/api/presentation/highlights`,
+    {
+      method: 'PUT',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify({ ranges }),
+      credentials: 'include',
+    },
+  )
 
   if (!response.ok) {
     throw new Error('Failed to set slide highlights')
@@ -101,7 +106,7 @@ export async function setSlideHighlights(
 export async function removeSlideHighlight(
   highlightId: string,
 ): Promise<TextStyleRange[]> {
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/presentation/highlights/${highlightId}`,
     {
       method: 'DELETE',
@@ -122,11 +127,14 @@ export async function removeSlideHighlight(
  * Clears all slide highlights
  */
 export async function clearSlideHighlights(): Promise<TextStyleRange[]> {
-  const response = await fetchFn(`${getApiUrl()}/api/presentation/highlights`, {
-    method: 'DELETE',
-    headers: getHeaders(),
-    credentials: 'include',
-  })
+  const response = await apiFetch(
+    `${getApiUrl()}/api/presentation/highlights`,
+    {
+      method: 'DELETE',
+      headers: getHeaders(),
+      credentials: 'include',
+    },
+  )
 
   if (!response.ok) {
     throw new Error('Failed to clear slide highlights')

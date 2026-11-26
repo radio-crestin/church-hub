@@ -109,10 +109,10 @@ export function UserPermissions({
     <div className="space-y-5">
       {/* Role Template Selection */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+        <h4 className="text-sm font-semibold text-fg">
           {t('sections.users.roleTemplate')}
         </h4>
-        <p className="mb-2.5 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mb-2.5 text-xs text-fg-hint">
           {t('sections.users.roleTemplateHint')}
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -124,8 +124,8 @@ export function UserPermissions({
               disabled={disabled}
               className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                 selectedRole === role
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  ? 'border-transparent bg-selected text-fg'
+                  : 'border-transparent bg-field text-fg-body hover:bg-hover'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {t(`sections.users.roles.${role}`)}
@@ -137,14 +137,16 @@ export function UserPermissions({
       {/* Permission Groups */}
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <h4 className="text-sm font-semibold text-fg">
             {t('sections.users.permissions')}
           </h4>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {permissions.length} {t('sections.users.permissionsSelected')}
+          <span className="text-xs text-fg-hint">
+            {t('sections.users.permissionsSelectedCount', {
+              count: permissions.length,
+            })}
           </span>
         </div>
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="border border-line rounded-lg overflow-hidden">
           {GROUP_ORDER.map((group) => {
             const isExpanded = expandedGroups.has(group)
             const isFullySelected = isGroupFullySelected(group)
@@ -153,21 +155,26 @@ export function UserPermissions({
             const totalCount = PERMISSION_GROUPS[group].length
 
             return (
-              <div
-                key={group}
-                className="border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-              >
+              <div key={group} className="border-b border-line last:border-b-0">
                 {/* Group Header */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-2 px-3 py-2 bg-field">
                   <button
                     type="button"
                     onClick={() => toggleGroup(group)}
-                    className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                    className="p-0.5 hover:bg-hover rounded"
                   >
                     {isExpanded ? (
-                      <ChevronDown size={16} className="text-gray-500" />
+                      <ChevronDown
+                        strokeWidth={1.5}
+                        size={16}
+                        className="text-fg-hint"
+                      />
                     ) : (
-                      <ChevronRight size={16} className="text-gray-500" />
+                      <ChevronRight
+                        strokeWidth={1.5}
+                        size={16}
+                        className="text-fg-hint"
+                      />
                     )}
                   </button>
                   <input
@@ -178,25 +185,25 @@ export function UserPermissions({
                     }}
                     onChange={(e) => handleGroupToggle(group, e.target.checked)}
                     disabled={disabled}
-                    className="w-4 h-4 text-indigo-600 rounded border-gray-300
-                    focus:ring-indigo-500 disabled:opacity-50 cursor-pointer
+                    className="w-4 h-4 accent-primary text-primary rounded border-line
+                    focus:ring-focus disabled:opacity-50 cursor-pointer
                     disabled:cursor-not-allowed"
                   />
                   <button
                     type="button"
                     onClick={() => toggleGroup(group)}
-                    className="flex-1 text-left text-sm font-medium text-gray-900 dark:text-white"
+                    className="flex-1 text-left text-sm font-medium text-fg"
                   >
                     {t(`sections.users.groups.${group}`)}
                   </button>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                  <span className="text-xs text-fg-hint">
                     {selectedCount}/{totalCount}
                   </span>
                 </div>
 
                 {/* Group Permissions */}
                 {isExpanded && (
-                  <div className="px-3 py-2 space-y-2 bg-white dark:bg-gray-800">
+                  <div className="px-3 py-2 space-y-2 bg-panel">
                     {PERMISSION_GROUPS[group].map((permission) => (
                       <label
                         key={permission}
@@ -209,11 +216,11 @@ export function UserPermissions({
                             handlePermissionChange(permission, e.target.checked)
                           }
                           disabled={disabled}
-                          className="w-4 h-4 text-indigo-600 rounded border-gray-300
-                          focus:ring-indigo-500 disabled:opacity-50 cursor-pointer
+                          className="w-4 h-4 accent-primary text-primary rounded border-line
+                          focus:ring-focus disabled:opacity-50 cursor-pointer
                           disabled:cursor-not-allowed ml-6"
                         />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="text-sm text-fg-body">
                           {t(`sections.users.permissionLabels.${permission}`)}
                         </span>
                       </label>

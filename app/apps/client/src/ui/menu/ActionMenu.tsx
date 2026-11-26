@@ -13,8 +13,6 @@ export interface ActionMenuItem {
   /** Short "what does this do" line under the label. */
   description?: string
   icon: React.ReactNode
-  /** Tailwind classes for the icon chip — keeps each action's colour cue. */
-  iconClassName?: string
   onSelect: () => void
   disabled?: boolean
   active?: boolean
@@ -39,6 +37,10 @@ interface ActionMenuProps {
 const PANEL_MIN_WIDTH = 264
 const PANEL_MAX_WIDTH = 320
 const ESTIMATED_ROW_HEIGHT = 56
+/** Between the trigger and the panel. */
+const PANEL_GAP = 6
+/** Kept clear between the panel and the screen's edges. */
+const VIEWPORT_MARGIN = 8
 
 /** Menus opened from inside a <dialog> must portal into it or they render behind. */
 function getPortalContainer(element: HTMLElement | null): HTMLElement {
@@ -65,6 +67,7 @@ export function ActionMenu({
     bottom?: number
     left: number
     minWidth: number
+    maxHeight?: number
   }>({ left: 0, minWidth: PANEL_MIN_WIDTH })
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -87,29 +90,41 @@ export function ActionMenu({
     const trigger = buttonRef.current
     if (!trigger) return
 
+    // The panel is fixed, so everything here is in viewport coordinates.
     const rect = trigger.getBoundingClientRect()
-    const panelHeight = Math.min(items.length * ESTIMATED_ROW_HEIGHT + 16, 420)
-    const spaceBelow = window.innerHeight - rect.bottom
-    const openUpward = spaceBelow < panelHeight && rect.top > spaceBelow
+    // It is already mounted when this runs, so its real content height and
+    // width are known; a long list gets the room there is and scrolls.
+    const panelHeight =
+      panelRef.current?.scrollHeight ?? items.length * ESTIMATED_ROW_HEIGHT
+    const spaceBelow =
+      window.innerHeight - rect.bottom - PANEL_GAP - VIEWPORT_MARGIN
+    const spaceAbove = rect.top - PANEL_GAP - VIEWPORT_MARGIN
+    const openUpward = panelHeight > spaceBelow && spaceAbove > spaceBelow
     const minWidth = Math.max(PANEL_MIN_WIDTH, rect.width)
     // The panel is as wide as its rows (up to a cap), so a long label makes it
-    // wider than the minimum. It is already mounted when this runs, and its
-    // width does not depend on where it sits, so line up by the real one.
+    // wider than the minimum; line up by the real width.
     const panelWidth = Math.max(minWidth, panelRef.current?.offsetWidth ?? 0)
 
     // Keep the panel on screen on narrow viewports instead of letting it
     // overflow past the right edge.
-    const preferredLeft =
-      align === 'end'
-        ? rect.right + window.scrollX - panelWidth
-        : rect.left + window.scrollX
-    const maxLeft = window.scrollX + window.innerWidth - panelWidth - 8
-    const left = Math.max(window.scrollX + 8, Math.min(preferredLeft, maxLeft))
+    const preferredLeft = align === 'end' ? rect.right - panelWidth : rect.left
+    const maxLeft = window.innerWidth - panelWidth - VIEWPORT_MARGIN
+    const left = Math.max(VIEWPORT_MARGIN, Math.min(preferredLeft, maxLeft))
 
     setPosition(
       openUpward
-        ? { bottom: window.innerHeight - rect.top + 6, left, minWidth }
-        : { top: rect.bottom + window.scrollY + 6, left, minWidth },
+        ? {
+            bottom: window.innerHeight - rect.top + PANEL_GAP,
+            left,
+            minWidth,
+            maxHeight: spaceAbove,
+          }
+        : {
+            top: rect.bottom + PANEL_GAP,
+            left,
+            minWidth,
+            maxHeight: spaceBelow,
+          },
     )
   }, [align, items.length])
 
@@ -244,12 +259,13 @@ export function ActionMenu({
       role="menu"
       aria-label={label}
       data-testid={testId ? `${testId}-panel` : undefined}
-      className="fixed z-50 max-h-[70vh] overflow-y-auto scrollbar-thin rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl py-1.5"
+      className={`fixed z-50 overflow-y-auto scrollbar-thin rounded-[10px] border border-line bg-panel p-1 shadow-popover`}
       style={{
         top: position.top,
         bottom: position.bottom,
         left: position.left,
         minWidth: position.minWidth,
+        maxHeight: position.maxHeight,
         width: 'max-content',
         maxWidth: `min(calc(100vw - 1rem), ${PANEL_MAX_WIDTH}px)`,
       }}
@@ -268,30 +284,28 @@ export function ActionMenu({
           tabIndex={index === activeIndex ? 0 : -1}
           onClick={() => handleSelect(item)}
           onMouseEnter={() => !item.disabled && setActiveIndex(index)}
-          className="w-full flex items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/60 focus:bg-gray-50 dark:focus:bg-gray-700/60 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent dark:disabled:hover:bg-transparent"
+          className="w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-hover focus:bg-hover focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
         >
-          <span
-            className={`shrink-0 mt-0.5 w-8 h-8 rounded-lg inline-flex items-center justify-center ${
-              item.iconClassName ??
-              'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-            }`}
-          >
+          <span className="shrink-0 mt-px w-4 h-4 inline-flex items-center justify-center text-fg-label [&>svg]:w-4 [&>svg]:h-4">
             {item.icon}
           </span>
           <span className="min-w-0 flex-1">
             {/* Wraps rather than truncates, so a long label still reads whole
                 within the panel's capped width. */}
-            <span className="block text-sm font-medium text-gray-900 dark:text-white">
+            <span className="block text-sm font-medium text-fg">
               {item.label}
             </span>
             {item.description && (
-              <span className="block text-xs text-gray-500 dark:text-gray-400">
+              <span className="block text-xs text-fg-hint">
                 {item.description}
               </span>
             )}
           </span>
           {item.active && (
-            <Check className="shrink-0 mt-2 w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <Check
+              strokeWidth={1.5}
+              className="shrink-0 mt-px w-4 h-4 text-fg"
+            />
           )}
         </button>
       ))}
@@ -316,19 +330,20 @@ export function ActionMenu({
         onKeyDown={handleTriggerKeyDown}
         className={
           size === 'compact'
-            ? `inline-flex items-center justify-center p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+            ? `inline-flex items-center justify-center p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
                 isOpen
-                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
+                  ? 'bg-selected text-fg'
+                  : 'text-fg-label hover:bg-hover hover:text-fg'
               }`
-            : `inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                isOpen
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-700 dark:text-indigo-200'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
+            : `inline-flex items-center justify-center h-8 w-8 rounded-lg shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+                isOpen ? 'bg-selected text-fg' : 'text-fg hover:bg-hover'
               }`
         }
       >
-        <MoreVertical size={size === 'compact' ? 14 : 16} />
+        <MoreVertical
+          size={size === 'compact' ? 14 : 16}
+          strokeWidth={size === 'compact' ? 1.75 : 1.5}
+        />
       </button>
       {isOpen && createPortal(panel, getPortalContainer(buttonRef.current))}
     </div>

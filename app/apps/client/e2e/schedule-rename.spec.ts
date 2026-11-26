@@ -1,6 +1,6 @@
 import { type APIRequestContext, expect, test } from '@playwright/test'
 
-import { selectAction } from './helpers/actions-menu'
+import { clickHeaderAction, selectAction } from './helpers/actions-menu'
 
 /**
  * A program's name can be changed after it is created: from the program page
@@ -176,9 +176,20 @@ test.describe('Schedule rename - Programe panel', () => {
       await page.goto(`/songs/${song.id}`)
 
       const panel = page.getByTestId('schedule-songs-panel')
-      const rename = panel.getByTestId('schedule-rename')
-      await expect(rename).toBeVisible({ timeout: 15000 })
-      await rename.click()
+      // Run sits first in the header; on narrower fonts the pencil moves to More.
+      await expect(
+        panel
+          .locator(
+            '[data-testid="schedule-rename"]:visible, [data-testid="schedule-header-more"]:visible',
+          )
+          .first(),
+      ).toBeVisible({ timeout: 15000 })
+      await clickHeaderAction(
+        page,
+        panel,
+        'schedule-rename',
+        'schedule-header-more',
+      )
 
       const modal = page.getByTestId('rename-schedule-modal')
       await expect(modal).toBeVisible()

@@ -26,13 +26,15 @@ export function OnboardingProgress({ step }: OnboardingProgressProps) {
                   ? 'active'
                   : 'pending'
             }
-            className="flex items-center gap-2 text-gray-400 data-[state=active]:font-semibold data-[state=active]:text-gray-900 data-[state=done]:text-gray-600 dark:text-gray-500 dark:data-[state=active]:text-white dark:data-[state=done]:text-gray-300"
+            className="flex items-center gap-2 text-fg-hint data-[state=active]:font-semibold data-[state=active]:text-fg data-[state=done]:text-fg-label"
           >
-            {index > 0 && (
-              <span className="h-px w-6 bg-gray-300 dark:bg-gray-700" />
-            )}
+            {index > 0 && <span className="h-px w-6 bg-line" />}
             <span className="flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">
-              {index < current ? <Check className="h-3.5 w-3.5" /> : index + 1}
+              {index < current ? (
+                <Check strokeWidth={1.75} className="h-3.5 w-3.5" />
+              ) : (
+                index + 1
+              )}
             </span>
             <span className={index === current ? '' : 'hidden sm:inline'}>
               {t(`steps.${name}`)}
@@ -49,10 +51,10 @@ export function OnboardingProgress({ step }: OnboardingProgressProps) {
           step: current + 1,
           total: ONBOARDING_STEPS.length,
         })}
-        className="h-1.5 overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-950"
+        className="h-1.5 overflow-hidden rounded-full bg-field"
       >
         <div
-          className="h-full rounded-full bg-indigo-600 transition-all duration-300"
+          className="h-full rounded-full bg-primary transition-all duration-300"
           style={{ width: `${percent}%` }}
         />
       </div>

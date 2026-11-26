@@ -1,3 +1,4 @@
+export { CloudSyncSection } from './cloud/components'
 export { SyncSettingsSection } from './components/SyncSettingsSection'
 export { SyncUpdateBadge } from './components/SyncUpdateBadge'
 export {

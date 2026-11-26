@@ -4,21 +4,14 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
-import {
-  Book,
-  Bookmark,
-  BookmarkCheck,
-  CalendarPlus,
-  Loader2,
-  Settings,
-} from 'lucide-react'
+import { Book, Bookmark, CalendarPlus, Loader2, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
-  BibleHistoryItem,
   BibleSearchResult,
   BibleVerse,
+  VerseTarget,
 } from '~/features/bible'
 import {
   BibleBookmarksPanel,
@@ -29,15 +22,18 @@ import {
   getVerseByReference,
   useAddBibleBookmark,
   useAddToHistory,
+  useAutoPresentOnSelect,
   useBibleBookmarks,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
+  usePresentWhenSelected,
   useRemoveBibleBookmark,
   useSelectedBibleTranslations,
   useVerses,
 } from '~/features/bible'
-import { getBookmarkSlideshow } from '~/features/bible/utils/getBookmarkSlideshow'
+import { BibleTopicsPanel } from '~/features/bible/topics'
+import { getVerseSlideshow } from '~/features/bible/utils/getVerseSlideshow'
 import {
   useFocusSearchEvent,
   usePageShortcutEvent,
@@ -56,6 +52,7 @@ import {
   useSetSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import type { TopicVerseSource } from '~/features/presentation/types'
 import type { ScheduleItem } from '~/features/schedules'
 import {
   getSchedulePassageTarget,
@@ -77,13 +74,13 @@ import { useToast } from '~/ui/toast'
 
 /**
  * The Bible page opens as navigation | control panel | the Istoric / Marcaje /
- * Programe stack. Everything after that is the operator's to rearrange.
+ * Teme / Programe stack. Everything after that is the operator's to rearrange.
  */
 const BIBLE_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
     { id: 'col-1', panelIds: ['navigation'] },
     { id: 'col-2', panelIds: ['control'] },
-    { id: 'col-3', panelIds: ['history', 'bookmarks', 'programs'] },
+    { id: 'col-3', panelIds: ['history', 'bookmarks', 'topics', 'programs'] },
   ],
 }
 
@@ -200,6 +197,10 @@ function BiblePage() {
   )
   const [bookmarksOpen, setBookmarksOpen] = usePersistedBoolean(
     'bible:bookmarks-open',
+    false,
+  )
+  const [topicsOpen, setTopicsOpen] = usePersistedBoolean(
+    'bible:topics-open',
     false,
   )
   const [programsOpen, setProgramsOpen] = usePersistedBoolean(
@@ -393,6 +394,12 @@ function BiblePage() {
     presentationState?.temporaryContent?.type === 'bible'
       ? presentationState.temporaryContent.data.translationId
       : undefined
+  // The topic passage the verse on screen was presented from: the verse
+  // stepped to next keeps it, and so its template.
+  const shownTopic =
+    presentationState?.temporaryContent?.type === 'bible'
+      ? presentationState.temporaryContent.data.topic
+      : undefined
   const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
 
   // Sync navigation with current Bible verse only on initial page open
@@ -443,7 +450,7 @@ function BiblePage() {
 
   // Extract primitive values from temporary content to avoid object reference comparisons
   const tempContentType = presentationState?.temporaryContent?.type
-  const isSlideshowLive = getBookmarkSlideshow(presentationState) !== null
+  const isSlideshowLive = getVerseSlideshow(presentationState) !== null
   const temporaryContent = presentationState?.temporaryContent
 
   /**
@@ -903,7 +910,7 @@ function BiblePage() {
 
   // Handle verse presentation to screen (API call)
   const presentVerseToScreen = useCallback(
-    async (verse: BibleVerse, verseIndex: number) => {
+    async (verse: BibleVerse, verseIndex: number, topic?: TopicVerseSource) => {
       const reference = formatVerseReference(
         verse.bookName,
         verse.chapter,
@@ -945,6 +952,7 @@ function BiblePage() {
         secondaryText,
         secondaryBookName,
         secondaryTranslationAbbreviation,
+        topic,
       })
 
       // Bring back whatever highlighting was saved with this verse. Live
@@ -1019,10 +1027,10 @@ function BiblePage() {
         if (clampedIndex !== presentedIndex) {
           navigation.presentVerse(clampedIndex)
         }
-        presentVerseToScreen(verse, clampedIndex)
+        presentVerseToScreen(verse, clampedIndex, shownTopic)
       }
     }
-  }, [navigation, verses, presentVerseToScreen])
+  }, [navigation, verses, presentVerseToScreen, shownTopic])
 
   // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
@@ -1048,6 +1056,18 @@ function BiblePage() {
       await presentVerseToScreen(verse, index)
     },
     [navigation, presentVerseToScreen, urlSelectOnly, navigate],
+  )
+
+  // A verse presented from a topic, drawn with the topic's template: the page
+  // follows the screen to its chapter (the server sync), so the next verse
+  // continues the passage.
+  const handlePresentTopicVerse = useCallback(
+    async (verse: BibleVerse, topic: TopicVerseSource) => {
+      isBrowsingRef.current = false
+      hasNavigatedOnOpen.current = true
+      await presentVerseToScreen(verse, verse.verse - 1, topic)
+    },
+    [presentVerseToScreen],
   )
 
   // Handle search result selection - navigate to verse via URL and select it (without presenting)
@@ -1115,7 +1135,7 @@ function BiblePage() {
       const verse = verses[nextIndex]
       if (verse) {
         navigation.presentVerse(nextIndex)
-        await presentVerseToScreen(verse, nextIndex)
+        await presentVerseToScreen(verse, nextIndex, shownTopic)
       }
     } else {
       // Just move selection (not presenting)
@@ -1129,6 +1149,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
+    shownTopic,
   ])
 
   const handlePreviousVerse = useCallback(async () => {
@@ -1166,7 +1187,7 @@ function BiblePage() {
       const verse = verses[prevIndex]
       if (verse) {
         navigation.presentVerse(prevIndex)
-        await presentVerseToScreen(verse, prevIndex)
+        await presentVerseToScreen(verse, prevIndex, shownTopic)
       }
     } else {
       // Just move selection (not presenting)
@@ -1180,6 +1201,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
+    shownTopic,
   ])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection
@@ -1243,6 +1265,70 @@ function BiblePage() {
     showSlide,
   ])
   usePageShortcutEvent('bible', 'showSlide', handleShowSelectedVerse)
+
+  // A verse picked in History or Bookmarks: select it without presenting
+  // (navigated via the URL), on the navigation tab on a phone.
+  const selectPanelVerse = useCallback(
+    (target: VerseTarget & { bookName: string }) => {
+      isBrowsingRef.current = true
+      pendingInternalNavRef.current = true
+      setPhoneTab('navigation')
+      navigate({
+        to: '/bible',
+        search: {
+          book: target.bookId,
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+  const presentWhenSelected = usePresentWhenSelected({
+    navigationState: navigation.state,
+    verses,
+    showSelected: handleShowSelectedVerse,
+  })
+  // A double-click in History or Bookmarks shows the verse right away.
+  const presentPanelVerse = useCallback(
+    (target: VerseTarget & { bookName: string }) => {
+      selectPanelVerse(target)
+      presentWhenSelected(target)
+    },
+    [selectPanelVerse, presentWhenSelected],
+  )
+
+  // Settings → Bible: "Present a verse as soon as I pick it" turns every
+  // pick (search results, History, Bookmarks, a program) into a present.
+  const autoPresent = useAutoPresentOnSelect()
+  const pickPanelVerse = autoPresent.enabled
+    ? presentPanelVerse
+    : selectPanelVerse
+  const pickSearchResult = useCallback(
+    (result: BibleSearchResult) => {
+      handleSelectSearchResult(result)
+      if (autoPresent.enabled) presentWhenSelected(result)
+    },
+    [handleSelectSearchResult, autoPresent.enabled, presentWhenSelected],
+  )
+  const pickSchedulePassage = useCallback(
+    (item: ScheduleItem) => {
+      handleSelectSchedulePassage(item)
+      const target = getSchedulePassageTarget(item)
+      const book = primaryBooks.find((b) => b.bookName === target?.bookName)
+      if (autoPresent.enabled && target && book) {
+        presentWhenSelected({ ...target, bookId: book.id })
+      }
+    },
+    [
+      handleSelectSchedulePassage,
+      autoPresent.enabled,
+      primaryBooks,
+      presentWhenSelected,
+    ],
+  )
 
   // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {
@@ -1387,7 +1473,7 @@ function BiblePage() {
             <BibleNavigationPanel
               navigation={navigation}
               onSelectVerse={handleSelectVerse}
-              onSelectSearchResult={handleSelectSearchResult}
+              onSelectSearchResult={pickSearchResult}
               onPresentSearched={handlePresentSearched}
               onNextVerse={handleNextVerse}
               onPreviousVerse={handlePreviousVerse}
@@ -1427,7 +1513,7 @@ function BiblePage() {
 
           {showsLiveProgramItem ? (
             <div
-              className={`overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 ${
+              className={`overflow-hidden rounded-xl border border-line bg-panel ${
                 isLargeScreen ? 'absolute inset-0' : ''
               }`}
             >
@@ -1449,22 +1535,8 @@ function BiblePage() {
           onToggleCollapse={
             isLargeScreen ? () => setHistoryOpen(!historyOpen) : undefined
           }
-          onSelectVerse={(item: BibleHistoryItem) => {
-            // Navigate via URL - select only without presenting
-            isBrowsingRef.current = true
-            pendingInternalNavRef.current = true
-            setPhoneTab('navigation')
-            navigate({
-              to: '/bible',
-              search: {
-                book: item.bookId,
-                bookName: item.bookName,
-                chapter: item.chapter,
-                verse: item.verse,
-                select: true,
-              },
-            })
-          }}
+          onSelectVerse={pickPanelVerse}
+          onPresentVerse={presentPanelVerse}
         />
       ),
     },
@@ -1480,19 +1552,37 @@ function BiblePage() {
           }
           activeVerseId={focusedVerse?.id}
           translationId={primaryTranslation?.id}
-          onSelectVerse={(bookmark) => {
-            // Navigate via URL - select only without presenting, the same as
-            // picking a verse out of the history.
+          onSelectVerse={pickPanelVerse}
+          onPresentVerse={presentPanelVerse}
+        />
+      ),
+    },
+    {
+      id: 'topics',
+      title: t('topics.title'),
+      collapsed: isLargeScreen && !topicsOpen,
+      render: () => (
+        <BibleTopicsPanel
+          isCollapsed={isLargeScreen && !topicsOpen}
+          onToggleCollapse={
+            isLargeScreen ? () => setTopicsOpen(!topicsOpen) : undefined
+          }
+          translationId={primaryTranslation?.id}
+          activeVerseId={focusedVerse?.id}
+          onPresentVerse={handlePresentTopicVerse}
+          onOpenVerse={(verse) => {
+            // Select only, the same as a bookmark: the operator reads it in
+            // its chapter before presenting it.
             isBrowsingRef.current = true
             pendingInternalNavRef.current = true
             setPhoneTab('navigation')
             navigate({
               to: '/bible',
               search: {
-                book: bookmark.bookId,
-                bookName: bookmark.bookName,
-                chapter: bookmark.chapter,
-                verse: bookmark.verse,
+                book: verse.bookId,
+                bookName: verse.bookName,
+                chapter: verse.chapter,
+                verse: verse.verse,
                 select: true,
               },
             })
@@ -1507,7 +1597,7 @@ function BiblePage() {
       render: () => (
         <SchedulePanel
           activeReference={activePassageReference}
-          onSelectPassage={handleSelectSchedulePassage}
+          onSelectPassage={pickSchedulePassage}
           onSelectSong={handleSelectScheduleSong}
           onOpenSchedule={(scheduleId) =>
             navigate({
@@ -1542,8 +1632,6 @@ function BiblePage() {
         ? tSchedules('panel.addVerse', { reference: candidatePassage.label })
         : tSchedules('panel.addVerseDisabled'),
       icon: <CalendarPlus size={18} />,
-      iconClassName:
-        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
       disabled: !candidatePassage,
       onSelect: handleAddCurrentVerseToProgram,
       testId: 'bible-add-to-schedule',
@@ -1555,7 +1643,7 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
+      <div className="flex flex-col gap-4 h-full lg:overflow-hidden">
         {/* Same single labelled menu as the song page, so both pages expose
             their actions the same way. */}
         <PageHeader
@@ -1570,16 +1658,21 @@ function BiblePage() {
                 aria-label={bookmarkLabel}
                 title={bookmarkLabel}
                 data-testid="bible-bookmark-toggle"
-                className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-hover focus:outline-none focus-visible:ring-1 focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed ${
                   isCurrentVerseBookmarked
-                    ? 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600'
-                    : 'bg-white border-gray-300 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:border-gray-600 dark:text-amber-400 dark:hover:bg-gray-700'
+                    ? 'text-bookmark'
+                    : 'text-fg-label hover:text-fg'
                 }`}
               >
                 {isCurrentVerseBookmarked ? (
-                  <BookmarkCheck size={16} />
+                  <Bookmark
+                    size={16}
+                    fill="currentColor"
+                    className="text-bookmark"
+                    strokeWidth={1.5}
+                  />
                 ) : (
-                  <Bookmark size={16} />
+                  <Bookmark size={16} strokeWidth={1.5} />
                 )}
               </button>
               <ActionMenu
@@ -1593,7 +1686,10 @@ function BiblePage() {
 
         {translationsLoading ? (
           <div className="flex items-center justify-center flex-1">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+            <Loader2
+              className="w-8 h-8 animate-spin text-fg-hint"
+              strokeWidth={1}
+            />
           </div>
         ) : selectedTranslations.length > 0 ? (
           <>
@@ -1636,29 +1732,35 @@ function BiblePage() {
         ) : translations.length > 0 ? (
           // Translations exist but none selected - prompt to go to settings
           <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
-            <Book className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <Book
+              className="w-16 h-16 mx-auto mb-4 text-fg-hint"
+              strokeWidth={1}
+            />
+            <h2 className="text-base font-semibold text-fg mb-2">
               {t('empty.noTranslationsSelected')}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-fg-hint mb-4">
               {t('empty.noTranslationsSelectedDescription')}
             </p>
           </div>
         ) : (
           // No translations imported at all
           <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
-            <Book className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <Book
+              className="w-16 h-16 mx-auto mb-4 text-fg-hint"
+              strokeWidth={1}
+            />
+            <h2 className="text-base font-semibold text-fg mb-2">
               {t('empty.title')}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm text-fg-hint mb-4">
               {t('empty.description')}
             </p>
             <Link
               to="/settings/bible"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
-              <Settings className="w-5 h-5" />
+              <Settings className="w-4 h-4" strokeWidth={1.5} />
               {t('actions.openSettings')}
             </Link>
           </div>

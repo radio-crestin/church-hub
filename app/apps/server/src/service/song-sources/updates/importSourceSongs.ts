@@ -7,18 +7,21 @@ import {
   batchImportSongs,
   batchUpdateSearchIndex,
   getAllCategories,
+  stampSourceHashes,
   upsertCategory,
 } from '../../songs'
 import type { SongSource } from '../types'
 
-function toBatchSong({
-  parsed,
-  sourceFilename,
-}: SourceSong): BatchImportSongInput {
+function toBatchSong(
+  sourceId: string,
+  { id, parsed, sourceFilename }: SourceSong,
+): BatchImportSongInput {
   const { metadata } = parsed
   return {
     title: parsed.title,
     sourceFilename,
+    sourceId,
+    sourceSongId: id,
     author: metadata.author,
     copyright: metadata.copyright,
     ccli: metadata.ccli,
@@ -69,11 +72,12 @@ export function importSourceSongs(
 ): SongRef[] {
   if (songs.length === 0) return []
   const result = batchImportSongs(
-    songs.map(toBatchSong),
+    songs.map((song) => toBatchSong(source.id, song)),
     sourceCategoryId(source),
     false,
     false,
   )
+  stampSourceHashes(source.id)
   batchUpdateSearchIndex(result.songIds)
   return titlesOf(result.songIds)
 }

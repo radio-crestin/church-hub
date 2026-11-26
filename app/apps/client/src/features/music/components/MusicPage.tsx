@@ -1,8 +1,6 @@
-import { ListPlus } from 'lucide-react'
-import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
-import { type ReactNode, useCallback, useState } from 'react'
+import { ListMusic } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import 'overlayscrollbars/overlayscrollbars.css'
 
 import type { WorkspaceLayout, WorkspacePanel } from '~/features/workspace'
 import { useEditLayoutAction, Workspace } from '~/features/workspace'
@@ -12,8 +10,11 @@ import { ActionMenu } from '~/ui/menu'
 import { Page, PageHeader } from '~/ui/page'
 import { AddFolderButton } from './AddFolderButton'
 import { LibraryNav } from './LibraryNav'
+import { MusicPanel } from './MusicPanel'
 import { NameModal } from './NameModal'
-import { Player } from './ServerMusicPlayer'
+import { PlayerDeck } from './PlayerDeck'
+import { PlayerQueue } from './PlayerQueue'
+import { Scrollable } from './Scrollable'
 import { TrackPanel } from './TrackPanel'
 import {
   useAddToPlaylist,
@@ -28,7 +29,8 @@ const WORKSPACE_ID = 'music-library'
 
 /**
  * Like the Songs page: the library's views on the left, the chosen view's
- * tracks in the middle, the player and its queue on the right.
+ * tracks in the middle, the player and its queue on the right. On a phone the
+ * player stays pinned on top, over the tracks, library and queue as tabs.
  */
 const MUSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
   columns: [
@@ -38,31 +40,13 @@ const MUSIC_WORKSPACE_LAYOUT: WorkspaceLayout = {
   ],
 }
 
-function Scrollable({
-  enabled,
-  children,
-}: {
-  enabled: boolean
-  children: ReactNode
-}) {
-  if (!enabled) return children
-  return (
-    <OverlayScrollbarsComponent
-      className="h-full"
-      options={{ scrollbars: { autoHide: 'scroll', autoHideDelay: 400 } }}
-      defer
-    >
-      {children}
-    </OverlayScrollbarsComponent>
-  )
-}
-
 export function MusicPage() {
   const { t } = useTranslation('music')
   const { t: tCommon } = useTranslation('common')
   const player = useServerAudioPlayer()
   const isLargeScreen = useMediaQuery('(min-width: 1024px)')
   const [view, setView] = useState<LibraryView>({ kind: 'all' })
+  const [phoneTab, setPhoneTab] = useState('tracks')
   const [search, setSearch] = useState('')
   // The new playlist being named, and the track it starts with, if any.
   const [newPlaylist, setNewPlaylist] = useState<{
@@ -82,9 +66,11 @@ export function MusicPage() {
           ? (playlists.find((p) => p.id === view.id)?.name ?? '')
           : (folders.find((f) => f.id === view.id)?.name ?? '')
 
+  // Picking a view on a phone opens its tracks.
   const selectView = useCallback((next: LibraryView) => {
     setView(next)
     setSearch('')
+    setPhoneTab('tracks')
   }, [])
 
   const handleAddToQueue = useCallback(
@@ -109,40 +95,34 @@ export function MusicPage() {
 
   const workspacePanels: WorkspacePanel[] = [
     {
-      id: 'player',
+      id: 'deck',
       title: t('player.title'),
+      pinned: true,
+      available: !isLargeScreen,
       render: () => (
-        <Player
-          state={player.state}
-          currentTrack={player.currentTrack}
-          onPlayPause={player.togglePlayPause}
-          onPrevious={player.previous}
-          onNext={player.next}
-          onSeek={player.seek}
-          onVolumeChange={player.setVolume}
-          onToggleMute={player.toggleMute}
-          onClearQueue={player.clearQueue}
-          onPlayAtIndex={player.playAtIndex}
-          onRemoveFromQueue={player.removeFromQueue}
-          onQueueOrderChange={player.setQueueOrder}
-        />
+        <MusicPanel>
+          <PlayerDeck player={player} />
+        </MusicPanel>
       ),
     },
     {
-      id: 'library',
-      title: t('library.title'),
+      id: 'player',
+      title: t('player.title'),
+      available: isLargeScreen,
       render: () => (
-        <Scrollable enabled={isLargeScreen}>
-          <LibraryNav view={view} onSelect={selectView} />
-        </Scrollable>
+        <MusicPanel>
+          <PlayerDeck player={player} />
+          <PlayerQueue player={player} />
+        </MusicPanel>
       ),
     },
     {
       id: 'tracks',
       title: t('tracks.title'),
       render: () => (
-        <Scrollable enabled={isLargeScreen}>
+        <MusicPanel>
           <TrackPanel
+            scrollable={isLargeScreen}
             view={view}
             viewName={viewName}
             search={search}
@@ -154,7 +134,28 @@ export function MusicPage() {
             onCreatePlaylistWith={(track) => setNewPlaylist({ track })}
             onViewRemoved={() => selectView({ kind: 'all' })}
           />
-        </Scrollable>
+        </MusicPanel>
+      ),
+    },
+    {
+      id: 'library',
+      title: t('library.title'),
+      render: () => (
+        <MusicPanel>
+          <Scrollable enabled={isLargeScreen}>
+            <LibraryNav view={view} onSelect={selectView} />
+          </Scrollable>
+        </MusicPanel>
+      ),
+    },
+    {
+      id: 'queue',
+      title: t('player.queue'),
+      available: !isLargeScreen,
+      render: () => (
+        <MusicPanel>
+          <PlayerQueue player={player} />
+        </MusicPanel>
       ),
     },
   ]
@@ -173,7 +174,7 @@ export function MusicPage() {
               className="shrink-0"
               data-testid="music-new-playlist"
             >
-              <ListPlus className="h-4 w-4 sm:mr-2" />
+              <ListMusic className="h-4 w-4 sm:mr-2" strokeWidth={1.5} />
               <span className="hidden sm:inline">{t('playlist.new')}</span>
             </Button>
             <AddFolderButton />
@@ -193,6 +194,9 @@ export function MusicPage() {
         defaultLayout={MUSIC_WORKSPACE_LAYOUT}
         defaultColumnSizes={['20%', '52%', '28%']}
         stacked={!isLargeScreen}
+        stackedAsTabs
+        activeTab={phoneTab}
+        onActiveTabChange={setPhoneTab}
         className="flex-1 lg:min-h-0"
       />
 

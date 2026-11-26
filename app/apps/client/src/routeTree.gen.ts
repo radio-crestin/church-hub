@@ -26,11 +26,14 @@ import { Route as rootIndexRouteImport } from './routes/(root)/index'
 import { Route as SongsDiscoverRouteImport } from './routes/songs/discover'
 import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsUpdatesRouteImport } from './routes/settings/updates'
+import { Route as SettingsThemesRouteImport } from './routes/settings/themes'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
 import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
 import { Route as SettingsProfileRouteImport } from './routes/settings/profile'
+import { Route as SettingsPrivacyRouteImport } from './routes/settings/privacy'
+import { Route as SettingsPhonesRouteImport } from './routes/settings/phones'
 import { Route as SettingsMidiRouteImport } from './routes/settings/midi'
 import { Route as SettingsLogsRouteImport } from './routes/settings/logs'
 import { Route as SettingsLivestreamRouteImport } from './routes/settings/livestream'
@@ -52,6 +55,7 @@ import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/ind
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as LivestreamScenesSceneIdRouteImport } from './routes/livestream/scenes/$sceneId'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
+import { Route as SchedulesScheduleIdSlidesItemIdRouteImport } from './routes/schedules/$scheduleId_.slides.$itemId'
 
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
@@ -138,6 +142,11 @@ const SettingsUpdatesRoute = SettingsUpdatesRouteImport.update({
   path: '/updates',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
+const SettingsThemesRoute = SettingsThemesRouteImport.update({
+  id: '/themes',
+  path: '/themes',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 const SettingsSongsRoute = SettingsSongsRouteImport.update({
   id: '/songs',
   path: '/songs',
@@ -161,6 +170,16 @@ const SettingsScreensRoute = SettingsScreensRouteImport.update({
 const SettingsProfileRoute = SettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsPrivacyRoute = SettingsPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsPhonesRoute = SettingsPhonesRouteImport.update({
+  id: '/phones',
+  path: '/phones',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsMidiRoute = SettingsMidiRouteImport.update({
@@ -268,6 +287,12 @@ const AuthYoutubeCallbackRoute = AuthYoutubeCallbackRouteImport.update({
   path: '/auth/youtube/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesScheduleIdSlidesItemIdRoute =
+  SchedulesScheduleIdSlidesItemIdRouteImport.update({
+    id: '/schedules/$scheduleId_/slides/$itemId',
+    path: '/schedules/$scheduleId/slides/$itemId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
@@ -289,11 +314,14 @@ export interface FileRoutesByFullPath {
   '/settings/livestream': typeof SettingsLivestreamRoute
   '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
+  '/settings/phones': typeof SettingsPhonesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
@@ -313,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
+  '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
@@ -333,11 +362,14 @@ export interface FileRoutesByTo {
   '/settings/livestream': typeof SettingsLivestreamRoute
   '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
+  '/settings/phones': typeof SettingsPhonesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
@@ -357,6 +389,7 @@ export interface FileRoutesByTo {
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
+  '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -379,11 +412,14 @@ export interface FileRoutesById {
   '/settings/livestream': typeof SettingsLivestreamRoute
   '/settings/logs': typeof SettingsLogsRoute
   '/settings/midi': typeof SettingsMidiRoute
+  '/settings/phones': typeof SettingsPhonesRoute
+  '/settings/privacy': typeof SettingsPrivacyRoute
   '/settings/profile': typeof SettingsProfileRoute
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
   '/settings/songs': typeof SettingsSongsRoute
+  '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
   '/settings/users': typeof SettingsUsersRoute
   '/songs/discover': typeof SongsDiscoverRoute
@@ -403,6 +439,7 @@ export interface FileRoutesById {
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
+  '/schedules/$scheduleId_/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -426,11 +463,14 @@ export interface FileRouteTypes {
     | '/settings/livestream'
     | '/settings/logs'
     | '/settings/midi'
+    | '/settings/phones'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/themes'
     | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
@@ -450,6 +490,7 @@ export interface FileRouteTypes {
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
+    | '/schedules/$scheduleId/slides/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/notifications'
@@ -470,11 +511,14 @@ export interface FileRouteTypes {
     | '/settings/livestream'
     | '/settings/logs'
     | '/settings/midi'
+    | '/settings/phones'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/themes'
     | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
@@ -494,6 +538,7 @@ export interface FileRouteTypes {
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId'
+    | '/schedules/$scheduleId/slides/$itemId'
   id:
     | '__root__'
     | '/settings'
@@ -515,11 +560,14 @@ export interface FileRouteTypes {
     | '/settings/livestream'
     | '/settings/logs'
     | '/settings/midi'
+    | '/settings/phones'
+    | '/settings/privacy'
     | '/settings/profile'
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
     | '/settings/songs'
+    | '/settings/themes'
     | '/settings/updates'
     | '/settings/users'
     | '/songs/discover'
@@ -539,6 +587,7 @@ export interface FileRouteTypes {
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
     | '/songs/$songId/'
+    | '/schedules/$scheduleId_/slides/$itemId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -567,6 +616,7 @@ export interface RootRouteChildren {
   LivestreamScenesSceneIdRoute: typeof LivestreamScenesSceneIdRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
+  SchedulesScheduleIdSlidesItemIdRoute: typeof SchedulesScheduleIdSlidesItemIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -690,6 +740,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsUpdatesRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/themes': {
+      id: '/settings/themes'
+      path: '/themes'
+      fullPath: '/settings/themes'
+      preLoaderRoute: typeof SettingsThemesRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/songs': {
       id: '/settings/songs'
       path: '/songs'
@@ -723,6 +780,20 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/settings/profile'
       preLoaderRoute: typeof SettingsProfileRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/privacy': {
+      id: '/settings/privacy'
+      path: '/privacy'
+      fullPath: '/settings/privacy'
+      preLoaderRoute: typeof SettingsPrivacyRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/phones': {
+      id: '/settings/phones'
+      path: '/phones'
+      fullPath: '/settings/phones'
+      preLoaderRoute: typeof SettingsPhonesRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/midi': {
@@ -872,6 +943,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthYoutubeCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/$scheduleId_/slides/$itemId': {
+      id: '/schedules/$scheduleId_/slides/$itemId'
+      path: '/schedules/$scheduleId/slides/$itemId'
+      fullPath: '/schedules/$scheduleId/slides/$itemId'
+      preLoaderRoute: typeof SchedulesScheduleIdSlidesItemIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -886,11 +964,14 @@ interface SettingsRouteRouteChildren {
   SettingsLivestreamRoute: typeof SettingsLivestreamRoute
   SettingsLogsRoute: typeof SettingsLogsRoute
   SettingsMidiRoute: typeof SettingsMidiRoute
+  SettingsPhonesRoute: typeof SettingsPhonesRoute
+  SettingsPrivacyRoute: typeof SettingsPrivacyRoute
   SettingsProfileRoute: typeof SettingsProfileRoute
   SettingsScreensRoute: typeof SettingsScreensRoute
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   SettingsSidebarRoute: typeof SettingsSidebarRoute
   SettingsSongsRoute: typeof SettingsSongsRoute
+  SettingsThemesRoute: typeof SettingsThemesRoute
   SettingsUpdatesRoute: typeof SettingsUpdatesRoute
   SettingsUsersRoute: typeof SettingsUsersRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -907,11 +988,14 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsLivestreamRoute: SettingsLivestreamRoute,
   SettingsLogsRoute: SettingsLogsRoute,
   SettingsMidiRoute: SettingsMidiRoute,
+  SettingsPhonesRoute: SettingsPhonesRoute,
+  SettingsPrivacyRoute: SettingsPrivacyRoute,
   SettingsProfileRoute: SettingsProfileRoute,
   SettingsScreensRoute: SettingsScreensRoute,
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   SettingsSidebarRoute: SettingsSidebarRoute,
   SettingsSongsRoute: SettingsSongsRoute,
+  SettingsThemesRoute: SettingsThemesRoute,
   SettingsUpdatesRoute: SettingsUpdatesRoute,
   SettingsUsersRoute: SettingsUsersRoute,
   SettingsIndexRoute: SettingsIndexRoute,
@@ -947,6 +1031,7 @@ const rootRouteChildren: RootRouteChildren = {
   LivestreamScenesSceneIdRoute: LivestreamScenesSceneIdRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
+  SchedulesScheduleIdSlidesItemIdRoute: SchedulesScheduleIdSlidesItemIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

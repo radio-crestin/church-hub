@@ -5,14 +5,12 @@ import { useTranslation } from 'react-i18next'
 
 import { formatRelativeTime } from '~/features/sync/utils/formatRelativeTime'
 
-export type NotificationTone = 'indigo' | 'emerald' | 'amber'
+export type NotificationTone = 'neutral' | 'attention'
 
+/** A plain line icon: grey, or amber when it needs attention. */
 const TONES: Record<NotificationTone, string> = {
-  indigo:
-    'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300',
-  emerald:
-    'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300',
-  amber: 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300',
+  neutral: 'text-fg-label',
+  attention: 'text-amber-600 dark:text-amber-400',
 }
 
 interface NotificationShellProps {
@@ -57,40 +55,40 @@ export function NotificationShell({
     <article
       data-testid={testId}
       data-new={isNew || undefined}
-      className={`group flex gap-3 rounded-lg border p-4 transition-colors ${
-        isNew
-          ? 'border-indigo-200 bg-indigo-50/60 dark:border-indigo-800/60 dark:bg-indigo-950/30'
-          : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+      className={`group flex gap-3 rounded-xl border border-line p-4 transition-colors ${
+        isNew ? 'bg-selected' : 'bg-panel'
       }`}
     >
       <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}
+        className={`flex h-5 w-4 shrink-0 items-center justify-center ${TONES[tone]}`}
       >
-        <Icon size={18} className={isBusy ? 'animate-spin' : undefined} />
+        <Icon
+          size={16}
+          strokeWidth={1.5}
+          className={isBusy ? 'animate-spin' : undefined}
+        />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-fg">
               {isNew && (
                 <span
                   aria-hidden="true"
-                  className="h-2 w-2 shrink-0 rounded-full bg-indigo-500"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
                 />
               )}
               <span className="min-w-0">{title}</span>
             </h3>
             {description && (
-              <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-300">
-                {description}
-              </p>
+              <p className="mt-0.5 text-sm text-fg-body">{description}</p>
             )}
           </div>
           {createdAt !== undefined && (
             <time
               dateTime={new Date(createdAt).toISOString()}
               title={new Date(createdAt).toLocaleString(i18n.language)}
-              className="shrink-0 pt-0.5 text-xs text-gray-400 dark:text-gray-500"
+              className="shrink-0 pt-0.5 text-xs text-fg-hint tabular-nums"
             >
               {formatRelativeTime(createdAt, i18n.language)}
             </time>
@@ -101,9 +99,9 @@ export function NotificationShell({
               onClick={onClose}
               aria-label={closeLabel}
               title={closeLabel}
-              className="-mt-1 -mr-1 shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+              className="-mt-1 -mr-1 shrink-0 rounded-lg p-1 text-fg-label transition-colors hover:bg-hover hover:text-fg md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
             >
-              <X size={16} />
+              <X size={16} strokeWidth={1.5} />
             </button>
           )}
         </div>

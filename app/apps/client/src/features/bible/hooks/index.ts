@@ -1,4 +1,5 @@
 export { useAIBibleSearch } from './useAIBibleSearch'
+export { useAutoPresentOnSelect } from './useAutoPresentOnSelect'
 export type {
   AvailableBible,
   AvailableBiblesData,
@@ -58,6 +59,10 @@ export type { ChapterVerses } from './useMultiChapterVerses'
 export { useChapterCount } from './useMultiChapterVerses'
 export type { MultiTranslationVerseResult } from './useMultiTranslationVerse'
 export { useMultiTranslationVerse } from './useMultiTranslationVerse'
+export {
+  usePresentWhenSelected,
+  type VerseTarget,
+} from './usePresentWhenSelected'
 export { useSearchBible } from './useSearchBible'
 export {
   MAX_TRANSLATIONS,

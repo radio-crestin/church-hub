@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getApiUrl } from '~/config'
+import { serverFetch } from '~/utils/serverFetch'
 
 export type TranslationEngine = 'openai' | 'gemini'
 export type OutputModality = 'audio_text' | 'text_only'
+
+/** The listeners' room and the link that opens it (/api/live-translation/stream-secret). */
+interface StreamLink {
+  secret: string
+  link: string
+}
 
 export interface TranscriptionEntry {
   id: string
@@ -113,6 +119,9 @@ export interface LiveTranslationSettings {
   primaryTargetId?: string
   openaiApiKey: string
   geminiApiKey: string
+  /** Sent instead of the keys to users who may not change settings. */
+  openaiKeySet?: boolean
+  geminiKeySet?: boolean
   inputDeviceId: number | null
   outputDeviceId: number | null
   outputMode: OutputMode
@@ -159,12 +168,11 @@ export function useLiveTranslation() {
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [streamSecret, setStreamSecret] = useState<string>('')
+  const [streamUrl, setStreamUrl] = useState<string>('')
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const baseUrl = getApiUrl() || ''
-
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/settings`)
+    serverFetch(`/api/live-translation/settings`)
       .then((res) => res.json())
       .then((data: Partial<LiveTranslationSettings>) => {
         // Migrate legacy gemini-api-key in localStorage
@@ -190,7 +198,7 @@ export function useLiveTranslation() {
         setSettings(merged)
         setSettingsLoaded(true)
         if (!data.geminiApiKey && lsKey) {
-          fetch(`${baseUrl}/api/live-translation/settings`, {
+          serverFetch(`/api/live-translation/settings`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(merged),
@@ -198,10 +206,10 @@ export function useLiveTranslation() {
         }
       })
       .catch(() => setSettingsLoaded(true))
-  }, [baseUrl])
+  }, [])
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/devices`)
+    serverFetch(`/api/live-translation/devices`)
       .then((res) => res.json())
       .then(
         (data: {
@@ -213,28 +221,28 @@ export function useLiveTranslation() {
         },
       )
       .catch(() => {})
-  }, [baseUrl])
+  }, [])
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/live-translation/stream-secret`)
+    serverFetch(`/api/live-translation/stream-secret`)
       .then((res) => res.json())
-      .then((data: { secret: string }) => setStreamSecret(data.secret))
+      .then((data: StreamLink) => {
+        setStreamSecret(data.secret)
+        setStreamUrl(data.link)
+      })
       .catch(() => {})
-  }, [baseUrl])
+  }, [])
 
-  const saveSettings = useCallback(
-    (next: LiveTranslationSettings) => {
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-      saveTimeoutRef.current = setTimeout(() => {
-        fetch(`${baseUrl}/api/live-translation/settings`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(next),
-        }).catch(() => {})
-      }, 500)
-    },
-    [baseUrl],
-  )
+  const saveSettings = useCallback((next: LiveTranslationSettings) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(() => {
+      serverFetch(`/api/live-translation/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      }).catch(() => {})
+    }, 500)
+  }, [])
 
   const updateSetting = useCallback(
     <K extends keyof LiveTranslationSettings>(
@@ -377,12 +385,17 @@ export function useLiveTranslation() {
   const apiKey =
     settings.engine === 'gemini' ? settings.geminiApiKey : settings.openaiApiKey
 
-  const canStart =
-    apiKey.length > 0 && settings.targets.length > 0 && !state.isActive
+  const hasApiKey =
+    apiKey.length > 0 ||
+    !!(settings.engine === 'gemini'
+      ? settings.geminiKeySet
+      : settings.openaiKeySet)
+
+  const canStart = hasApiKey && settings.targets.length > 0 && !state.isActive
 
   const startTranslation = useCallback(async () => {
     if (!canStart) return
-    const res = await fetch(`${baseUrl}/api/live-translation/start`, {
+    const res = await serverFetch(`/api/live-translation/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -423,10 +436,10 @@ export function useLiveTranslation() {
         listenerCount: 0,
       })),
     }))
-  }, [baseUrl, canStart, settings])
+  }, [canStart, settings])
 
   const stopTranslation = useCallback(async () => {
-    await fetch(`${baseUrl}/api/live-translation/stop`, {
+    await serverFetch(`/api/live-translation/stop`, {
       method: 'POST',
     }).catch(() => {})
     setState((prev) => ({
@@ -436,39 +449,32 @@ export function useLiveTranslation() {
       outputAudioLevel: 0,
       startedAt: null,
     }))
-  }, [baseUrl])
+  }, [])
 
   const clearTranscription = useCallback(async () => {
-    await fetch(`${baseUrl}/api/live-translation/clear`, {
+    await serverFetch(`/api/live-translation/clear`, {
       method: 'POST',
     }).catch(() => {})
     setState((prev) => ({ ...prev, transcription: [] }))
-  }, [baseUrl])
+  }, [])
 
   const resetSecret = useCallback(async () => {
-    const res = await fetch(
-      `${baseUrl}/api/live-translation/stream-secret/reset`,
-      { method: 'POST' },
-    )
+    const res = await serverFetch(`/api/live-translation/stream-secret/reset`, {
+      method: 'POST',
+    })
     if (res.ok) {
-      const data = await res.json()
+      const data = (await res.json()) as StreamLink
       setStreamSecret(data.secret)
+      setStreamUrl(data.link)
     }
-  }, [baseUrl])
-
-  const streamUrl = useMemo(
-    () =>
-      streamSecret
-        ? `https://churchub-backend.radiocrestin.ro/listen/${streamSecret}`
-        : '',
-    [streamSecret],
-  )
+  }, [])
 
   return {
     state,
     settings,
     settingsLoaded,
     apiKey,
+    hasApiKey,
     audioDevices,
     streamUrl,
     streamSecret,

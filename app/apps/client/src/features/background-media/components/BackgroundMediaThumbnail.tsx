@@ -1,5 +1,5 @@
+import { useMediaUrl } from '../hooks/useMediaUrl'
 import type { BackgroundMedia } from '../service'
-import { resolveMediaUrl } from '../utils/resolveMediaUrl'
 
 interface BackgroundMediaThumbnailProps {
   media: BackgroundMedia
@@ -9,7 +9,7 @@ interface BackgroundMediaThumbnailProps {
 export function BackgroundMediaThumbnail({
   media,
 }: BackgroundMediaThumbnailProps) {
-  const src = resolveMediaUrl(media.url)
+  const src = useMediaUrl(media.url) ?? ''
 
   if (media.kind === 'video') {
     return (

@@ -23,7 +23,9 @@ import {
   ExternalLink,
   ListPlus,
   Pencil,
+  Play,
   Search,
+  Square,
   Trash2,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -34,7 +36,11 @@ import { useSongDropZone } from '~/features/songs/hooks/useSongDropZone'
 import { useFollowPresentedScroll } from '~/hooks/useFollowPresentedScroll'
 import { usePermissions } from '~/provider/permissions-provider'
 import type { ComboboxOption } from '~/ui/combobox'
-import { type OverflowAction, OverflowActions } from '~/ui/menu'
+import {
+  type OverflowAction,
+  OverflowActions,
+  PanelHeaderButton,
+} from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { ClearSearchButton } from '~/ui/search'
 import { useToast } from '~/ui/toast'
@@ -48,6 +54,7 @@ import {
 } from './ScheduleItemEditors'
 import { SchedulePanelNoPrograms } from './SchedulePanelNoPrograms'
 import { SchedulePanelPicker } from './SchedulePanelPicker'
+import { ScheduleRunButton } from './ScheduleRunButton'
 import { ScheduleSlideRow } from './ScheduleSlideRow'
 import { ScheduleSongRow } from './ScheduleSongRow'
 import { ScheduleVerseRow } from './ScheduleVerseRow'
@@ -57,17 +64,21 @@ import {
   useMarkScheduleItemSung,
   useRemoveItemFromSchedule,
   useReorderScheduleItems,
+  useRunSchedule,
   useSchedule,
+  useScheduleAutomation,
   useScheduleFlatNavigation,
   useScheduleKeyLineEditor,
   useSchedules,
 } from '../hooks'
 import { useLoadProgramIntoBookmarks } from '../hooks/useLoadProgramIntoBookmarks'
+import { playMusicItem } from '../media-items/service/scheduleItemsApi'
 import {
   readSelectedScheduleId,
   writeSelectedScheduleId,
 } from '../service/selectedSchedule'
 import type { Schedule, ScheduleItem } from '../types'
+import { flattenScheduleItems } from '../utils/flattenScheduleItems'
 import { isSamePassage } from '../utils/isSamePassage'
 import { countScheduleItemSteps } from '../utils/scheduleFlatItems'
 
@@ -137,6 +148,8 @@ export function SchedulePanel({
   const canEditProgram = hasPermission('programs.edit')
   const canCreateProgram = hasPermission('programs.create')
   const canDeleteProgram = hasPermission('programs.delete')
+  const { data: automation } = useScheduleAutomation()
+  const runSchedule = useRunSchedule()
   const [isCreatingSchedule, setIsCreatingSchedule] = useState(false)
   const { data: schedules = [], isLoading: schedulesLoading } = useSchedules()
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(
@@ -219,6 +232,8 @@ export function SchedulePanel({
     presentVerseteEntry,
     presentAnnouncement,
     presentScene,
+    presentVideo,
+    presentDeckStep,
   } = useScheduleFlatNavigation({
     scheduleId: selectedScheduleId,
     items: allItems,
@@ -317,7 +332,7 @@ export function SchedulePanel({
    * within it goes up next is chosen on the left of the page, or with the
    * next/prev arrows — this list is the running order, not a verse picker.
    */
-  const presentItem = useCallback(
+  const presentLeafItem = useCallback(
     (item: ScheduleItem) => {
       if (item.itemType === 'song') {
         const presented = presentSongSlide(item, 0)
@@ -327,10 +342,15 @@ export function SchedulePanel({
         return presented
       }
       if (item.itemType === 'bible_passage') return presentPassageVerse(item, 0)
-      if (item.slideType === 'versete_tineri') {
+      if (item.slideType === 'versete_tineri' || item.itemType === 'verses') {
         return presentVerseteEntry(item, 0)
       }
       if (item.slideType === 'scene') return presentScene(item)
+      if (item.itemType === 'video') return presentVideo(item)
+      if (item.itemType === 'slides') return presentDeckStep(item, 0)
+      if (item.itemType === 'music') {
+        return playMusicItem(item.scheduleId, item.id)
+      }
       return presentAnnouncement(item)
     },
     [
@@ -338,9 +358,21 @@ export function SchedulePanel({
       presentAnnouncement,
       presentPassageVerse,
       presentScene,
+      presentVideo,
+      presentDeckStep,
       presentSongSlide,
       presentVerseteEntry,
     ],
+  )
+
+  // A presentation inside it starts from its first item.
+  const presentItem = useCallback(
+    (item: ScheduleItem) => {
+      const leaf =
+        item.itemType === 'schedule' ? flattenScheduleItems([item])[0] : item
+      return leaf ? presentLeafItem(leaf) : undefined
+    },
+    [presentLeafItem],
   )
 
   const handleToggleSung = useCallback(
@@ -470,12 +502,14 @@ export function SchedulePanel({
     (item: ScheduleItem, sortable: boolean) => {
       const isLive = liveItemId === item.id
       const rowRef = isLive ? liveRowRef : undefined
+      const position = orderedItems.indexOf(item) + 1
 
       if (item.itemType === 'bible_passage') {
         return (
           <ScheduleVerseRow
             key={item.id}
             item={item}
+            position={position}
             isActive={
               !!activeReference &&
               isSamePassage(item.biblePassageReference, activeReference)
@@ -501,6 +535,7 @@ export function SchedulePanel({
           <ScheduleSongRow
             key={item.id}
             item={item}
+            position={position}
             isActive={activeSongId === item.songId}
             isLive={isLive}
             isSortable={sortable}
@@ -523,6 +558,7 @@ export function SchedulePanel({
         <ScheduleSlideRow
           key={item.id}
           item={item}
+          position={position}
           isLive={isLive}
           isSortable={sortable}
           rowRef={rowRef}
@@ -546,6 +582,7 @@ export function SchedulePanel({
       liveItemId,
       onSelectPassage,
       onSelectSong,
+      orderedItems,
       presentItem,
     ],
   )
@@ -563,28 +600,45 @@ export function SchedulePanel({
   // The header's actions in the order they sit. A column too narrow for all of
   // them tucks the ones at the end under "More", so the least-used (delete)
   // goes first and adding to the program is the last to leave the row.
+  const isRunningSelected =
+    automation?.running === true && automation.scheduleId === selectedScheduleId
   const headerActions: OverflowAction[] = [
+    ...(selectedScheduleId && hasPermission('control_room.control')
+      ? [
+          {
+            id: 'run',
+            label: isRunningSelected
+              ? t('automation.stop')
+              : t('automation.run'),
+            icon: isRunningSelected ? <Square size={18} /> : <Play size={18} />,
+            onSelect: () =>
+              isRunningSelected
+                ? runSchedule.stop.mutate()
+                : runSchedule.run.mutate(selectedScheduleId),
+            testId: 'schedule-run-menu',
+            inline: (
+              <ScheduleRunButton scheduleId={selectedScheduleId} compact />
+            ),
+          },
+        ]
+      : []),
     ...(selectedScheduleId && canEditProgram
       ? [
           {
             id: 'add-item',
             label: tCommon('addMenu.title'),
             icon: <ListPlus size={18} />,
-            iconClassName:
-              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
             onSelect: () => editorsRef.current?.addItem(),
             testId: 'schedule-add-item-menu',
             inline: (
               <Tooltip content={t('panel.addItem')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => editorsRef.current?.addItem()}
                   data-testid="schedule-add-item"
                   aria-label={t('panel.addItem')}
-                  className="p-1.5 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors"
                 >
-                  <ListPlus className="w-3.5 h-3.5" />
-                </button>
+                  <ListPlus size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -598,28 +652,21 @@ export function SchedulePanel({
             id: 'search',
             label: t('panel.openSearch'),
             icon: <Search size={18} />,
-            iconClassName:
-              'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
             active: isSearchOpen,
             onSelect: toggleSearch,
             testId: 'schedule-search-toggle-menu',
             inline: (
               <Tooltip content={searchLabel} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={toggleSearch}
                   aria-expanded={isSearchOpen}
                   aria-label={searchLabel}
                   title={searchLabel}
                   data-testid="schedule-search-toggle"
-                  className={`p-1.5 rounded-md transition-colors ${
-                    isSearchOpen
-                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700'
-                  }`}
+                  active={isSearchOpen}
                 >
-                  <Search className="w-3.5 h-3.5" />
-                </button>
+                  <Search size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -636,23 +683,19 @@ export function SchedulePanel({
             id: 'load-into-bookmarks',
             label: t('panel.loadIntoBookmarks'),
             icon: <BookmarkPlus size={18} />,
-            iconClassName:
-              'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
             onSelect: loadIntoBookmarks.load,
             disabled: loadIntoBookmarks.isPending,
             testId: 'schedule-load-into-bookmarks-menu',
             inline: (
               <Tooltip content={t('panel.loadIntoBookmarks')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={loadIntoBookmarks.load}
                   disabled={loadIntoBookmarks.isPending}
                   data-testid="schedule-load-into-bookmarks"
                   aria-label={t('panel.loadIntoBookmarks')}
-                  className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
                 >
-                  <BookmarkPlus className="w-3.5 h-3.5" />
-                </button>
+                  <BookmarkPlus size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -664,22 +707,18 @@ export function SchedulePanel({
             id: 'add-all-bookmarks',
             label: t('panel.addAllBookmarks'),
             icon: <CalendarPlus size={18} />,
-            iconClassName:
-              'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
             onSelect: onAddAllBookmarks,
             testId: 'schedule-add-all-bookmarks-menu',
             inline: (
               <Tooltip content={t('panel.addAllBookmarks')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={onAddAllBookmarks}
                   data-testid="schedule-add-all-bookmarks"
                   aria-label={t('panel.addAllBookmarks')}
                   title={t('panel.addAllBookmarks')}
-                  className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
                 >
-                  <CalendarPlus className="w-3.5 h-3.5" />
-                </button>
+                  <CalendarPlus size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -691,22 +730,18 @@ export function SchedulePanel({
             id: 'open',
             label: t('panel.openSchedule'),
             icon: <ExternalLink size={18} />,
-            iconClassName:
-              'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
             onSelect: () => onOpenSchedule(selectedScheduleId),
             testId: 'schedule-open-menu',
             inline: (
               <Tooltip content={t('panel.openSchedule')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => onOpenSchedule(selectedScheduleId)}
                   data-testid="schedule-open"
                   aria-label={t('panel.openSchedule')}
-                  className="p-1.5 rounded-md bg-orange-50 text-orange-600 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:hover:bg-orange-900/50 transition-colors"
                   title={t('panel.openSchedule')}
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                  <ExternalLink size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -722,16 +757,14 @@ export function SchedulePanel({
             testId: 'schedule-rename-menu',
             inline: (
               <Tooltip content={t('panel.renameSchedule')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => setRenamingSchedule(schedule)}
                   data-testid="schedule-rename"
                   aria-label={t('panel.renameSchedule')}
                   title={t('panel.renameSchedule')}
-                  className="p-1.5 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
                 >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
+                  <Pencil size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -743,22 +776,18 @@ export function SchedulePanel({
             id: 'delete',
             label: t('panel.deleteSchedule'),
             icon: <Trash2 size={18} />,
-            iconClassName:
-              'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
             onSelect: () => setPendingDelete(true),
             testId: 'schedule-delete-menu',
             inline: (
               <Tooltip content={t('panel.deleteSchedule')} position="bottom">
-                <button
-                  type="button"
+                <PanelHeaderButton
                   onClick={() => setPendingDelete(true)}
                   data-testid="schedule-delete"
                   aria-label={t('panel.deleteSchedule')}
                   title={t('panel.deleteSchedule')}
-                  className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                  <Trash2 size={14} strokeWidth={1.75} />
+                </PanelHeaderButton>
               </Tooltip>
             ),
           },
@@ -769,10 +798,8 @@ export function SchedulePanel({
   return (
     <div
       ref={songDropRef}
-      className={`bg-white dark:bg-gray-800 rounded-lg border flex flex-col overflow-hidden h-full transition-colors ${
-        isSongOver
-          ? 'border-orange-400 dark:border-orange-500 ring-2 ring-orange-400/40'
-          : 'border-gray-200 dark:border-gray-700'
+      className={`rounded-xl border flex flex-col overflow-hidden h-full transition-colors ${
+        isSongOver ? 'bg-hover border-line-strong' : 'bg-panel border-line'
       } ${songJustLanded ? 'song-drop-land' : ''}`}
       data-testid="schedule-songs-panel"
     >
@@ -780,7 +807,7 @@ export function SchedulePanel({
           stack of accordion sections. */}
       <div
         data-panel-header
-        className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0"
+        className="flex items-center px-3 py-1.5 border-b border-line flex-shrink-0"
       >
         <OverflowActions
           testId="schedule-header-more"
@@ -796,21 +823,25 @@ export function SchedulePanel({
                   aria-label={
                     isCollapsed ? t('panel.expand') : t('panel.collapse')
                   }
-                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-fg-hint transition-transform hover:bg-hover"
                 >
                   <ChevronDown
                     size={14}
                     className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                    strokeWidth={1.75}
                   />
                 </button>
               ) : null}
-              <CalendarDays className="w-4 h-4 shrink-0 text-orange-500 dark:text-orange-400" />
+              <CalendarDays
+                className="w-4 h-4 shrink-0 text-fg-label"
+                strokeWidth={1.5}
+              />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
-              <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="min-w-0 truncate text-sm font-medium text-fg">
                 {t('panel.title')}
                 {orderedItems.length > 0 && (
-                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                  <span className="ml-2 text-xs font-normal text-fg-hint tabular-nums">
                     ({isSearching ? `${displayItems.length}/` : ''}
                     {orderedItems.length})
                   </span>
@@ -825,7 +856,7 @@ export function SchedulePanel({
         <>
           {/* Program picker — searchable, because a church accumulates a lot
               of past programs. */}
-          <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="px-3 py-2 border-b border-line flex-shrink-0">
             <SchedulePanelPicker
               options={scheduleOptions}
               value={selectedScheduleId}
@@ -837,9 +868,12 @@ export function SchedulePanel({
           </div>
 
           {isSearchOpen && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-hint"
+                  strokeWidth={1.75}
+                />
                 <input
                   ref={searchInputRef}
                   data-slide-navigation=""
@@ -855,14 +889,14 @@ export function SchedulePanel({
                   }}
                   placeholder={t('panel.searchPlaceholder')}
                   data-testid="schedule-search-input"
-                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
                     inputRef={searchInputRef}
                     onClear={() => setSearchQuery('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg-label"
                   />
                 )}
               </div>
@@ -874,14 +908,14 @@ export function SchedulePanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : schedules.length === 0 ? (
               <SchedulePanelNoPrograms canCreate={canCreateProgram} />
             ) : displayItems.length === 0 ? (
               isSearching ? (
-                <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="px-4 py-6 text-center text-sm text-fg-hint">
                   {t('panel.noResults')}
                 </div>
               ) : (
@@ -889,12 +923,15 @@ export function SchedulePanel({
                   data-testid="schedule-panel-empty-program"
                   className="px-4 py-6 text-center"
                 >
-                  <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <CalendarDays
+                    className="w-8 h-8 mx-auto mb-2 text-fg-hint"
+                    strokeWidth={1}
+                  />
+                  <p className="text-sm text-fg-hint">
                     {t('panel.emptySchedule')}
                   </p>
                   {canEditProgram && (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    <p className="text-xs text-fg-hint mt-1">
                       {t('panel.emptyScheduleHint')}
                     </p>
                   )}
@@ -911,7 +948,7 @@ export function SchedulePanel({
                   items={displayItems.map((item) => item.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="p-2 flex flex-col gap-1.5">
+                  <div className="p-1.5 flex flex-col gap-0.5">
                     {displayItems.map((item) => renderItem(item, !isSearching))}
                   </div>
                 </SortableContext>

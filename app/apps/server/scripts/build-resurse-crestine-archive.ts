@@ -2,13 +2,15 @@
  * Rebuilds the Resurse Creștine song archive from resursecrestine.ro's
  * OpenSong ZIP (see UPSTREAM_URLS): one OpenSong file per song, named after
  * the song, with the title an untitled song gets from its first lyric line
- * and the file it came from (source_filename). Run daily by .github/workflows/resurse-crestine-archive.yml.
+ * and the file it came from (source_filename). Run daily by
+ * .github/workflows/resurse-crestine-archive.yml, which publishes it to the
+ * `song-sources` release when the checksum changed
+ * (docs/managed-song-sources.md).
  *
- * Usage: bun scripts/build-resurse-crestine-archive.ts <out-dir> [previous-checksum]
+ * Usage: bun scripts/build-resurse-crestine-archive.ts <out-dir>
  * Writes resurse-crestine.chsongs, resurse-crestine-opensong.zip (the same
  * bytes, for other programs) and resurse-crestine.chsongs.sha256 to
- * <out-dir>, and `changed=true|false` to $GITHUB_OUTPUT when set. Nothing is
- * written when the checksum equals the previous one.
+ * <out-dir>, and `checksum=<the bundle's checksum>` to $GITHUB_OUTPUT when set.
  */
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -38,7 +40,8 @@ const UPSTREAM_URLS = [
   'https://www.resursecrestine.ro/download/52651',
   'https://www.resursecrestine.ro/download/65147',
 ]
-const ARCHIVE_NAME = 'resurse-crestine'
+/** The files are named after the source, as the publisher expects. */
+const ARCHIVE_NAME = source.id
 
 const escapeXml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -110,8 +113,8 @@ async function downloadUpstream(): Promise<JSZip> {
 }
 
 async function main() {
-  const [outDir, previousChecksum] = process.argv.slice(2)
-  if (!outDir) throw new Error('usage: <out-dir> [previous-checksum]')
+  const [outDir] = process.argv.slice(2)
+  if (!outDir) throw new Error('usage: <out-dir>')
 
   const zip = await downloadUpstream()
 
@@ -138,15 +141,11 @@ async function main() {
     songs,
   )
   const { checksum } = bundle.manifest
-  const changed = checksum !== previousChecksum?.trim()
   // biome-ignore lint/suspicious/noConsole: CI log of what was built
-  console.log(
-    `${songs.length} songs, checksum ${checksum}, changed: ${changed}`,
-  )
+  console.log(`${songs.length} songs, checksum ${checksum}`)
   if (process.env.GITHUB_OUTPUT) {
-    appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\n`)
+    appendFileSync(process.env.GITHUB_OUTPUT, `checksum=${checksum}\n`)
   }
-  if (!changed) return
 
   const archive = await zipBundleFiles(bundle)
   mkdirSync(outDir, { recursive: true })

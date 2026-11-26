@@ -5,10 +5,13 @@
  *
  *   1. node_modules from bun's global cache (`bun install` clones or hardlinks),
  *   2. Cargo's target dir: the worktree's app/tauri/.cargo/config.toml points
- *      at the main checkout's, so `cargo check`/`clippy`/`test` reuse its crates,
+ *      at the main checkout's (the user cache's when the main checkout is
+ *      read-only, see sharedCargoTarget), so `cargo check`/`clippy`/`test`
+ *      and the review shell reuse its crates,
  *   3. the built sidecar binary, which tauri-build requires before compiling,
  *   4. the Playwright browser in the shared per-user cache (checked, never downloaded),
- *   5. then builds the client for the worktree's own port (3100 + task number).
+ *   5. then builds the client for the worktree's own port (the first of the
+ *      task's port block, see portFor).
  *
  * Usage, from anywhere inside the worktree:
  *   bun app/scripts/worktree-setup.ts T-052
@@ -27,7 +30,14 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 
-import { mainCheckoutRoot, portFor, run, step } from './worktree-common'
+import {
+  mainCheckoutRoot,
+  portFor,
+  run,
+  sharedCargoTarget,
+  step,
+  WORKTREE_E2E_WORKERS,
+} from './worktree-common'
 
 const SIDECAR_PREFIX = 'church-hub-sidecar'
 const USAGE = 'usage: bun app/scripts/worktree-setup.ts <task id, e.g. T-052>'
@@ -42,6 +52,7 @@ function findCheckouts() {
   }
   return {
     worktreeApp: join(worktreeRoot, 'app'),
+    mainRoot,
     mainApp: join(mainRoot, 'app'),
   }
 }
@@ -51,8 +62,8 @@ function installDependencies(worktreeApp: string) {
   return undefined
 }
 
-function shareCargoTarget(worktreeApp: string, mainApp: string) {
-  const mainTarget = join(mainApp, 'tauri', 'target')
+function shareCargoTarget(worktreeApp: string, mainRoot: string) {
+  const mainTarget = sharedCargoTarget(mainRoot)
   const cargoDir = join(worktreeApp, 'tauri', '.cargo')
   mkdirSync(cargoDir, { recursive: true })
   // JSON string escaping is valid TOML, so Windows backslashes survive.
@@ -108,12 +119,12 @@ function buildClient(worktreeApp: string, port: number) {
 }
 
 const port = portFor(process.argv[2], USAGE)
-const { worktreeApp, mainApp } = findCheckouts()
+const { worktreeApp, mainRoot, mainApp } = findCheckouts()
 step('dependencies', () => installDependencies(worktreeApp))
-step('cargo target shared', () => shareCargoTarget(worktreeApp, mainApp))
+step('cargo target shared', () => shareCargoTarget(worktreeApp, mainRoot))
 step('sidecar', () => copySidecar(worktreeApp, mainApp))
 step('playwright browser', () => checkBrowser(worktreeApp))
 step('client build', () => buildClient(worktreeApp, port))
 console.log(
-  `\nRun e2e: cd app/apps/client && CI=1 TEST_PORT=${port} bunx playwright test <spec> --workers=1 --retries=2`,
+  `\nRun e2e: cd app/apps/client && CI=1 E2E_WORKERS=${WORKTREE_E2E_WORKERS} TEST_PORT=${port} bunx playwright test <spec> --retries=2`,
 )

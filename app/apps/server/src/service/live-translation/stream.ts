@@ -1,8 +1,9 @@
-import { randomInt } from 'node:crypto'
 import { type RTCDataChannel, RTCPeerConnection } from 'werift'
 
+import { getStreamRoom, renewStreamLink } from './streamLink'
 import { log } from '../../utils/fileLogger'
-import { getSetting, upsertSetting } from '../settings'
+import { ICE_SERVERS } from '../signaling/iceServers'
+import { startSignalingRelay } from '../signaling/startSignalingRelay'
 
 const logger = {
   debug: (msg: string, data?: unknown) =>
@@ -14,14 +15,6 @@ const logger = {
   error: (msg: string, data?: unknown) =>
     log('translation-stream', 'error', msg, data),
 }
-
-const SETTINGS_KEY = 'live_translation_stream_secret'
-const SIGNALING_BASE_URL = 'https://churchub-backend.radiocrestin.ro'
-
-const ICE_SERVERS = [
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-]
 
 interface AvailableLanguage {
   targetId: string
@@ -39,33 +32,14 @@ interface Listener {
 
 const listeners = new Map<string, Listener>()
 let pingInterval: ReturnType<typeof setInterval> | null = null
-let pollInterval: ReturnType<typeof setInterval> | null = null
+let closeRoom: (() => Promise<void>) | null = null
 let listenerIdCounter = 0
 let availableLanguages: AvailableLanguage[] = []
 let listenerCountsCallback: ((counts: Record<string, number>) => void) | null =
   null
 
-/** The listener stream secret: 32 chars from a cryptographic RNG. */
-function generateSecret(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < 32; i++) {
-    result += chars[randomInt(chars.length)]
-  }
-  return result
-}
-
-export function getStreamSecret(): string {
-  const saved = getSetting('app_settings', SETTINGS_KEY)
-  if (saved) return saved.value
-  const secret = generateSecret()
-  upsertSetting('app_settings', { key: SETTINGS_KEY, value: secret })
-  return secret
-}
-
 export function resetStreamSecret(): string {
-  const secret = generateSecret()
-  upsertSetting('app_settings', { key: SETTINGS_KEY, value: secret })
+  const secret = renewStreamLink()
   for (const [id, listener] of listeners) {
     try {
       if (listener.dc?.readyState === 'open') {
@@ -77,10 +51,7 @@ export function resetStreamSecret(): string {
   }
   notifyListenerCounts()
   logger.info('Stream secret reset, all listeners disconnected')
-  if (pollInterval) {
-    stopSignalingRelay()
-    startSignalingRelay()
-  }
+  if (closeRoom) void openListenerRoom()
   return secret
 }
 
@@ -118,86 +89,30 @@ function notifyListenerCounts(): void {
   listenerCountsCallback(counts)
 }
 
-export async function startSignalingRelay(): Promise<void> {
-  const secret = getStreamSecret()
-  try {
-    const res = await fetch(`${SIGNALING_BASE_URL}/signal/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret }),
-    })
-    if (!res.ok) {
-      logger.error('Failed to register room on CF Worker', {
-        status: res.status,
-      })
-      return
-    }
-    logger.info('Room registered on CF Worker')
-  } catch (err) {
-    logger.error('Failed to reach CF Worker for registration', {
-      error: String(err),
-    })
-    return
-  }
-
-  if (pollInterval) clearInterval(pollInterval)
-  // Aggressive 500ms poll — every poll only fetches a small JSON, and faster
-  // polling cuts up to 2s off first-connect latency for new listeners.
-  pollInterval = setInterval(() => pollForOffers(secret), 500)
-  logger.info('Signaling relay polling started')
+/**
+ * Opens (or reopens, after a new link) the listeners' room on the signaling
+ * relay and answers each listener's offer.
+ */
+export async function openListenerRoom(): Promise<void> {
+  const close = closeRoom
+  closeRoom = null
+  await close?.()
+  closeRoom = startSignalingRelay({
+    ...getStreamRoom(),
+    // Every poll fetches a small JSON; polling fast cuts up to 2 s off a new
+    // listener's first connect.
+    pollMs: 500,
+    answer: async (offer) => (await handleListenerOffer(offer)).answer,
+  })
 }
 
-export async function stopSignalingRelay(): Promise<void> {
-  if (pollInterval) {
-    clearInterval(pollInterval)
-    pollInterval = null
-  }
-
-  const secret = getStreamSecret()
-  try {
-    await fetch(`${SIGNALING_BASE_URL}/signal/unregister`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ secret }),
-    })
-    logger.info('Room unregistered from CF Worker')
-  } catch {
-    logger.warn('Failed to unregister room from CF Worker')
-  }
-
+/** Closes the listeners' room and disconnects every listener. */
+export async function closeListenerRoom(): Promise<void> {
+  const close = closeRoom
+  closeRoom = null
+  await close?.()
   for (const [id] of listeners) {
     cleanupListener(id)
-  }
-}
-
-async function pollForOffers(secret: string): Promise<void> {
-  try {
-    const res = await fetch(`${SIGNALING_BASE_URL}/signal/${secret}/offers`)
-    if (!res.ok) return
-    const data = (await res.json()) as {
-      offers: Array<{ sessionId: string; offer: string }>
-    }
-    if (!data.offers || data.offers.length === 0) return
-    logger.info('Received pending offers', { count: data.offers.length })
-
-    for (const { sessionId, offer } of data.offers) {
-      try {
-        const result = await handleListenerOffer(offer)
-        await fetch(`${SIGNALING_BASE_URL}/signal/${secret}/answer`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, answer: result.answer }),
-        })
-        logger.info('Answer sent for session', { sessionId })
-      } catch (err) {
-        logger.error('Failed to handle offer', {
-          sessionId,
-          error: String(err),
-        })
-      }
-    }
-  } catch (err) {
-    logger.debug('Poll for offers failed', { error: String(err) })
   }
 }
 

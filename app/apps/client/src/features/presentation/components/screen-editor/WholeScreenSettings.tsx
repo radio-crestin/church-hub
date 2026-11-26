@@ -60,7 +60,7 @@ export function WholeScreenSettings({
           defaultOpen={false}
         >
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.clock.format')}
             </Label>
             <SegmentedControl
@@ -98,7 +98,7 @@ export function WholeScreenSettings({
         />
         {nextSlideConfig?.enabled && (
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.nextSlide.labelText')}
             </Label>
             <Input
@@ -121,12 +121,12 @@ export function WholeScreenSettings({
         icon={Ruler}
         defaultOpen={false}
       >
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-fg-hint">
           {t('screens.general.screenSizeDescription')}
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.general.widthPx')}
             </Label>
             <Input
@@ -142,7 +142,7 @@ export function WholeScreenSettings({
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.general.heightPx')}
             </Label>
             <Input

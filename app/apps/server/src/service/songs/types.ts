@@ -99,6 +99,8 @@ export interface SongTag {
  */
 export interface Song {
   id: number
+  /** The song's identity across the church's devices (cloud sync). */
+  uuid: string
   title: string
   /**
    * Other names this song goes by — usually the title its source gave it,
@@ -356,6 +358,9 @@ export interface BatchImportSongInput {
   hymnNumber?: string | null
   keyLine?: string | null
   presentationOrder?: string | null
+  /** The song source it comes from and its id there (a new song only). */
+  sourceId?: string | null
+  sourceSongId?: string | null
   slides?: Array<{
     content: string
     sortOrder: number
@@ -385,16 +390,25 @@ export interface DiscoveryCandidateInput {
   title: string
   lyrics: string
   sourceFilename: string | null
+  /** The song source it comes from and its id there, when it has one. */
+  sourceId?: string
+  sourceSongId?: string
+  /** Its lyrics fingerprint (lyricsHash), matched against `content_hash`. */
+  fingerprint?: string | null
 }
 
 /**
  * How an external candidate relates to the local library:
+ *  - `exact-source`:   a song this source added (or was linked to) has its id.
+ *  - `exact-lyrics`:   a song has the same lyrics fingerprint.
  *  - `exact-filename`: a song with the same `source_filename` already exists.
  *  - `exact-title`:    a song with the same normalized title already exists.
  *  - `similar`:        no exact match, but ≥1 fuzzy version match was found.
  *  - `new`:            nothing comparable in the library — safe to import.
  */
 export type DiscoveryMatchVerdict =
+  | 'exact-source'
+  | 'exact-lyrics'
   | 'exact-filename'
   | 'exact-title'
   | 'similar'
@@ -404,7 +418,7 @@ export type DiscoveryMatchVerdict =
 export interface DiscoveryMatchResult {
   tempId: string
   verdict: DiscoveryMatchVerdict
-  /** The matched library song id for exact-filename / exact-title verdicts. */
+  /** The matched library song id for the exact-* verdicts. */
   exactSongId: number | null
   /** Fuzzy version matches (empty unless verdict is `similar`). */
   similar: SongVersionSuggestion[]
@@ -463,7 +477,12 @@ export interface UpsertSongGroupInput {
  *  - `reason` is a coarse hint ("titlu", "versuri") shown in the UI so the
  *    operator understands *why* the candidate matched (helps trust).
  */
-export interface SongVersionSuggestion {
+export interface SongVersionSuggestion extends SuggestedSong {
+  reason: 'title' | 'lyrics' | 'mixed'
+}
+
+/** What a list of suggested songs shows for each one. */
+export interface SuggestedSong {
   songId: number
   title: string
   hymnNumber: string | null
@@ -472,5 +491,16 @@ export interface SongVersionSuggestion {
   /** The song's musical key ("gama melodie"), free-text. */
   keyLine: string | null
   score: number
-  reason: 'title' | 'lyrics' | 'mixed'
+}
+
+/**
+ * A song on the same theme as a given one: a different song (never one of
+ * its versions) whose words share the given song's distinctive ones.
+ * `sharedWords` are those words, as the given song writes them, most
+ * distinctive first: with `themes`, they tell the operator what the theme is.
+ */
+export interface SongThemeSuggestion extends SuggestedSong {
+  /** The named themes both songs are on (see `themeLexicon`). */
+  themes: string[]
+  sharedWords: string[]
 }

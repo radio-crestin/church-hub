@@ -5,7 +5,6 @@ import {
   Headphones,
   Images,
   KeyRound,
-  MessageSquarePlus,
   Monitor,
   Music,
   Radio,
@@ -53,7 +52,6 @@ export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
   music: 'purple',
   song_key: 'yellow',
   live_translation: 'blue',
-  feedback: 'gray',
   kiosk: 'gray',
   settings: 'gray',
 }
@@ -62,54 +60,25 @@ export const DEFAULT_ICON_COLORS: Record<BuiltInMenuItemId, IconColor> = {
  * Tailwind CSS classes for each icon color
  * Includes background and text colors for light and dark modes
  */
+/** DESIGN.md bans coloured icon tiles: every icon colour renders as the
+ * same neutral line icon, so the UI stays monochrome. */
+const NEUTRAL_ICON = { bg: 'bg-transparent', text: 'text-fg-label' }
+
 export const ICON_COLOR_CLASSES: Record<
   IconColor,
   { bg: string; text: string }
 > = {
-  gray: {
-    bg: 'bg-gray-100 dark:bg-gray-700',
-    text: 'text-gray-600 dark:text-gray-400',
-  },
-  indigo: {
-    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
-    text: 'text-indigo-600 dark:text-indigo-400',
-  },
-  blue: {
-    bg: 'bg-blue-100 dark:bg-blue-900/30',
-    text: 'text-blue-600 dark:text-blue-400',
-  },
-  teal: {
-    bg: 'bg-teal-100 dark:bg-teal-900/30',
-    text: 'text-teal-600 dark:text-teal-400',
-  },
-  green: {
-    bg: 'bg-green-100 dark:bg-green-900/30',
-    text: 'text-green-600 dark:text-green-400',
-  },
-  orange: {
-    bg: 'bg-orange-100 dark:bg-orange-900/30',
-    text: 'text-orange-600 dark:text-orange-400',
-  },
-  purple: {
-    bg: 'bg-purple-100 dark:bg-purple-900/30',
-    text: 'text-purple-600 dark:text-purple-400',
-  },
-  violet: {
-    bg: 'bg-violet-100 dark:bg-violet-900/30',
-    text: 'text-violet-600 dark:text-violet-400',
-  },
-  red: {
-    bg: 'bg-red-100 dark:bg-red-900/30',
-    text: 'text-red-600 dark:text-red-400',
-  },
-  pink: {
-    bg: 'bg-pink-100 dark:bg-pink-900/30',
-    text: 'text-pink-600 dark:text-pink-400',
-  },
-  yellow: {
-    bg: 'bg-yellow-100 dark:bg-yellow-900/30',
-    text: 'text-yellow-600 dark:text-yellow-400',
-  },
+  gray: NEUTRAL_ICON,
+  indigo: NEUTRAL_ICON,
+  blue: NEUTRAL_ICON,
+  teal: NEUTRAL_ICON,
+  green: NEUTRAL_ICON,
+  orange: NEUTRAL_ICON,
+  purple: NEUTRAL_ICON,
+  violet: NEUTRAL_ICON,
+  red: NEUTRAL_ICON,
+  pink: NEUTRAL_ICON,
+  yellow: NEUTRAL_ICON,
 }
 
 /**
@@ -143,7 +112,6 @@ export const PAGES_WITH_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   livestream: false,
   song_key: false,
   live_translation: false,
-  feedback: false,
   kiosk: false,
   settings: false,
 }
@@ -169,7 +137,6 @@ export const DEFAULT_FOCUS_SEARCH: Record<BuiltInMenuItemId, boolean> = {
   livestream: false,
   song_key: false,
   live_translation: false,
-  feedback: false,
   kiosk: false,
   settings: false,
 }
@@ -237,6 +204,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.livestream',
     to: '/livestream',
     permission: 'settings.view',
+    pcOnly: true,
   },
   music: {
     id: 'music',
@@ -244,6 +212,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.music',
     to: '/music',
     permission: 'settings.view',
+    pcOnly: true,
   },
   song_key: {
     id: 'song_key',
@@ -258,13 +227,7 @@ export const BUILTIN_ITEMS: Record<BuiltInMenuItemId, BuiltInItemDefinition> = {
     labelKey: 'sidebar:navigation.liveTranslation',
     to: '/live-translation',
     permission: 'settings.view',
-  },
-  feedback: {
-    id: 'feedback',
-    icon: MessageSquarePlus,
-    labelKey: 'sidebar:navigation.feedback',
-    to: '/feedback', // Special marker - opens the Feedback tool, not a route
-    permission: 'settings.view',
+    pcOnly: true,
   },
   kiosk: {
     id: 'kiosk',
@@ -359,14 +322,6 @@ export const DEFAULT_SIDEBAR_CONFIG: SidebarConfiguration = {
       order: 8,
       isVisible: true,
       settings: getDefaultSidebarItemSettings('live_translation'),
-    },
-    {
-      id: 'feedback',
-      type: 'builtin',
-      builtinId: 'feedback',
-      order: 9,
-      isVisible: true,
-      settings: getDefaultSidebarItemSettings('feedback'),
     },
     // Note: Settings is not configurable - it's fixed at the bottom of the sidebar
     // Note: Kiosk is not configurable - it's dynamically shown when kiosk mode is enabled

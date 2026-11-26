@@ -21,7 +21,8 @@
       "backup": "Backup",
       "updates": "Updates",
       "logs": "Logs",
-      "shortcuts": "Shortcuts"
+      "shortcuts": "Shortcuts",
+      "privacy": "Privacy"
     },
     "search": {
       "placeholder": "Search settings…",
@@ -61,7 +62,13 @@
         "added": "Translation added",
         "deleted": "Translation deleted",
         "error": "An error occurred"
-      }
+      },
+      "primaryVersion": "Primary Version",
+      "selectPrimary": "Select primary version...",
+      "primaryDescription": "Main Bible version shown in the app",
+      "secondaryVersion": "Secondary Version",
+      "selectSecondary": "None (optional)",
+      "secondaryDescription": "Shown alongside primary in presentation"
     },
     "application": {
       "title": "Application Settings",
@@ -322,7 +329,10 @@
       "userName": "User Name",
       "userNamePlaceholder": "e.g., John's Tablet",
       "permissions": "permissions",
-      "permissionsSelected": "permissions selected",
+      "permissionCount_one": "{{count}} permission",
+      "permissionCount_other": "{{count}} permissions",
+      "permissionsSelectedCount_one": "{{count}} permission selected",
+      "permissionsSelectedCount_other": "{{count}} permissions selected",
       "status": "Status",
       "active": "Active",
       "inactive": "Inactive",
@@ -343,7 +353,7 @@
         "song_versions": "Song versions",
         "bible": "Bible",
         "control_room": "Control Room",
-        "programs": "Programs",
+        "programs": "Presentations",
         "queue": "Queue",
         "settings": "Settings",
         "displays": "Displays",
@@ -369,11 +379,11 @@
         "bible.present_now": "Present Bible verses immediately",
         "control_room.view": "View control room",
         "control_room.control": "Control presentation",
-        "programs.view": "View programs",
-        "programs.create": "Create programs",
-        "programs.edit": "Edit programs",
-        "programs.delete": "Delete programs",
-        "programs.import_to_queue": "Import programs to queue",
+        "programs.view": "View presentations",
+        "programs.create": "Create presentations",
+        "programs.edit": "Edit presentations",
+        "programs.delete": "Delete presentations",
+        "programs.import_to_queue": "Import presentations to queue",
         "queue.view": "View queue",
         "queue.add": "Add items to queue",
         "queue.remove": "Remove items from queue",
@@ -432,7 +442,14 @@
           "title": "Regenerate Token",
           "message": "This will invalidate the current token for \"{{name}}\". The user will need to be re-authenticated.",
           "confirm": "Regenerate"
-        }
+        },
+        "deactivate": {
+          "title": "Deactivate user",
+          "message": "\"{{name}}\" will no longer be able to sign in.",
+          "confirm": "Deactivate"
+        },
+        "devicesSignedOut_one": "Their device will be signed out. To join again, it has to be added again.",
+        "devicesSignedOut_other": "Their {{count}} devices will be signed out. To join again, they have to be added again."
       },
       "toast": {
         "created": "User created successfully",
@@ -720,6 +737,22 @@
         "error": "An error occurred"
       }
     },
+    "phones": {
+      "title": "Phones",
+      "description": "Sign in on a phone by scanning a code from this computer.",
+      "steps": {
+        "wifi": "Connect the phone to the same Wi-Fi as this computer.",
+        "account": "Choose the account the phone signs in with.",
+        "scan": "Scan the code with the phone camera, or with \"Scan the QR code\" in the Church Hub app."
+      },
+      "remote": {
+        "label": "Reach this computer from anywhere",
+        "description": "Phones paired with the code connect over the internet when they are away from the church Wi-Fi. Phones paired before this must scan the code again."
+      },
+      "account": "Account",
+      "noAccounts": "There is no account to sign in with yet.",
+      "createAccount": "Create one in Users"
+    },
     "apiUrl": {
       "title": "Server Connection",
       "label": "Server URL",
@@ -731,6 +764,7 @@
       "save": "Save & Continue",
       "saved": "Server URL saved successfully",
       "connectionSuccess": "Connection successful",
+      "scan": "Scan the QR code",
       "authTokenDetected": "Authentication token detected",
       "reconnect": "Reconnect",
       "setup": {
@@ -745,7 +779,9 @@
         "emptyUrl": "Please enter a server URL",
         "invalidUrl": "Please enter a valid URL (e.g., http://192.168.1.100:3000/api/auth/user/usr_TOKEN)",
         "connectionFailed": "Could not connect to the server. Please check the URL and try again.",
-        "testFirst": "Please test the connection before saving"
+        "testFirst": "Please test the connection before saving",
+        "cameraDenied": "Church Hub needs the camera to scan the code. Allow it in the phone settings.",
+        "scanFailed": "The code could not be read. Try again, or type the link below."
       }
     },
     "kiosk": {
@@ -763,7 +799,7 @@
         "present": "Control Room",
         "songs": "Songs",
         "bible": "Bible",
-        "schedules": "Schedules",
+        "schedules": "Presentations",
         "livestream": "Livestream",
         "settings": "Settings"
       },
@@ -818,8 +854,8 @@
           "songsDescription": "Song categories, songs and slides",
           "bible": "Bible",
           "bibleDescription": "Bible translations and verses",
-          "schedules": "Schedules",
-          "schedulesDescription": "Programs and schedule items",
+          "schedules": "Presentations",
+          "schedulesDescription": "Presentations and their items",
           "configurations": "Configurations",
           "configurationsDescription": "Screens, settings and preferences"
         }
@@ -975,7 +1011,7 @@
         "loading": "Downloading and reading the backup…",
         "failed": "Could not read the backup contents.",
         "songs": "Songs ({{total}})",
-        "schedules": "Schedules ({{total}})",
+        "schedules": "Presentations ({{total}})",
         "scheduleSongs_one": "{{count}} song",
         "scheduleSongs_other": "{{count}} songs",
         "playlists": "Playlists ({{total}})",
@@ -987,19 +1023,203 @@
           "songSlides": "Song slides",
           "songCategories": "Song categories",
           "songBookmarks": "Song bookmarks",
-          "schedules": "Schedules",
-          "scheduleItems": "Schedule items",
+          "schedules": "Presentations",
+          "scheduleItems": "Presentation items",
           "musicPlaylists": "Playlists",
           "musicFiles": "Music files",
           "bibleTranslations": "Bible translations",
           "users": "Users",
           "screens": "Screens"
         }
+      },
+      "cloud": {
+        "title": "Church Hub Cloud (free)",
+        "signedInAs": "Signed in as {{email}}",
+        "usage": "{{used}} of {{total}} used",
+        "signOut": "Sign out",
+        "signedOut": {
+          "title": "Not signed in",
+          "description": "Sign in with Google once. Each backup is encrypted on this computer before it is sent.",
+          "signIn": "Sign in with Google",
+          "cancel": "Cancel",
+          "waiting": "Finish signing in in the browser window, then come back here.",
+          "failed": "Couldn’t start the sign-in. Check the internet connection and try again.",
+          "timedOut": "The sign-in wasn’t finished. Try again."
+        },
+        "signOutModal": {
+          "title": "Sign out of Church Hub Cloud?",
+          "message": "Your cloud backups stay saved, and automatic backups stop. Sign in again with the same Google account to see them."
+        },
+        "deleteAccount": {
+          "button": "Sign out and delete my cloud backups",
+          "title": "Delete all cloud backups?",
+          "message": "Every backup of this account in Church Hub Cloud is deleted for good, and you are signed out. Limits you were given (a pause or a larger storage quota) are kept for 90 days. Backups on this computer and in Google Drive are not affected.",
+          "confirm": "Delete and sign out"
+        },
+        "now": {
+          "title": "Manual backup",
+          "last": "Last backup: {{date}}",
+          "never": "No backup from this computer yet",
+          "button": "Back up now",
+          "running": "Backing up…",
+          "encrypted": "The church’s own data is encrypted on this computer before it is sent. Bible texts and library songs are stored as shared copies, without encryption."
+        },
+        "auto": {
+          "title": "Automatic backups",
+          "description": "Back up to Church Hub Cloud on a schedule while the app is open.",
+          "interval": "How often",
+          "everyHours": "Every {{hours}} hours",
+          "short": {
+            "hours": "{{count}}h",
+            "days": "{{count}}d"
+          }
+        },
+        "list": {
+          "title": "Cloud backups",
+          "loading": "Loading backups…",
+          "empty": "No cloud backups yet.",
+          "restore": "Restore",
+          "delete": "Delete backup"
+        },
+        "restoreModal": {
+          "title": "Restore this backup?",
+          "message": "All current data is replaced with the backup from {{date}}. The current data is first saved as a copy on this computer. The app reloads when it is done.",
+          "confirm": "Restore"
+        },
+        "deleteModal": {
+          "title": "Delete this backup?",
+          "message": "The backup from {{date}} is deleted from Church Hub Cloud for good.",
+          "confirm": "Delete"
+        },
+        "toast": {
+          "backedUp": "Backed up to Church Hub Cloud",
+          "restored": "Backup restored. Reloading…",
+          "deleted": "Backup deleted",
+          "signedOut": "Signed out of Church Hub Cloud",
+          "deletedAll": "Cloud backups deleted and signed out"
+        },
+        "errors": {
+          "cloud_sign_in_required": "Your Church Hub Cloud sign-in has ended. Sign in with Google again.",
+          "quota_exceeded": "The free storage is full. Delete an older cloud backup, or wait until older ones expire after 30 days.",
+          "too_large": "This database is larger than the free backup limit.",
+          "daily_limit": "You have reached today’s backup limit. Try again tomorrow.",
+          "rate_limited": "Too many requests. Wait a minute and try again.",
+          "busy": "A backup or restore is already running.",
+          "upload_in_progress": "A backup is still uploading. Try again in a few minutes.",
+          "backup_unreadable": "This backup can’t be opened: it was changed or belongs to another account.",
+          "not_found": "This backup no longer exists.",
+          "service_unreachable": "Church Hub Cloud can’t be reached. Check the internet connection.",
+          "not_configured": "Church Hub Cloud is not available right now.",
+          "generic": "Something went wrong with Church Hub Cloud. Try again.",
+          "quota_exceeded_details": "This backup needs {{needed}}, but only {{free}} of your {{total}} is free. Delete an older cloud backup, or wait until older ones expire after 30 days.",
+          "suspended": "Cloud backups are paused for this account. Contact Church Hub for help.",
+          "not_available": "Church Hub Cloud is not available in this version yet. It will be available after an update."
+        },
+        "description": "Free backups of this church’s data, kept by Church Hub for 30 days. Restore them on any computer by signing in with the same Google account.",
+        "retention": "Each backup is kept for {{days}} days. When the free storage is full, new backups are refused until older ones expire or you delete some.",
+        "unavailable": {
+          "title": "Not available yet",
+          "description": "This version of Church Hub can’t use Church Hub Cloud yet. It will be available after an update."
+        }
+      }
+    },
+    "secretStore": {
+      "title": "Saved passwords and keys",
+      "description": "The passwords, API keys and sign-ins this computer saves are encrypted.",
+      "keptIn": {
+        "keychain": "The key that opens them is kept in the macOS Keychain, never in the database or its backups.",
+        "credentialManager": "The key that opens them is kept in Windows Credential Manager, never in the database or its backups.",
+        "secretService": "The key that opens them is kept in the system keyring, never in the database or its backups.",
+        "file": "This computer has no system keyring, so the key that opens them is kept in a file in the Church Hub data folder that only you can read. Backups don't include it."
+      },
+      "locked": "Church Hub couldn't open its key in the system keyring, so saved passwords and keys can't be used right now. Unlock the keyring, then restart Church Hub.",
+      "otherComputer": "A backup restored on another computer can't open them: there, you sign in again and re-enter the keys.",
+      "reset": {
+        "title": "This backup came from another computer. Set these up again:",
+        "features": {
+          "youtube": "YouTube: sign in again",
+          "googleDrive": "Google Drive backups: sign in again",
+          "cloudSync": "Cloud sync: the church's owner connects it again",
+          "listenerLink": "Live translation: share the new listener link",
+          "remoteAccess": "Phones: scan the pairing code again",
+          "cloudBackup": "Church Hub Cloud backup: sign in again",
+          "obs": "OBS: enter the password again",
+          "songSources": "Song sources: enter the S3 secret key again",
+          "aiSearch": "AI search: enter the API key again",
+          "liveTranslation": "Live translation: enter the API keys again",
+          "users": "Users: phones sign in again with a new code"
+        },
+        "dismiss": "Done"
+      }
+    },
+    "cloudSync": {
+      "title": "Cloud sync",
+      "description": "Songs and programs reach your phones and other PCs within seconds, through Church Hub's cloud.",
+      "off": {
+        "title": "Turn on cloud sync",
+        "description": "Pick how this church is set up. You can sign in with Google later too.",
+        "google": "Continue with Google",
+        "guest": "Continue as a guest",
+        "ownerHint": "With Google, your account owns this church: you can recover it on a new PC and revoke lost devices. As a guest, sign in later to claim it.",
+        "failed": "Cloud sync could not be turned on. Check the internet connection and try again."
+      },
+      "recover": {
+        "title": "Already set up on another PC?",
+        "description": "Sign in with the Google account that owns the church to bring it to this PC.",
+        "signIn": "Recover with Google"
+      },
+      "on": {
+        "title": "Cloud sync is on",
+        "owner": "Owner: {{email}}",
+        "guest": "Guest church: nobody owns it yet",
+        "claimHint": "Sign in with Google to own this church. Nothing moves; you can then recover it on another PC.",
+        "claim": "Sign in with Google to claim it",
+        "manageHint": "Sign in as the owner to see your church servers, transfer the church or revoke every device.",
+        "manage": "Sign in as the owner",
+        "turnOff": "Turn off cloud sync",
+        "turnOffTitle": "Turn off cloud sync?",
+        "turnOffConfirm": "This PC stops syncing. The church stays in the cloud: its owner can recover it later."
+      },
+      "owner": {
+        "signedInAs": "Signed in as {{email}}",
+        "signOut": "Sign out",
+        "yourChurches": "Your church servers",
+        "thisPc": "This PC",
+        "offered": "Offered to you: accept it to become its owner",
+        "churchDetails_one": "{{count}} device · updated {{updated}}",
+        "churchDetails_other": "{{count}} devices · updated {{updated}}",
+        "noChurches": "This account owns no church yet.",
+        "listFailed": "Could not load your churches.",
+        "recover": "Use on this PC",
+        "accept": "Accept",
+        "transferTitle": "Transfer ownership",
+        "transferHint": "The church stays yours until that Google account signs in and accepts it.",
+        "transferPlaceholder": "New owner's Gmail address",
+        "transfer": "Transfer",
+        "transferSent": "Offered to {{email}}. It is theirs once they accept.",
+        "revokeTitle": "Revoke every device",
+        "revokeHint": "Use it when a phone is lost or a backup file got out: every device must be paired again.",
+        "revokeAll": "Revoke every device",
+        "revokeConfirm": "Every phone and PC loses access, and the church moves to a new private address. This PC keeps syncing. Pair the phones again afterwards.",
+        "revokedAll": "Every device was revoked. Pair your phones again.",
+        "actionFailed": "That did not work. Sign in again and retry."
+      },
+      "conflict": {
+        "title": "This church is also on another PC",
+        "body": "{{name}} (last active {{lastSeen}}) uses this church too, usually because a backup was restored there. Only one PC can keep it. Which one?",
+        "keepHere": "Keep it on this PC",
+        "keepOther": "Let {{name}} keep it",
+        "unknownPc": "Another PC",
+        "unknownTime": "recently"
+      },
+      "signIn": {
+        "waiting": "Finish signing in in the browser window…",
+        "failed": "The sign-in could not start. Check the internet connection and try again."
       }
     },
     "sync": {
       "title": "Library Sync",
-      "description": "Keep your song library and schedules up to date across all your devices through your Google Drive account.",
+      "description": "Keep your song library and presentations up to date across all your devices through your Google Drive account.",
       "loading": "Loading sync status…",
       "toggle": {
         "title": "Real-time library sync",
@@ -1040,13 +1260,28 @@
           "added": "Added",
           "updated": "Updated",
           "removed": "Removed",
-          "conflict": "Conflict"
+          "conflict": "Conflict",
+          "rejected": "Not allowed"
         },
         "entity": {
           "song": "Song",
           "song_category": "Category",
           "song_group": "Group",
-          "schedule": "Schedule"
+          "schedule": "Presentation",
+          "song_tag": "Tag",
+          "song_bookmark": "Song bookmark",
+          "song_bookmark_note": "Song bookmarks note",
+          "bible_bookmark": "Bible bookmark",
+          "bible_bookmark_note": "Bible bookmarks note",
+          "music_playlist": "Playlist",
+          "setting": "Setting",
+          "role": "Role",
+          "user": "User"
+        },
+        "needs": "Needs: {{permission}}",
+        "needsSpecial": {
+          "super_admin": "a super admin",
+          "active_user": "an active account"
         }
       }
     },
@@ -1056,7 +1291,7 @@
     },
     "screens": {
       "title": "Screens",
-      "description": "Configure screens for different display purposes. Each screen type has its own layout and configuration options.",
+      "description": "Each screen is a window: on the projector, the stage monitor or the stream. Pick one to choose how it looks and where it shows.",
       "addScreen": "Add Screen",
       "noScreens": "No screens configured",
       "status": {
@@ -1064,23 +1299,21 @@
         "closed": "window closed"
       },
       "groups": {
+        "look": "Look",
         "idle": "When nothing is shown",
-        "window": "Window",
-        "advanced": "More window options"
+        "where": "Where it shows",
+        "more": "More options",
+        "slides": "Slides"
       },
       "idle": {
-        "summaryOpen": "Between songs and verses the projector shows this empty slide. Click it to change its look.",
-        "summaryClosed": "Between songs and verses the window closes: the projector shows the computer's desktop, with no clock or background.",
-        "windowCloses": "Window closed: the desktop shows",
-        "editEmptySlide": "Edit the empty slide",
         "clock": {
           "label": "Clock on the empty slide",
           "description": "Shows the time when nothing is live, for example before the service."
         }
       },
       "window": {
-        "label": "Window open now",
-        "description": "Shows this screen on its display. Turn it off to close the window."
+        "open": "Open window",
+        "close": "Close window"
       },
       "openOnStartup": {
         "label": "Open when the app starts",
@@ -1098,7 +1331,7 @@
       },
       "previewScreen": {
         "label": "Shown in the previews",
-        "description": "The Control Room, Bible, song and program previews mirror this screen. Pick another screen to switch; without a choice, it is the main screen.",
+        "description": "The Control Room, Bible, song and presentation previews mirror this screen. Pick another screen to switch; without a choice, it is the main screen.",
         "enabled": "The previews now show this screen",
         "error": "Could not change the screen shown in the previews"
       },
@@ -1120,9 +1353,10 @@
         "openInNewTab": "Open in new tab",
         "copyUrl": "Copy URL to clipboard",
         "duplicate": "Duplicate the screen with all its settings",
-        "edit": "Edit layout",
+        "edit": "Edit theme",
         "delete": "Delete screen",
-        "editTooltip": "Change what each slide type looks like on this screen: text, background, clock"
+        "editTooltip": "Change this screen's theme: what each slide type looks like (colours, text, background, clock)",
+        "menu": "More screen actions"
       },
       "toast": {
         "created": "Screen created successfully",
@@ -1173,6 +1407,9 @@
           "saveFailed": "Failed to save file",
           "cancelled": "Export cancelled"
         }
+      },
+      "slides": {
+        "description": "Every kind of slide, as this screen shows it. Click one to edit it."
       }
     },
     "developer": {
@@ -1297,11 +1534,18 @@
           "install": "The update could not be installed and the current version is still running. Try again, or install the release from GitHub. A development instance cannot replace itself."
         }
       },
-      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, schedules and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
+      "howItWorks": "Installing closes Church Hub, replaces it with the new version and opens it again by itself. Your songs, presentations and settings are kept. On Windows a short progress window may appear; nothing needs to be clicked.",
       "outcome": {
         "updated": "Updated to v{{version}}",
         "failed": "The update to v{{version}} did not complete — still running v{{current}}. See the logs for details."
       }
+    },
+    "startup": {
+      "title": "Startup",
+      "description": "What happens when the computer starts.",
+      "openOnLogin": "Open Church Hub when the computer starts",
+      "openOnLoginDescription": "A presentation set to start with Church Hub then begins on its own.",
+      "error": "The startup setting could not be changed"
     },
     "about": {
       "title": "About",
@@ -1315,6 +1559,44 @@
       "viewReleaseNotes": "View release notes on GitHub",
       "devInstance": "Development instance",
       "devInstanceDescription": "You're running a dev build — update checks are disabled."
+    },
+    "credits": {
+      "title": "Credits",
+      "description": "Content the app bundles from others",
+      "bibleTopics": {
+        "title": "Bible verses by topic",
+        "attribution": "The topics and their verses come from the <source>OpenBible.info topical Bible</source>, licensed under <licence>CC BY 4.0</licence>. The Romanian titles are our translation; the verse texts come from your installed Bibles."
+      }
+    },
+    "cloudDevices": {
+      "title": "Join with a link",
+      "description": "A phone or a browser opens the link, from anywhere, and stays bound to this church.",
+      "notConnected": "Connect this computer to Church Hub Cloud first: the church's songs are kept there, so joined devices can read them even when this computer is off.",
+      "connect": "Connect to Church Hub Cloud",
+      "connecting": "Connecting…",
+      "connectFailed": "Could not connect: {{error}}",
+      "account": "Account",
+      "name": "Device name",
+      "namePlaceholder": "For example: Andrei's phone",
+      "remoteOff": "“Reach this computer from anywhere” is off: this device will read the songs from the cloud only. Turn it on before you create the link, so the device also works live with this computer while it is on.",
+      "create": "Create the link",
+      "creating": "Creating…",
+      "createFailed": "Could not create the link: {{error}}",
+      "linkHint": "Scan the code with the phone, or send it the link. The link is shown only once and lets the device in, so share it only with that person.",
+      "another": "Add another device",
+      "devices": "Devices",
+      "none": "No device has joined with a link yet.",
+      "addedOn": "added {{date}}",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "revokeFailed": "Could not revoke the device: {{error}}",
+      "revokeConfirm": {
+        "title": "Revoke this device?",
+        "message": "{{name}} can no longer read or change the church's data. Other devices keep working."
+      }
+    },
+    "themes": {
+      "title": "Themes"
     }
   }
 }

@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 
 import { ContentTypeButton } from './ContentTypeButton'
 import {
+  type LiveProgramSteps,
   useClearSlide,
-  useNavigateTemporary,
+  useMoveLive,
   usePresentationState,
 } from '../hooks'
 
@@ -13,10 +14,7 @@ interface MobileLiveStripProps {
    * The program whose step is on the screens, if any: next and previous walk
    * it, as the arrow keys do.
    */
-  liveProgram: {
-    goNext: () => Promise<void>
-    goPrev: () => Promise<void>
-  } | null
+  liveProgram: LiveProgramSteps | null
 }
 
 /**
@@ -27,57 +25,49 @@ interface MobileLiveStripProps {
 export function MobileLiveStrip({ liveProgram }: MobileLiveStripProps) {
   const { t } = useTranslation('bible')
   const { data: state } = usePresentationState()
-  const navigateTemporary = useNavigateTemporary()
+  const { goNext, goPrev } = useMoveLive(liveProgram)
   const clearSlide = useClearSlide()
 
   const content = state?.temporaryContent
   if (!content || state.isHidden) return null
 
-  const go = (direction: 'next' | 'prev') => {
-    if (liveProgram) {
-      void (direction === 'next' ? liveProgram.goNext() : liveProgram.goPrev())
-    } else {
-      navigateTemporary.mutate({ direction })
-    }
-  }
-
   const buttonClass =
-    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-700 active:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:active:bg-gray-700'
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-fg-label active:bg-hover'
 
   return (
     <div
       data-testid="mobile-live-strip"
-      className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-950/60 border-t border-indigo-200 dark:border-indigo-900"
+      className="flex items-center gap-2 px-3 py-2 bg-panel border-t border-line"
     >
-      <span className="w-2 h-2 shrink-0 rounded-full bg-red-500 animate-pulse" />
+      <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-live" />
       <div className="flex min-w-0 flex-1">
         <ContentTypeButton temporaryContent={content} />
       </div>
       <button
         type="button"
-        onClick={() => go('prev')}
+        onClick={goPrev}
         aria-label={t('controls.prev')}
         className={buttonClass}
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={20} strokeWidth={1.5} />
       </button>
       <button
         type="button"
-        onClick={() => go('next')}
+        onClick={goNext}
         aria-label={t('controls.next')}
         data-testid="mobile-live-strip-next"
         className={buttonClass}
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={20} strokeWidth={1.5} />
       </button>
       <button
         type="button"
         onClick={() => clearSlide.mutate()}
         aria-label={t('controls.hide')}
         data-testid="mobile-live-strip-hide"
-        className={`${buttonClass} text-red-600 dark:text-red-400`}
+        className={buttonClass}
       >
-        <EyeOff size={18} />
+        <EyeOff size={20} strokeWidth={1.5} />
       </button>
     </div>
   )

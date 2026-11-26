@@ -37,7 +37,7 @@ function WorkspaceDropZone({
       ref={setNodeRef}
       data-testid={`workspace-drop-${panelId}-${edge}`}
       className={`absolute z-30 rounded transition-colors ${className} ${
-        isOver ? 'bg-indigo-500/30 ring-2 ring-indigo-500 ring-inset' : ''
+        isOver ? 'bg-focus/20 ring-2 ring-focus ring-inset' : ''
       }`}
     />
   )

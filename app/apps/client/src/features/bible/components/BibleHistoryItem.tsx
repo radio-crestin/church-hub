@@ -3,22 +3,27 @@ import type { BibleHistoryItem as BibleHistoryItemType } from '../types'
 interface BibleHistoryItemProps {
   item: BibleHistoryItemType
   onClick: () => void
+  onDoubleClick: () => void
 }
 
-export function BibleHistoryItem({ item, onClick }: BibleHistoryItemProps) {
+export function BibleHistoryItem({
+  item,
+  onClick,
+  onDoubleClick,
+}: BibleHistoryItemProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left p-2 rounded-lg border transition-all border-gray-200 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-600 bg-white dark:bg-gray-800 hover:bg-teal-50/50 dark:hover:bg-teal-900/10"
+      onDoubleClick={onDoubleClick}
+      data-testid="bible-history-item"
+      className="w-full text-left px-2.5 py-2 rounded-lg transition-colors hover:bg-hover"
     >
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-medium mb-0.5 text-gray-500 dark:text-gray-400">
+        <div className="text-xs font-medium mb-0.5 text-fg-label">
           {item.reference}
         </div>
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          {item.text}
-        </div>
+        <div className="text-sm text-fg-body">{item.text}</div>
       </div>
     </button>
   )

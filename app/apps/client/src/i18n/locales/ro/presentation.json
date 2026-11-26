@@ -3,31 +3,31 @@
     "title": "Ecrane",
     "description": "Configurați ecrane pentru diferite scopuri de afișare. Fiecare tip de ecran are propriile opțiuni de configurare.",
     "addScreen": "Adaugă Ecran",
-    "addFirstScreen": "Adaugă Primul Ecran",
+    "addFirstScreen": "Adaugă primul ecran",
     "noScreens": "Niciun ecran configurat",
     "noScreensDescription": "Adaugă primul tău ecran pentru a configura cum este afișat conținutul.",
-    "screenName": "Nume Ecran",
-    "screenNamePlaceholder": "ex: Proiector Principal",
-    "screenType": "Tip Ecran",
+    "screenName": "Nume ecran",
+    "screenNamePlaceholder": "ex.: Proiector principal",
+    "screenType": "Tip ecran",
     "screenTypes": {
-      "primary": "Principal / Audiență",
-      "stage": "Monitor Scenă",
-      "livestream": "Transmisie Live",
-      "kiosk": "Chioșc"
+      "primary": "Principal / Sală",
+      "stage": "Monitor de scenă",
+      "livestream": "Transmisiune live",
+      "kiosk": "Kiosk"
     },
-    "createAndConfigure": "Creează și Configurează",
-    "deleteConfirmTitle": "Șterge Ecranul?",
-    "deleteConfirmMessage": "Ești sigur că vrei să ștergi \"{{name}}\"? Această acțiune nu poate fi anulată.",
+    "createAndConfigure": "Creează și configurează",
+    "deleteConfirmTitle": "Ștergi ecranul?",
+    "deleteConfirmMessage": "Ești sigur că vrei să ștergi „{{name}}”? Acțiunea nu poate fi anulată.",
     "editor": {
       "zoom": "Zoom",
-      "resetZoom": "Resetează Zoom",
+      "resetZoom": "Resetează zoomul",
       "save": "Salvează",
       "unsavedChanges": "Modificări nesalvate",
-      "previewText": "Text Previzualizare",
-      "previewTextDescription": "Personalizați textul de previzualizare pentru a testa cum arată stilul cu conținut diferit.",
-      "customPreviewText": "Text Personalizat",
-      "previewTextPlaceholder": "Introduceți text personalizat (multiline suportat)...",
-      "resetPreviewText": "Resetează la Implicit",
+      "previewText": "Text de probă",
+      "previewTextDescription": "Scrie un text de probă ca să vezi cum arată stilul cu alt conținut.",
+      "customPreviewText": "Text personalizat",
+      "previewTextPlaceholder": "Scrie textul de probă (poate avea mai multe rânduri)…",
+      "resetPreviewText": "Revino la textul implicit",
       "noScene": "Implicit (fără scenă)",
       "loading": "Se încarcă...",
       "nextSlidePreview": "Previzualizarea slide-ului următor...",
@@ -36,31 +36,31 @@
       "zoomIn": "Mărește",
       "zoomOut": "Micșorează",
       "close": "Închide editorul",
-      "selectHint": "Apasă pe un text din previzualizare ca să-i schimbi fontul, mărimea și locul.",
+      "selectHint": "Apasă pe un text din previzualizare ca să-i schimbi fontul, mărimea și poziția.",
       "forSlideType": "Doar pe slide-urile „{{type}}”",
       "forSlideTypeDescription": "Se schimbă doar la acest tip de slide. Alege alt tip din bara de sus.",
       "wholeScreen": "Pe tot ecranul",
       "wholeScreenDescription": "Sunt la fel pe toate tipurile de slide ale acestui ecran.",
       "elementsTitle": "Textele de pe acest slide",
-      "elementsHint": "Alege unul ca să-i schimbi fontul, mărimea și locul.",
+      "elementsHint": "Alege unul ca să-i schimbi fontul, mărimea și poziția.",
       "backToScreen": "Înapoi la setările ecranului",
       "appliesToScreen": "La fel pe toate tipurile de slide",
       "appliesToSlideType": "Doar pe acest tip de slide"
     },
     "contentTypes": {
-      "song": "Cântec",
-      "song_first_slide": "Cântec - Primul Slide",
-      "song_last_slide": "Cântec - Ultimul Slide",
-      "bible": "Verset Biblic",
-      "bible_passage": "Pasaj Biblic",
+      "song": "Cântare",
+      "song_first_slide": "Cântare (primul slide)",
+      "song_last_slide": "Cântare (ultimul slide)",
+      "bible": "Verset biblic",
+      "bible_passage": "Pasaj biblic",
       "announcement": "Anunț",
-      "versete_tineri": "Versete Biblice",
+      "versete_tineri": "Versete biblice",
       "empty": "Gol / Ceas",
-      "screen_share": "Partajare Ecran"
+      "screen_share": "Partajare ecran"
     },
     "panels": {
       "position": "Poziție și Dimensiune",
-      "textStyle": "Stil Text",
+      "textStyle": "Stilul textului",
       "animation": "Animație",
       "background": "Fundal",
       "general": "Setări Generale",
@@ -73,6 +73,7 @@
     "elements": {
       "songKey": "Gama",
       "amen": "Amin",
+      "songTitle": "Titlul cântării",
       "mainText": "Text principal",
       "contentText": "Textul versetului",
       "referenceText": "Referința biblică",
@@ -95,62 +96,72 @@
       "left": "Stânga",
       "right": "Dreapta",
       "stretchHorizontal": "Lățimea se întinde între constrângerile stânga și dreapta",
-      "stretchVertical": "Înălțimea se întinde între constrângerile sus și jos"
+      "stretchVertical": "Înălțimea se întinde între constrângerile sus și jos",
+      "copy": "Copiază poziția",
+      "paste": "Lipește poziția",
+      "nothingCopied": "Copiază întâi poziția unui element",
+      "copied": "Poziția a fost copiată. Lipește-o pe alt element, tip de slide sau ecran.",
+      "lock": "Blochează",
+      "locked": "Blocat",
+      "lockHint": "Blochează-l, ca să nu fie mutat din greșeală",
+      "unlockHint": "Deblochează-l ca să-l poți muta sau redimensiona",
+      "lockedDescription": "Poziția e blocată. Deblochează elementul ca să-l muți sau să-i schimbi mărimea."
     },
     "textStyle": {
-      "fontFamily": "Familie Font",
-      "maxFontSize": "Dimensiune Max Font",
-      "autoScale": "Scalare Automată",
-      "autoScaleDescription": "Scalează automat textul pentru a încăpea în container. Când este dezactivat, folosește o dimensiune fixă.",
-      "fontSize": "Dimensiune Font",
-      "minFontSize": "Dimensiune Min Font",
+      "fontFamily": "Font",
+      "maxFontSize": "Mărime maximă font",
+      "autoScale": "Scalare automată",
+      "autoScaleDescription": "Micșorează automat textul ca să încapă în casetă. Când e oprit, folosește o mărime fixă.",
+      "fontSize": "Mărime font",
+      "minFontSize": "Mărime minimă font",
       "color": "Culoare",
       "bold": "Îngroșat",
       "italic": "Cursiv",
       "underline": "Subliniat",
-      "horizontalAlignment": "Aliniere Orizontală",
-      "verticalAlignment": "Aliniere Verticală",
+      "horizontalAlignment": "Aliniere orizontală",
+      "verticalAlignment": "Aliniere verticală",
       "left": "Stânga",
       "center": "Centru",
       "right": "Dreapta",
       "top": "Sus",
       "middle": "Mijloc",
       "bottom": "Jos",
-      "lineHeight": "Înălțime Linie",
-      "shadow": "Umbră Text",
-      "compressLines": "Comprimă Liniile",
-      "lineSeparator": "Separator Linii",
+      "lineHeight": "Spațiu între rânduri",
+      "shadow": "Umbră text",
+      "compressLines": "Comprimă rândurile",
+      "lineSeparator": "Separator între rânduri",
       "separators": {
-        "space": "Spațiu Dublu",
-        "dash": "Liniuță Em (—)",
-        "pipe": "Bară Verticală (|)"
+        "space": "Spațiu dublu",
+        "dash": "Linie de pauză (—)",
+        "pipe": "Bară verticală (|)"
       },
-      "fitLineToWidth": "Potrivește Fiecare Linie la Lățime",
-      "fitLineToWidthDescription": "Previne întreruperea liniilor - fiecare linie se scalează pentru a încăpea",
+      "fitLineToWidth": "Fiecare rând pe toată lățimea",
+      "fitLineToWidthDescription": "Rândurile nu se mai rup: fiecare rând se scalează ca să încapă în lățime",
       "justify": "Justificat",
       "systemDefault": "Implicit (sistem)"
     },
     "animation": {
-      "animationIn": "Animație Intrare",
-      "animationOut": "Animație Ieșire",
-      "slideTransitionOut": "Tranziție Slide - Ieșire",
+      "animationIn": "Animație la intrare",
+      "animationOut": "Animație la ieșire",
+      "slideTransitionOut": "Tranziție între slide-uri (ieșire)",
       "slideTransitionOutDescription": "Animație pentru conținutul vechi care dispare la schimbarea slide-ului",
-      "slideTransitionIn": "Tranziție Slide - Intrare",
+      "slideTransitionIn": "Tranziție între slide-uri (intrare)",
       "slideTransitionInDescription": "Animație pentru conținutul nou care apare la schimbarea slide-ului",
       "type": "Tip",
       "duration": "Durată",
       "delay": "Întârziere",
       "easing": "Easing",
       "types": {
-        "none": "Niciunul",
-        "fade": "Fade",
-        "slideUp": "Alunecare Sus",
-        "slideDown": "Alunecare Jos",
-        "slideLeft": "Alunecare Stânga",
-        "slideRight": "Alunecare Dreapta",
+        "none": "Fără",
+        "fade": "Estompare",
+        "slideUp": "Alunecare în sus",
+        "slideDown": "Alunecare în jos",
+        "slideLeft": "Alunecare spre stânga",
+        "slideRight": "Alunecare spre dreapta",
         "scale": "Scalare",
-        "blur": "Blur",
-        "zoom": "Zoom"
+        "blur": "Încețoșare",
+        "zoom": "Zoom",
+        "typewriter": "Mașină de scris"
       },
       "easings": {
         "linear": "Liniar",
@@ -159,14 +170,15 @@
         "easeInOut": "Ease In Out",
         "bounce": "Bounce"
       },
-      "durationMs": "Durată (ms)"
+      "durationMs": "Durată (ms)",
+      "typingMs": "Timp maxim de scriere (ms)"
     },
     "background": {
       "type": "Tip",
       "types": {
         "inherit": "Implicit (setările ecranului)",
         "transparent": "Transparent",
-        "color": "Culoare Solidă",
+        "color": "Culoare uniformă",
         "image": "Imagine",
         "video": "Video"
       },
@@ -189,7 +201,7 @@
       "hint": {
         "any": "Imagini: JPG, PNG, WebP sau GIF, de până la 50 MB. Videoclipuri: MP4 (H.264) sau WebM, de până la 1 GB — acestea rulează pe Windows, macOS și Linux."
       },
-      "songTypesHint": "Cântecele au trei aranjamente. Setează același fundal pentru {{song}}, {{firstSlide}} și {{lastSlide}}.",
+      "songTypesHint": "Cântările folosesc trei tipuri de slide. Pune același fundal pentru {{song}}, {{firstSlide}} și {{lastSlide}}.",
       "switchedType": "Tipul fundalului este acum „{{type}}”, potrivit fișierului încărcat.",
       "noViewPermission": "Nu ai permisiunea de a vedea imaginile și videoclipurile încărcate.",
       "heavyGif": {
@@ -209,11 +221,11 @@
         "fileTooLarge": "Fișierul este prea mare. Imaginile pot avea până la 50 MB, iar videoclipurile până la 1 GB.",
         "uploadFailed": "Încărcarea a eșuat. Încearcă din nou.",
         "deleteFailed": "Fișierul nu a putut fi șters. Încearcă din nou.",
-        "loadFailed": "Lista fișierelor încărcate nu a putut fi afișată."
+        "loadFailed": "Lista fișierelor încărcate nu a putut fi citită."
       }
     },
     "general": {
-      "screenSize": "Dimensiune Ecran",
+      "screenSize": "Dimensiune ecran",
       "width": "Lățime",
       "height": "Înălțime",
       "clockEnabled": "Afișează Ceas",
@@ -224,10 +236,10 @@
     },
     "screenShare": {
       "title": "Partajare Ecran",
-      "videoSettings": "Setări Afișare Video",
-      "videoPosition": "Poziție și Dimensiune",
-      "objectFit": "Scalare Video",
-      "objectFitDescription": "Cum se încadrează videoul în container",
+      "videoSettings": "Afișarea videoului",
+      "videoPosition": "Poziție și dimensiune",
+      "objectFit": "Scalare video",
+      "objectFitDescription": "Cum se încadrează videoul în casetă",
       "objectFitOptions": {
         "contain": "Încadrat",
         "cover": "Acoperă",
@@ -235,20 +247,20 @@
       }
     },
     "nextSlide": {
-      "title": "Previzualizare Slide Următor",
+      "title": "Previzualizarea slide-ului următor",
       "enable": "Afișează previzualizarea slide-ului următor",
       "description": "Afișează o previzualizare a conținutului următor în partea de jos a ecranului, util pentru monitoarele de scenă.",
       "enabled": "Afișează Secțiunea Slide Următor",
-      "labelText": "Text Etichetă",
+      "labelText": "Text etichetă",
       "labelStyle": "Stil Etichetă",
       "contentStyle": "Stil Conținut",
       "labelPlaceholder": "Urmează:"
     },
     "songOptions": {
-      "title": "Opțiuni Cântare",
-      "displayKeyLine": "Afișează tonalitatea",
-      "displayKeyLineDescription": "Afișează tonalitatea muzicală pe primul slide al cântării",
-      "displayChords": "Afișează acorduri",
+      "title": "Opțiuni cântare",
+      "displayKeyLine": "Afișează gama",
+      "displayKeyLineDescription": "Afișează gama cântării pe primul slide",
+      "displayChords": "Afișează acordurile",
       "displayChordsDescription": "Afișează acordurile deasupra versurilor pe ecran",
       "chordFontSize": "Mărime acorduri"
     },
@@ -256,9 +268,9 @@
       "title": "Opțiuni Biblie",
       "includeReferenceInContent": "Include referința în conținut",
       "includeReferenceInContentDescription": "Adaugă referința biblică la începutul versetului și ascunde elementul separat de referință",
-      "referenceWrapperStyle": "Delimitator referință",
+      "referenceWrapperStyle": "Paranteze la referință",
       "wrapperStyles": {
-        "none": "Nimic",
+        "none": "Fără",
         "parentheses": "(ref)",
         "brackets": "[ref]"
       }
@@ -269,7 +281,7 @@
       "sharedSettings": "Setări Ceas (comune pentru toate tipurile de slide)",
       "format": "Format",
       "showSeconds": "Afișează secundele",
-      "positionHint": "Trageți elementul ceas pe canvas pentru a ajusta poziția"
+      "positionHint": "Trage ceasul în previzualizare ca să-i schimbi poziția"
     },
     "nativeWindow": "Fereastră nativă",
     "messages": {
@@ -288,11 +300,11 @@
     "monitor": {
       "label": "Monitor",
       "auto": "Automat",
-      "autoDescription": "Se deschide pe un ecran pe care nu este aplicația",
+      "autoDescription": "Se deschide pe un monitor pe care nu e Camera de control",
       "unnamed": "Monitorul {{index}}",
       "disconnected": "{{name}} (neconectat)",
       "identify": "Identifică",
-      "identifyTooltip": "Afișează un număr pe fiecare ecran, ca să le deosebești",
+      "identifyTooltip": "Afișează un număr pe fiecare monitor, ca să le deosebești",
       "description": "Proiectorul sau televizorul pe care se deschide acest ecran."
     },
     "sections": {
@@ -302,6 +314,9 @@
       "clockSettings": "Setări ceas",
       "clock": "Ceas",
       "screenSettings": "Setări ecran"
+    },
+    "songTitle": {
+      "showNumber": "Arată cartea și numărul cântării (PDC 19)"
     }
   },
   "displays": {
@@ -376,7 +391,7 @@
     "clearHighlights": "Șterge Evidențierile"
   },
   "controlRoom": {
-    "title": "Cameră de Control",
+    "title": "Camera de control",
     "settings": {
       "title": "Setări Cameră de Control",
       "button": "Setări",
@@ -391,7 +406,7 @@
         "conflictOther": "Folosită deja de \"{{action}}\""
       }
     },
-    "selectProgram": "Selectează un program",
+    "selectProgram": "Alege o prezentare",
     "presenting": "În prezentare",
     "notPresenting": "Nu prezintă",
     "connected": "Conectat",
@@ -399,16 +414,16 @@
     "disconnected": "Deconectat",
     "openDisplay": "Deschide Ecran",
     "slides": "Slide-uri",
-    "noSlides": "Niciun slide în acest program",
+    "noSlides": "Niciun slide în această prezentare",
     "preview": "Previzualizare",
     "openSong": "Deschide Cântec",
     "openBible": "Deschide Biblia",
     "screenShare": {
-      "start": "Partajare Ecran",
-      "stop": "Oprește Partajarea",
+      "start": "Partajează ecranul",
+      "stop": "Oprește partajarea",
       "error": {
-        "notSupported": "Partajarea ecranului nu este suportată în acest browser",
-        "failed": "Eroare la pornirea partajării ecranului"
+        "notSupported": "Partajarea ecranului nu merge în acest browser",
+        "failed": "Partajarea ecranului nu a putut porni"
       },
       "waiting": "Se așteaptă ecranul partajat…",
       "picker": {
@@ -426,9 +441,9 @@
   },
   "textStyle": {
     "highlight": "Evidențiere",
-    "bold": "Bold",
+    "bold": "Îngroșat",
     "underline": "Subliniere",
-    "removeStyle": "Elimină Stil",
+    "removeStyle": "Elimină stilul",
     "highlightColor": "Culoare Evidențiere"
   },
   "contentTypes": {
@@ -439,5 +454,119 @@
     "label": "Ecranul afișat în previzualizare",
     "changed": "Previzualizările arată acum {{name}}",
     "error": "Nu s-a putut schimba ecranul din previzualizare"
+  },
+  "templates": {
+    "bundled": {
+      "classic": "Clasic",
+      "stage": "Scenă",
+      "lower_third": "Bandă jos",
+      "kiosk": "Kiosk",
+      "verses_evening": "Versete · Seară",
+      "verses_light": "Versete · Lumină",
+      "verses_calm": "Versete · Liniște",
+      "typewriter_paper": "Mașină de scris · Hârtie",
+      "typewriter_night": "Mașină de scris · Noapte",
+      "photo_mountain_sunrise": "Răsărit pe munte",
+      "photo_misty_forest": "Pădure în ceață",
+      "photo_golden_wheat": "Lan de grâu",
+      "photo_calm_sea": "Mare liniștită",
+      "photo_starry_night": "Noapte înstelată",
+      "photo_sea_of_clouds": "Mare de nori",
+      "video_ocean_horizon": "Orizont pe mare · video",
+      "video_golden_clouds": "Nori aurii · video",
+      "video_forest_light": "Lumină în pădure · video",
+      "video_blue_particles": "Particule albastre · video"
+    },
+    "bundledBadge": "Inclusă",
+    "sample": {
+      "reference": "Ioan 3:16",
+      "verse": "Fiindcă atât de mult a iubit Dumnezeu lumea, că a dat pe singurul Lui Fiu."
+    },
+    "usedBy": "Folosită de {{names}}",
+    "unused": "Nefolosită încă",
+    "copyName": "{{name}} (copie)",
+    "picker": {
+      "title": "Alege o temă",
+      "change": "Schimbă tema",
+      "close": "Închide",
+      "manage": "Gestionează temele",
+      "current": "Tema: {{name}}"
+    },
+    "page": {
+      "title": "Teme",
+      "description": "Cum arată slide-urile: culori, fonturi, fundal, poziții, tranziții. Alegi câte una pentru fiecare ecran și prezentare.",
+      "new": "Temă nouă",
+      "newName": "Temă nouă",
+      "empty": "Încă nu există teme."
+    },
+    "actions": {
+      "edit": "Editează",
+      "duplicate": "Duplică",
+      "rename": "Redenumește",
+      "delete": "Șterge"
+    },
+    "rename": {
+      "title": "Redenumește tema",
+      "label": "Nume",
+      "save": "Salvează"
+    },
+    "delete": {
+      "title": "Ștergi această temă?",
+      "message": "„{{name}}” va fi ștearsă.",
+      "inUse": "Folosită de {{names}}: alege acolo altă temă mai întâi.",
+      "bundled": "Temele incluse nu se pot șterge."
+    },
+    "toast": {
+      "saved": "Tema a fost salvată",
+      "savedAsCopy": "Temele incluse nu se schimbă: salvată ca „{{name}}”",
+      "duplicated": "Tema „{{name}}” a fost creată",
+      "renamed": "Tema a fost redenumită",
+      "deleted": "Tema a fost ștearsă",
+      "changed": "Tema a fost schimbată",
+      "error": "Tema nu s-a putut salva"
+    },
+    "screen": {
+      "description": "Alege o temă: ecranul arată toate slide-urile cu ea.",
+      "follows": {
+        "label": "Prezentările îi pot schimba aspectul",
+        "description": "O prezentare cu temă proprie apare aici în tema ei."
+      },
+      "scenes": {
+        "title": "Pe scene OBS",
+        "description": "Cât timp o scenă e live, ecranul folosește altă temă.",
+        "own": "Tema ecranului"
+      }
+    },
+    "presentation": {
+      "none": "Al fiecărui ecran",
+      "itemNone": "Tema prezentării",
+      "menu": "Temă",
+      "menuDescription": "Cum arată slide-urile acestei prezentări",
+      "own": "Tema acestei prezentări",
+      "edit": "Editează tema",
+      "editDescription": "Culori, fonturi, fundal și fiecare slide, doar pentru această prezentare"
+    },
+    "design": {
+      "title": "Design (toate slide-urile)",
+      "description": "Culori, fonturi, fundal și tranziție, schimbate deodată pe toate slide-urile temei.",
+      "colors": "Culori",
+      "textColor": "Text",
+      "accentColor": "Accent: referință, titlu, gamă",
+      "shadow": "Umbră sub text",
+      "shadowDescription": "Textul rămâne lizibil pe poze și video.",
+      "fonts": "Fonturi",
+      "textFont": "Fontul textului",
+      "accentFont": "Fontul accentului",
+      "background": "Fundal pentru toate slide-urile",
+      "transition": "Tranziție între slide-uri",
+      "duration": "Durată",
+      "typewriter": "Mașină de scris",
+      "typewriterDescription": "Versetele și anunțurile se afișează literă cu literă. Cântările apar treptat, ca să puteți cânta cu toții de la început."
+    },
+    "editor": {
+      "design": "Design",
+      "slide": "Slide-ul acesta",
+      "slides": "Slide-uri"
+    }
   }
 }

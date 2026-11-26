@@ -15,6 +15,8 @@ export interface DiscoveryCandidate {
 
 /** Mirrors the server's `DiscoveryMatchVerdict`. */
 export type DiscoveryMatchVerdict =
+  | 'exact-source'
+  | 'exact-lyrics'
   | 'exact-filename'
   | 'exact-title'
   | 'similar'

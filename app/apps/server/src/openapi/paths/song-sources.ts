@@ -74,7 +74,153 @@ const idParameter = (type: 'string' | 'integer') => ({
   schema: { type },
 })
 
+const share = {
+  type: 'object',
+  nullable: true,
+  properties: {
+    id: { type: 'integer' },
+    sourceId: {
+      type: 'string',
+      description: '<churchId>-<random>: the library folder',
+    },
+    name: { type: 'string' },
+    publisher: { type: 'string' },
+    categoryIds: {
+      type: 'array',
+      nullable: true,
+      items: { type: 'integer' },
+      description: 'null: the whole library',
+    },
+    listed: { type: 'boolean' },
+    manifestUrl: {
+      type: 'string',
+      nullable: true,
+      description: 'The link others add as a song source',
+    },
+    publishedChecksum: { type: 'string', nullable: true },
+    publishedShards: { type: 'array', items: { type: 'string' } },
+    songCount: { type: 'integer' },
+    lastSyncedAt: { type: 'integer', nullable: true },
+    lastError: { type: 'string', nullable: true },
+  },
+}
+
 export const songSourcesPaths = {
+  '/api/song-sources/share': {
+    get: {
+      tags,
+      summary: '"Share my songs": the shared library',
+      description:
+        'The church’s shared library (null while it shares nothing) and whether cloud sync is on, which sharing needs. Requires `settings.view`.',
+      security,
+      responses: {
+        '200': {
+          description: 'The share',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { data: share, cloudSync: { type: 'boolean' } },
+              },
+            },
+          },
+        },
+        ...errors,
+      },
+    },
+    put: {
+      tags,
+      summary: 'Share the songs, or change what is shared',
+      description:
+        'Publishes the whole library (categoryIds null) or chosen categories as a shared library through the sync service: hash-named gzipped shards of about 500 songs plus a manifest under libraries/<sourceId>/, unlisted by default or listed in the public catalog. Kept in sync every 5 minutes. Requires `settings.edit`.',
+      security,
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['name', 'categoryIds', 'listed'],
+              properties: {
+                name: { type: 'string' },
+                publisher: { type: 'string' },
+                categoryIds: {
+                  type: 'array',
+                  nullable: true,
+                  items: { type: 'integer' },
+                },
+                listed: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': { description: 'The share', content: dataOf(share) },
+        '400': { description: 'No category chosen' },
+        '409': { description: 'Cloud sync is off (cloud_sync_off)' },
+        '502': { description: 'The sync service failed' },
+        ...errors,
+      },
+    },
+    delete: {
+      tags,
+      summary: 'Stop sharing',
+      description:
+        'The service deletes the library from the catalog and the bucket. Requires `settings.edit`.',
+      security,
+      responses: {
+        '200': { description: 'Stopped' },
+        '502': { description: 'The sync service failed' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/share/sync': {
+    post: {
+      tags,
+      summary: 'Publish the shared library again now',
+      description:
+        'Uploads only the shards the bucket lacks, then the manifest. Requires `settings.edit`.',
+      security,
+      responses: {
+        '200': { description: 'The share', content: dataOf(share) },
+        '404': { description: 'Nothing is shared' },
+        '502': { description: 'The sync service failed' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/catalog': {
+    get: {
+      tags,
+      summary: 'The shared libraries in the public catalog',
+      description:
+        'The libraries churches listed (libraries/catalog.json), each with the manifest URL to add as a song source. Requires `songs.view`.',
+      security,
+      responses: {
+        '200': {
+          description: 'Listed libraries',
+          content: dataOf({
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                sourceId: { type: 'string' },
+                name: { type: 'string' },
+                publisher: { type: 'string' },
+                songCount: { type: 'integer' },
+                updatedAt: { type: 'string' },
+                manifestUrl: { type: 'string' },
+              },
+            },
+          }),
+        },
+        '502': { description: 'The catalog could not be read' },
+        ...errors,
+      },
+    },
+  },
   '/api/song-sources': {
     get: {
       tags,
@@ -157,7 +303,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Download a song file source’s archive',
       description:
-        'For `song-bundle-file` sources: the `.chsongs` file, downloaded by the server (links are checked to reach public addresses only). Requires `songs.create`.',
+        'For `song-bundle-file` sources: the `.chsongs` file, downloaded by the server (links are checked to reach public addresses only). A built-in source’s file (from Church Hub’s `song-sources` GitHub release) is refused with 502 when it is damaged (a ZIP entry’s CRC-32 differs) or its manifest’s checksum differs from the `.sha256` published next to it. Requires `songs.create`.',
       security,
       parameters: [idParameter('string')],
       responses: {
@@ -470,7 +616,7 @@ export const songSourcesPaths = {
       tags,
       summary: 'Save the S3 storage',
       description:
-        'An empty secret keeps the stored one. Requires `settings.edit`.',
+        'An empty secret keeps the stored one, but only for the same endpoint: with a new endpoint the secret must be sent again (400 otherwise). Requires `settings.edit`.',
       security,
       requestBody: {
         required: true,
@@ -485,7 +631,10 @@ export const songSourcesPaths = {
           description: 'The saved storage',
           content: dataOf({ $ref: '#/components/schemas/S3Storage' }),
         },
-        '400': { description: 'A field is missing or not a URL' },
+        '400': {
+          description:
+            'A field is missing or not a URL, or the endpoint changed with no secret sent',
+        },
         ...errors,
       },
     },

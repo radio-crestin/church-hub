@@ -1,17 +1,22 @@
 import { Eraser, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  formatShortcutForDisplay,
-  useAppShortcuts,
-} from '~/features/keyboard-shortcuts'
+import { isWebApp } from '~/config'
+import { useAppShortcuts } from '~/features/keyboard-shortcuts'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
+import { PhoneSlideControls } from './PhoneSlideControls'
+import { PreviewNavControls } from './PreviewNavControls'
+import { PreviewScreenPicker } from './PreviewScreenPicker'
 import {
+  type LiveProgramSteps,
   useClearSlide,
   useClearTemporaryContent,
+  useMoveLive,
   usePresentationState,
   useShowSlide,
 } from '../hooks'
@@ -30,8 +35,33 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
   fontSize: 140,
 }
 
-export function ControlRoom() {
+const HEADER_BUTTON_CLASS =
+  'flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-fg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] rounded-lg hover:bg-hover disabled:opacity-50 transition-colors'
+const ICON_BUTTON_CLASS =
+  'flex items-center justify-center h-8 w-8 rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50 transition-colors'
+
+interface ControlRoomProps {
+  /** The program whose step is on the screens: the phone's arrows walk it. */
+  liveProgram: LiveProgramSteps | null
+  /**
+   * The queue, or the program running, beside the preview (under it on a
+   * phone): what the operator follows and steps through. It fills the column
+   * and scrolls its own list.
+   */
+  playlist?: ReactNode
+  /** The playlist's name, for screen readers. */
+  playlistTitle?: string
+}
+
+export function ControlRoom({
+  liveProgram,
+  playlist,
+  playlistTitle,
+}: ControlRoomProps) {
   const { t } = useTranslation(['presentation', 'common'])
+  // A phone has no arrow keys: previous, hide and next sit at the bottom.
+  const isPhone = !useMediaQuery('(min-width: 1024px)')
+  const { goNext, goPrev, isMoving } = useMoveLive(liveProgram)
 
   const { data: state } = usePresentationState()
   const clearSlide = useClearSlide()
@@ -84,6 +114,8 @@ export function ControlRoom() {
   // content it is exactly what an operator is looking at.
   const isLive =
     !isHidden && (hasTemporaryContent || !!state?.currentSongSlideId)
+  // Prev/Next walk the live presentation, else the song or passage on screen.
+  const canMove = !!liveProgram || (hasTemporaryContent && !isHidden)
 
   // Render content button based on what's being presented
   const renderContentButton = () => {
@@ -97,109 +129,157 @@ export function ControlRoom() {
     <div className="flex flex-col h-full gap-4">
       <PageHeader
         title={t('presentation:controlRoom.title')}
-        actions={<ScreenShareButton />}
+        // Sharing a screen is the church PC's: the web app can't capture one
+        actions={isWebApp ? undefined : <ScreenShareButton />}
       />
 
-      {/* Preview Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-4 shrink-0 gap-4">
-          {/* LEFT: Content Button */}
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {renderContentButton()}
-          </div>
-
-          {/* RIGHT: LIVE + Controls */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* LIVE Indicator */}
-            <div
-              data-testid="control-room-live"
-              data-live={isLive ? 'true' : 'false'}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
-                isLive
-                  ? 'bg-red-100 dark:bg-red-900/30'
-                  : 'bg-gray-100 dark:bg-gray-700'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isLive
-                    ? 'bg-red-500 animate-pulse'
-                    : 'bg-gray-400 dark:bg-gray-500'
-                }`}
-              />
-              <span
-                className={`text-xs font-semibold ${
-                  isLive
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-400 dark:text-gray-500'
-                }`}
-              >
-                LIVE
-              </span>
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-1 lg:min-h-0">
+        {/* Preview Section */}
+        <div className="bg-panel rounded-xl border border-line p-3 lg:p-4 lg:flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-3 shrink-0 gap-4">
+            {/* LEFT: Content Button */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {renderContentButton()}
             </div>
-            {/* Clear Highlights Button */}
-            {hasHighlights && (
-              <button
-                type="button"
-                onClick={() => clearHighlights.mutate()}
-                disabled={clearHighlights.isPending}
-                className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                title={t('presentation:controls.clearHighlights')}
+
+            {/* RIGHT: LIVE + Controls */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* LIVE Indicator */}
+              <div
+                data-testid="control-room-live"
+                data-live={isLive ? 'true' : 'false'}
+                className="flex items-center gap-1.5 h-8 px-2"
               >
-                {clearHighlights.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Eraser size={16} />
-                )}
-              </button>
-            )}
-            {/* Hide/Show Button */}
-            {!isHidden ? (
-              <button
-                type="button"
-                onClick={handleHide}
-                disabled={clearSlide.isPending || clearTemporary.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                title={`${t('presentation:controls.hide')} (Esc)`}
-              >
-                {clearSlide.isPending || clearTemporary.isPending ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <EyeOff size={18} />
-                )}
-                <span>{t('presentation:controls.hide')}</span>
-                <span className="text-xs opacity-75">(Esc)</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleShow}
-                disabled={!hasContent || showSlideCommand.isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                title={t('presentation:controls.show')}
-              >
-                {showSlideCommand.isPending ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Eye size={18} />
-                )}
-                <span>{t('presentation:controls.show')}</span>
-                {showSlideShortcut && (
-                  <span className="text-xs opacity-75">
-                    ({formatShortcutForDisplay(showSlideShortcut)})
-                  </span>
-                )}
-              </button>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isLive ? 'bg-live' : 'bg-fg-hint'
+                  }`}
+                />
+                <span
+                  className={`text-xs font-medium ${
+                    isLive ? 'text-live' : 'text-fg-hint'
+                  }`}
+                >
+                  LIVE
+                </span>
+              </div>
+              {/* Clear Highlights Button */}
+              {hasHighlights && (
+                <button
+                  type="button"
+                  onClick={() => clearHighlights.mutate()}
+                  disabled={clearHighlights.isPending}
+                  className={ICON_BUTTON_CLASS}
+                  title={t('presentation:controls.clearHighlights')}
+                >
+                  {clearHighlights.isPending ? (
+                    <Loader2
+                      size={16}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Eraser size={16} strokeWidth={1.5} />
+                  )}
+                </button>
+              )}
+              {/* On a desktop the screen picker sits in the Previous / Next row */}
+              {isPhone && <PreviewScreenPicker placement="down" />}
+              {/* Hide/Show Button (on a phone, in the bottom bar) */}
+              {isPhone ? null : !isHidden ? (
+                <button
+                  type="button"
+                  onClick={handleHide}
+                  disabled={clearSlide.isPending || clearTemporary.isPending}
+                  className={HEADER_BUTTON_CLASS}
+                  title={`${t('presentation:controls.hide')} (Esc)`}
+                >
+                  {clearSlide.isPending || clearTemporary.isPending ? (
+                    <Loader2
+                      size={16}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <EyeOff size={16} strokeWidth={1.5} />
+                  )}
+                  <span>{t('presentation:controls.hide')}</span>
+                  <KeyboardShortcutBadge shortcut="Escape" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleShow}
+                  disabled={!hasContent || showSlideCommand.isPending}
+                  className={HEADER_BUTTON_CLASS}
+                  title={t('presentation:controls.show')}
+                >
+                  {showSlideCommand.isPending ? (
+                    <Loader2
+                      size={16}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Eye size={16} strokeWidth={1.5} />
+                  )}
+                  <span>{t('presentation:controls.show')}</span>
+                  {showSlideShortcut && (
+                    <KeyboardShortcutBadge shortcut={showSlideShortcut} />
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Previous / Next walk the live presentation (on a phone, in the bottom bar) */}
+          <div className="lg:flex-1 lg:min-h-0 flex flex-col lg:justify-center lg:[container-type:size] [--preview-reserve:3.75rem]">
+            <div className="w-full flex-shrink-0">
+              <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
+            </div>
+            {!isPhone && (
+              <PreviewNavControls
+                onPrev={goPrev}
+                onNext={goNext}
+                canPrev={canMove}
+                canNext={canMove}
+                isBusy={isMoving}
+                testIdPrefix="control-room"
+              />
             )}
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-          <div className="w-full h-full flex items-center justify-center">
-            <LivePreview clockOverride={CONTROL_ROOM_CLOCK} />
-          </div>
-        </div>
+        {playlist && (
+          <aside
+            aria-label={playlistTitle}
+            data-testid="control-room-playlist"
+            className="bg-panel rounded-xl border border-line p-3 lg:p-4 lg:order-first lg:w-[30rem] lg:shrink-0 lg:min-h-0 lg:flex lg:flex-col"
+          >
+            {playlist}
+          </aside>
+        )}
       </div>
+
+      {isPhone && (
+        <PhoneSlideControls
+          testId="control-room-phone"
+          keepsTabBar
+          onPrev={goPrev}
+          onNext={goNext}
+          canPrev={canMove}
+          canNext={canMove}
+          isNavigating={isMoving}
+          isLive={isLive}
+          onHide={handleHide}
+          isHiding={clearSlide.isPending || clearTemporary.isPending}
+          project={
+            isHidden && !!state?.lastSongSlideId
+              ? { onClick: handleShow, isPending: showSlideCommand.isPending }
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }

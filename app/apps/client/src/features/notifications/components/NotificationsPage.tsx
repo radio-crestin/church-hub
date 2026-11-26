@@ -53,9 +53,7 @@ export function NotificationsPage() {
 
         {days.map(({ label, items }) => (
           <section key={label} className="flex flex-col gap-3">
-            <h2 className="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-              {label}
-            </h2>
+            <h2 className="text-xs font-medium text-fg-hint">{label}</h2>
             {items.map((notification: AppNotification) => {
               const isNew = notification.readAt === null
               return (

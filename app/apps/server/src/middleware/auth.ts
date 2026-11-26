@@ -1,7 +1,10 @@
+import { isAppWebviewOrigin, isLoopbackHostname } from './origins'
 import type { AuthResult } from './types'
 import { validateSystemToken } from '../service/app-sessions'
+import { deviceSessionUserId } from '../service/sync/cloud/deviceSessions'
 import {
   ALL_PERMISSIONS,
+  getUserById,
   getUserByToken,
   type Permission,
   updateUserLastUsed,
@@ -24,12 +27,14 @@ const READ_ONLY_LOCALHOST_PERMISSIONS: Permission[] = ALL_PERMISSIONS.filter(
 
 /**
  * Builds the `user_auth` Set-Cookie header value with attributes that
- * actually persist in every engine we target:
+ * actually persist in every engine we target, as strict as each allows:
  *
- * - Chromium (Windows WebView2, Chrome, Edge, CI) gets `None; Secure`. On
- *   Windows the desktop UI (`tauri.localhost`) is cross-site with this server,
- *   Chromium refuses `SameSite=None` without `Secure`, and it treats plain-http
- *   localhost as trustworthy.
+ * - The Windows desktop webview (WebView2, Chromium, origin
+ *   `http://tauri.localhost`) gets `None; Secure`: its UI is cross-site with
+ *   this server, Chromium refuses `SameSite=None` without `Secure`, and it
+ *   treats plain-http localhost as trustworthy.
+ * - Every other Chromium (Chrome, Edge, CI) loads the app from this server
+ *   itself, same-site, and gets `Lax`, so other sites' pages never carry it.
  * - WebKit (Safari, macOS WKWebView, Linux webkitgtk/Epiphany) gets `Lax`.
  *   Every WebKit REJECTS `Secure` over plain http — no localhost exemption —
  *   and Linux WebKit (libsoup) also rejects `SameSite=None` without `Secure`,
@@ -47,18 +52,11 @@ export function buildUserAuthCookie(
   token: string,
   maxAgeSeconds: number,
 ): string {
-  const host = req.headers.get('host')?.split(':')[0] ?? 'localhost'
-  const isLocal = host === 'localhost' || host === '127.0.0.1'
-  const ua = req.headers.get('user-agent') ?? ''
-  // Every Chromium UA advertises both AppleWebKit and Chrome/Chromium;
-  // genuine WebKit (Safari, WKWebView, webkitgtk) advertises only the former.
-  const isNonChromiumWebKit =
-    ua.includes('AppleWebKit') &&
-    !ua.includes('Chrome') &&
-    !ua.includes('Chromium')
+  const host = cookieHost(req)
+  const isLocal = isLocalCookieHost(host)
 
   const parts = [`user_auth=${token}`, 'HttpOnly']
-  if (isLocal && !isNonChromiumWebKit) {
+  if (isLocal && fromAppWebview(req) && !isNonChromiumWebKit(req)) {
     parts.push('SameSite=None', 'Secure')
   } else {
     parts.push('SameSite=Lax')
@@ -69,6 +67,48 @@ export function buildUserAuthCookie(
     parts.push(`Domain=${host}`)
   }
   return parts.join('; ')
+}
+
+/**
+ * The session cookie again, now `Lax`, for a request it authenticated from a
+ * Chromium browser on this machine outside the desktop webview: until
+ * 2026-11-26 every such browser was given `SameSite=None`, which other
+ * sites' pages carry along. Null for every other request.
+ */
+export function reissueSessionCookie(req: Request): string | null {
+  const token = parseCookies(req.headers.get('Cookie') ?? '')['user_auth']
+  const hadCrossSiteCookie =
+    isLocalCookieHost(cookieHost(req)) && !isNonChromiumWebKit(req)
+  if (!token || !hadCrossSiteCookie || fromAppWebview(req)) return null
+  return buildUserAuthCookie(req, token, SESSION_COOKIE_MAX_AGE_SECONDS)
+}
+
+/** How long a session cookie lasts. */
+export const SESSION_COOKIE_MAX_AGE_SECONDS = 31536000
+
+function cookieHost(req: Request): string {
+  return req.headers.get('host')?.split(':')[0] ?? 'localhost'
+}
+
+function isLocalCookieHost(host: string): boolean {
+  return host === 'localhost' || host === '127.0.0.1'
+}
+
+function fromAppWebview(req: Request): boolean {
+  return isAppWebviewOrigin(req.headers.get('origin') ?? '')
+}
+
+/**
+ * Every Chromium UA advertises both AppleWebKit and Chrome/Chromium; genuine
+ * WebKit (Safari, WKWebView, webkitgtk) advertises only the former.
+ */
+function isNonChromiumWebKit(req: Request): boolean {
+  const ua = req.headers.get('user-agent') ?? ''
+  return (
+    ua.includes('AppleWebKit') &&
+    !ua.includes('Chrome') &&
+    !ua.includes('Chromium')
+  )
 }
 
 /**
@@ -101,9 +141,24 @@ export function parseCookies(cookieHeader: string): Record<string, string> {
  */
 export function isLocalhost(req: Request): boolean {
   const peer = getRequestPeer(req)
-  const local = !!peer && isLoopbackAddress(peer)
+  const local = !!peer && isLoopbackAddress(peer) && addressesThisMachine(req)
   logger.debug(`Peer ${peer ?? 'unknown'} is ${local ? 'local' : 'remote'}`)
   return local
+}
+
+/**
+ * Whether the request was addressed to this machine by a loopback name. A
+ * local browser reaches a website's domain rebound to 127.0.0.1 from a
+ * loopback peer too, but it still sends that domain as the Host.
+ */
+function addressesThisMachine(req: Request): boolean {
+  const host = req.headers.get('host')
+  if (!host) return false
+  try {
+    return isLoopbackHostname(new URL(`http://${host}`).hostname)
+  } catch {
+    return false
+  }
 }
 
 function extractBearerToken(req: Request): string | null {
@@ -148,7 +203,12 @@ export async function authMiddleware(req: Request): Promise<AuthResult> {
     cookies['user_auth'] || req.headers.get('X-User-Auth') || undefined
 
   if (userToken) {
-    const user = await getUserByToken(userToken)
+    // A joined phone's device session (T-174), else the user's own token.
+    const deviceUserId = await deviceSessionUserId(userToken)
+    const user =
+      deviceUserId === null
+        ? await getUserByToken(userToken)
+        : getUserById(deviceUserId)
     if (user && user.isActive) {
       logger.debug(`Authenticated user: ${user.name} (id: ${user.id})`)
       updateUserLastUsed(user.id)

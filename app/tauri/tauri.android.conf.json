@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "build": {
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:3001",
+    "beforeBuildCommand": "bun run --filter client build"
+  },
+  "bundle": {
+    "externalBin": [],
+    "resources": {
+      "../apps/client/dist": null,
+      "resources/midi-native": null,
+      "resources/sample-music": null,
+      "resources/default-backgrounds": null,
+      "resources/theme-backgrounds": null
+    },
+    "android": {
+      "minSdkVersion": 24
+    }
+  }
+}

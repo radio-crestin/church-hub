@@ -246,6 +246,20 @@
       "when": 1769300000000,
       "tag": "0034_add_music_play_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1769400000000,
+      "tag": "0035_add_server_secrets",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1769500000000,
+      "tag": "0036_add_songs_source_link",
+      "breakpoints": true
     }
   ]
 }

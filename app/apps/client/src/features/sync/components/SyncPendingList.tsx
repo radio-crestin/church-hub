@@ -1,10 +1,18 @@
 import type { LucideIcon } from 'lucide-react'
 import {
+  BookMarked,
+  Bookmark,
   CalendarDays,
   CheckCircle2,
   FolderOpen,
+  ListMusic,
   Music,
+  Settings,
+  Shield,
+  StickyNote,
   Tag,
+  Tags,
+  User,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -17,6 +25,15 @@ const ENTITY_ICONS: Record<SyncEntityType, LucideIcon> = {
   song_category: Tag,
   song_group: FolderOpen,
   schedule: CalendarDays,
+  song_tag: Tags,
+  song_bookmark: Bookmark,
+  song_bookmark_note: StickyNote,
+  bible_bookmark: BookMarked,
+  bible_bookmark_note: StickyNote,
+  music_playlist: ListMusic,
+  setting: Settings,
+  role: Shield,
+  user: User,
 }
 
 /**
@@ -29,17 +46,17 @@ export function SyncPendingList() {
   const { data: pending } = useSyncPending()
 
   return (
-    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+    <div className="rounded-xl border border-line p-4">
+      <h4 className="text-sm font-medium text-fg">
         {t('sections.sync.changes.toSend')}
       </h4>
       {!pending || pending.length === 0 ? (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-fg-hint">
+          <CheckCircle2 strokeWidth={1.75} className="h-3.5 w-3.5 text-ok" />
           {t('sections.sync.changes.empty')}
         </p>
       ) : (
-        <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
+        <ul className="mt-2 divide-y divide-line">
           {pending.map((entry) => {
             const Icon = ENTITY_ICONS[entry.entityType]
             return (
@@ -49,14 +66,14 @@ export function SyncPendingList() {
               >
                 <span
                   title={t(`sections.sync.changes.entity.${entry.entityType}`)}
-                  className="flex-shrink-0 text-gray-400"
+                  className="flex-shrink-0 text-fg-label"
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon strokeWidth={1.5} className="h-4 w-4" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-white">
+                <span className="min-w-0 flex-1 truncate text-sm text-fg-body">
                   {entry.title}
                 </span>
-                <span className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                <span className="flex-shrink-0 text-xs text-fg-hint">
                   {formatRelativeTime(entry.queuedAt * 1000, i18n.language)}
                 </span>
               </li>

@@ -7,6 +7,7 @@ import {
   useDeleteBackgroundMedia,
 } from '~/features/background-media/hooks'
 import type { BackgroundMedia } from '~/features/background-media/service/types'
+import { Button } from '~/ui/button'
 import { ConfirmModal } from '~/ui/modal'
 import { useHasPermission } from '~/ui/PermissionGate'
 import { EmptyState, Page, PageHeader, PagePanel } from '~/ui/page'
@@ -17,19 +18,24 @@ import { GalleryItemCard } from './GalleryItemCard'
 import { GalleryPreviewModal } from './GalleryPreviewModal'
 import { GalleryUploadButton } from './GalleryUploadButton'
 import { useGalleryUpload } from '../hooks/useGalleryUpload'
+import { useLiveGalleryMediaId } from '../hooks/useLiveGalleryMediaId'
+import { usePresentGalleryItem } from '../hooks/usePresentGalleryItem'
 import type { GalleryFilter } from '../types'
 
 const logger = createLogger('app:gallery')
 
 /**
  * Every uploaded image and video in one place: upload several at once, filter
- * by kind, preview at full size and delete. The same files are offered as
+ * by kind, preview at full size, present on the screens and delete. The same files are offered as
  * screen and song backgrounds.
  */
 export function GalleryPage() {
   const { t } = useTranslation('gallery')
   const { showToast } = useToast()
   const canEdit = useHasPermission('displays.edit')
+  const canPresent = useHasPermission('control_room.control')
+  const presentItem = usePresentGalleryItem()
+  const liveMediaId = useLiveGalleryMediaId()
   const {
     data: media = [],
     isLoading,
@@ -73,7 +79,7 @@ export function GalleryPage() {
     if (isLoading) {
       return (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-fg-hint" />
         </div>
       )
     }
@@ -84,13 +90,9 @@ export function GalleryPage() {
           <p className="text-sm text-red-600 dark:text-red-400">
             {t('errors.loadFailed')}
           </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-          >
+          <Button type="button" onClick={() => refetch()}>
             {t('common:buttons.retry')}
-          </button>
+          </Button>
         </div>
       )
     }
@@ -113,7 +115,9 @@ export function GalleryPage() {
           <GalleryItemCard
             key={item.id}
             media={item}
+            isLive={item.id === liveMediaId}
             onPreview={() => setPreviewMedia(item)}
+            onPresent={canPresent ? () => presentItem(item) : undefined}
             onDelete={canEdit ? () => setPendingDelete(item) : undefined}
           />
         ))}
@@ -143,7 +147,7 @@ export function GalleryPage() {
             counts={counts}
             onChange={setFilter}
           />
-          <p className="flex items-start gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="flex items-start gap-1.5 text-xs text-fg-hint">
             <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             {t('usageNote')}
           </p>
@@ -155,6 +159,7 @@ export function GalleryPage() {
       <GalleryPreviewModal
         media={previewMedia}
         onClose={() => setPreviewMedia(null)}
+        onPresent={canPresent ? presentItem : undefined}
       />
 
       <ConfirmModal

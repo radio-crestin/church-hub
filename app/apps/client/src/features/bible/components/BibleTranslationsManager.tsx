@@ -129,7 +129,7 @@ export function BibleTranslationsManager({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
@@ -138,22 +138,22 @@ export function BibleTranslationsManager({
     <div>
       {/* Header */}
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Book className="w-5 h-5" />
+        <h3 className="text-base font-semibold text-fg flex items-center gap-2">
+          <Book className="w-5 h-5" strokeWidth={1.5} />
           {t('sections.bible.title')}
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-sm text-fg-label mt-1">
           {t('sections.bible.description')}
         </p>
       </div>
 
       {translations.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
-          <Book className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
+        <div className="text-center py-8 bg-field rounded-lg border border-dashed border-line">
+          <Book className="w-12 h-12 mx-auto text-fg-hint mb-3" />
+          <p className="text-fg-label font-medium">
             {t('sections.bible.noTranslations')}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+          <p className="text-sm text-fg-hint mt-1">
             {t('sections.bible.noTranslationsDescription')}
           </p>
         </div>
@@ -161,54 +161,42 @@ export function BibleTranslationsManager({
         <div className="space-y-4">
           {/* Primary Version Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('sections.bible.primaryVersion', {
-                defaultValue: 'Primary Version',
-              })}
+            <label className="block text-sm font-medium text-fg-body mb-1">
+              {t('sections.bible.primaryVersion')}
             </label>
             <Combobox
               options={primaryOptions}
               value={primaryTranslation?.id ?? null}
               onChange={handlePrimaryChange}
               onDelete={handleDeleteRequest}
-              placeholder={t('sections.bible.selectPrimary', {
-                defaultValue: 'Select primary version...',
-              })}
+              placeholder={t('sections.bible.selectPrimary')}
               allowClear
               allowDelete
               portalContainer={portalContainer}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t('sections.bible.primaryDescription', {
-                defaultValue: 'Main Bible version shown in the app',
-              })}
+            <p className="text-xs text-fg-hint mt-1">
+              {t('sections.bible.primaryDescription')}
             </p>
           </div>
 
           {/* Secondary Version Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('sections.bible.secondaryVersion', {
-                defaultValue: 'Secondary Version',
-              })}
+            <label className="block text-sm font-medium text-fg-body mb-1">
+              {t('sections.bible.secondaryVersion')}
             </label>
             <Combobox
               options={secondaryOptions}
               value={secondaryTranslation?.id ?? null}
               onChange={handleSecondaryChange}
               onDelete={handleDeleteRequest}
-              placeholder={t('sections.bible.selectSecondary', {
-                defaultValue: 'None (optional)',
-              })}
+              placeholder={t('sections.bible.selectSecondary')}
               disabled={!primaryTranslation}
               allowClear
               allowDelete
               portalContainer={portalContainer}
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {t('sections.bible.secondaryDescription', {
-                defaultValue: 'Shown alongside primary in presentation',
-              })}
+            <p className="text-xs text-fg-hint mt-1">
+              {t('sections.bible.secondaryDescription')}
             </p>
           </div>
         </div>
@@ -216,17 +204,11 @@ export function BibleTranslationsManager({
 
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
-        title={t('sections.bible.modals.delete.title', {
-          defaultValue: 'Delete Translation',
-        })}
+        title={t('sections.bible.modals.delete.title')}
         message={t('sections.bible.modals.delete.message', {
-          defaultValue:
-            'Are you sure you want to delete "{{name}}"? All verses will be permanently removed.',
           name: deleteConfirm.translationName,
         })}
-        confirmLabel={t('sections.bible.modals.delete.confirm', {
-          defaultValue: 'Delete',
-        })}
+        confirmLabel={t('sections.bible.modals.delete.confirm')}
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
         variant="danger"

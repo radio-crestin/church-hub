@@ -1,11 +1,10 @@
-import {
-  useClearTemporaryContent,
-  usePresentationState,
-  usePresentTemporaryVerseteTineri,
-} from '~/features/presentation'
+import { useMemo } from 'react'
+
+import { usePresentationState } from '~/features/presentation'
 import type { VerseteTineriEntry } from '~/features/presentation/types'
+import { useVerseSlideshow } from './useVerseSlideshow'
 import type { BibleBookmark } from '../service/bookmarks'
-import { getBookmarkSlideshow } from '../utils/getBookmarkSlideshow'
+import { getVerseSlideshow } from '../utils/getVerseSlideshow'
 
 function toEntry(bookmark: BibleBookmark, index: number): VerseteTineriEntry {
   return {
@@ -23,35 +22,34 @@ function toEntry(bookmark: BibleBookmark, index: number): VerseteTineriEntry {
   }
 }
 
+/** The bookmarks in the order their slideshow shows them: the list's. */
+export function slideshowOrder(bookmarks: BibleBookmark[]): BibleBookmark[] {
+  return [...bookmarks].sort((a, b) => a.sortOrder - b.sortOrder)
+}
+
 /**
  * Shows the bookmarked verses on screen one after another, in the list's
- * order, as a Versete Biblice slide. With `loop` the server moves on by itself
- * after each verse's reading time and starts over after the last one.
+ * order: stepped with the arrows, or with `loop` on by themselves and over
+ * again.
  */
 export function useBookmarkSlideshow(bookmarks: BibleBookmark[]) {
-  const { data: state } = usePresentationState()
-  const present = usePresentTemporaryVerseteTineri()
-  const clear = useClearTemporaryContent()
-
-  const slideshow = getBookmarkSlideshow(state)
-
-  const start = (loop: boolean) => {
-    const ordered = [...bookmarks].sort((a, b) => a.sortOrder - b.sortOrder)
-    if (ordered.length === 0) return
-    present.mutate({
-      entries: ordered.map(toEntry),
-      currentEntryIndex: 0,
-      loop,
-    })
-  }
+  const entries = useMemo(
+    () => slideshowOrder(bookmarks).map(toEntry),
+    [bookmarks],
+  )
+  const slideshow = useVerseSlideshow('bookmarks', entries)
 
   return {
-    isPlaying: slideshow !== null,
-    isLooping: !!slideshow?.loop,
-    position: slideshow
-      ? { index: slideshow.currentEntryIndex, count: slideshow.entries.length }
-      : null,
-    start,
-    stop: () => clear.mutate(),
+    ...slideshow,
+    // ▶ steps by hand; 🔁 plays on its own
+    start: (loop: boolean, fromIndex?: number) =>
+      slideshow.start(loop ? 'loop' : 'manual', fromIndex),
   }
+}
+
+/** The bookmark the bookmarks slideshow has on screen, or null. */
+export function useLiveBookmarkId(): number | null {
+  const { data: state } = usePresentationState()
+  const playing = getVerseSlideshow(state, 'bookmarks')
+  return playing?.entries[playing.currentEntryIndex]?.id ?? null
 }

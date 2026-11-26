@@ -53,7 +53,7 @@ async function openMusic(page: Page) {
 }
 
 async function clearQueue(page: Page) {
-  const clear = page.getByTitle('Clear Queue')
+  const clear = page.getByTestId('music-clear-queue')
   if (await clear.isVisible()) await clear.click()
   await expect(page.getByTestId('music-queue-item')).toHaveCount(0)
 }
@@ -133,7 +133,11 @@ test.describe('Music page', () => {
     // Another track joins it from the whole library.
     await page.getByTestId('music-view-all').click()
     await row(page, NEARER).getByTestId('music-track-menu').click()
-    await page.getByRole('menuitem', { name: `Add to ${name}` }).click()
+    await page.getByTestId('music-add-to-playlist').click()
+    await page
+      .getByTestId('music-playlist-picker')
+      .getByRole('button', { name })
+      .click()
     const playlistNav = page
       .getByTestId('music-library-nav')
       .getByRole('button', { name })
@@ -250,13 +254,16 @@ test.describe('Music page', () => {
 test.describe('Music page on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('the views scroll in a row and a tap plays a track', async ({
+  test('the tracks open first, the views sit in the Library tab, and a tap plays a track', async ({
     page,
   }) => {
     await setAppLanguage(page, 'en')
     await openMusic(page)
 
+    await expect(row(page, BURG)).toBeVisible()
+    await page.getByTestId('workspace-tab-library').click()
     await expect(page.getByTestId('music-view-all')).toBeVisible()
+    await page.getByTestId('music-view-all').click()
     await expect(row(page, BURG)).toBeVisible()
     // Nothing is wider than the screen.
     const overflow = await page.evaluate(

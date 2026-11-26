@@ -35,9 +35,12 @@
     "next": "Next",
     "prevVerse": "Previous verse",
     "nextVerse": "Next verse",
-    "show": "Show",
+    "show": "Show on screen",
     "hide": "Hide",
-    "clearHighlights": "Clear Highlights"
+    "clearHighlights": "Clear Highlights",
+    "showHint": "Puts what the preview shows on the projector and the other screens",
+    "settings": "Preview settings",
+    "bibleSettings": "More Bible settings"
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -95,8 +98,12 @@
     },
     "readingSpeed": {
       "title": "Reading speed",
-      "description": "How long each verse stays on screen when bookmarks play in a loop: its words at this speed, at least 3 seconds.",
+      "description": "How long each verse stays on screen when bookmarks or a topic play by themselves: its words at this speed, at least 3 seconds.",
       "label": "Words per minute"
+    },
+    "autoPresent": {
+      "label": "Present a verse as soon as I pick it",
+      "description": "Picking a verse in the search results, History, Bookmarks or a program puts it on screen right away, without a second press."
     }
   },
   "translation": {
@@ -109,7 +116,7 @@
     "clear": "Clear",
     "today": "Today",
     "yesterday": "Yesterday",
-    "export": "Export as schedule",
+    "export": "Export as presentation",
     "exportLastSession": "Last session",
     "exportEntireHistory": "Entire history",
     "exportVerseCount_one": "{{count}} verse",
@@ -169,7 +176,39 @@
   },
   "actionsMenu": {
     "trigger": "More",
-    "addToScheduleDescription": "Add the open verse to the selected program",
-    "addToSchedule": "Add verse to program"
+    "addToScheduleDescription": "Add the open verse to the selected presentation",
+    "addToSchedule": "Add verse to presentation"
+  },
+  "topics": {
+    "title": "Topics",
+    "searchPlaceholder": "Search topics...",
+    "empty": "No topics",
+    "noResults": "No topic found",
+    "verseCount_one": "{{count}} verse",
+    "verseCount_other": "{{count}} verses",
+    "back": "Back to topics",
+    "previous": "Present the previous passage",
+    "next": "Present the next passage",
+    "present": "Present",
+    "openInBible": "Open in the Bible",
+    "expand": "Expand topics",
+    "collapse": "Collapse topics",
+    "passageTemplate": {
+      "none": "Same as the topic"
+    },
+    "slideshow": {
+      "play": "Play",
+      "loop": "Loop",
+      "stopPlay": "Stop playing",
+      "stopLoop": "Stop the loop"
+    }
+  },
+  "slideshow": {
+    "wordsPerMinute_one": "{{count}} word a minute",
+    "wordsPerMinute_other": "{{count}} words a minute",
+    "slower": "Slower",
+    "faster": "Faster",
+    "speedHint": "Each verse stays up while it is read at this speed, at least 3 seconds.",
+    "nextIn": "Next verse in {{seconds}} s"
   }
 }

@@ -1,15 +1,17 @@
 {
-  "title": "Traducere Live",
+  "title": "Traducere live",
   "status": {
     "live": "Live",
     "inactive": "Inactiv"
   },
   "dashboard": {
-    "cardTitle": "Stream-uri Traducere Live",
+    "cardTitle": "Transmisiuni de traducere live",
     "cardDescription": "Distribuie acest link ascultătorilor. Ei aleg limba din player.",
     "configuredLanguages": "Limbi configurate",
-    "noLanguages": "Nicio limbă țintă configurată.",
-    "openSettings": "Deschide setările"
+    "noLanguages": "Nu ai configurat încă nicio limbă țintă.",
+    "openSettings": "Deschide setările",
+    "linkChanged": "Linkul pentru ascultători s-a schimbat. Distribuie mai jos noul link; cel vechi nu mai funcționează.",
+    "dismissLinkChanged": "Închide"
   },
   "settings": {
     "button": "Setări",
@@ -17,25 +19,25 @@
     "engine": "Motor",
     "engineDefault": "implicit",
     "outputModality": "Tip de ieșire",
-    "outputModalityDescription": "Tradu în voce + transcript, sau doar în transcript text (mai ieftin și mai rapid).",
+    "outputModalityDescription": "Traducere vorbită și scrisă, sau doar scrisă (mai ieftin și mai rapid).",
     "outputModality_audio_text": "Audio + text",
-    "outputModality_audio_text_description": "Sintetizează vocea tradusă și afișează transcriptul.",
+    "outputModality_audio_text_description": "Generează traducerea vorbită și afișează textul.",
     "outputModality_text_only": "Doar text",
-    "outputModality_text_only_description": "Doar transcript — fără voce sintetizată. Cost și latență mai mici.",
+    "outputModality_text_only_description": "Doar text, fără voce. Cost și întârziere mai mici.",
     "apiKey": {
       "openai": "Cheie API OpenAI",
       "gemini": "Cheie API Gemini"
     },
     "apiKeyPlaceholder": {
       "openai": "sk-...",
-      "gemini": "Introduceți cheia API Gemini"
+      "gemini": "Introdu cheia API Gemini"
     },
     "apiKeyDescription": {
       "openai": "Necesară pentru OpenAI Realtime API (GPT-4o Realtime). Cheia este stocată în siguranță pe server.",
       "gemini": "Necesară pentru traducerea audio nativă Gemini 2.5 Flash. Cheia este stocată în siguranță pe server."
     },
     "apiKeyConfigured": "Cheia API este configurată și salvată.",
-    "howToGetKey": "Cum obțineți cheia API:",
+    "howToGetKey": "Cum obții cheia API:",
     "getApiKey": "Deschide site-ul furnizorului",
     "sourceLanguage": "Limba sursă",
     "targetLanguage": "Limba țintă",
@@ -50,18 +52,18 @@
     "voice": "Voce",
     "inputDevice": "Dispozitiv de intrare",
     "outputDevice": "Dispozitiv de ieșire",
-    "defaultDevice": "Implicit sistem",
+    "defaultDevice": "Implicit al sistemului",
     "outputMode": "Redare audio locală",
     "outputModeDevice": "Difuzor local",
-    "outputModeWebrtc": "Dezactivat",
-    "outputModeBoth": "Difuzor + stream",
-    "outputModeDescription": "Alegeți cum se redă traducerea pe acest dispozitiv. Ascultătorii primesc întotdeauna limba lor prin link-ul partajat.",
-    "streamUrl": "Link ascultător",
-    "streamUrlDescription": "Distribuie acest link ascultătorilor — ei aleg limba din player.",
+    "outputModeWebrtc": "Oprit",
+    "outputModeBoth": "Difuzor + transmisiune",
+    "outputModeDescription": "Alege cum se redă traducerea pe acest dispozitiv. Ascultătorii primesc mereu limba lor prin linkul distribuit.",
+    "streamUrl": "Link pentru ascultători",
+    "streamUrlDescription": "Distribuie acest link ascultătorilor: ei aleg limba din player.",
     "copyUrl": "Copiază",
     "copiedUrl": "Copiat!",
-    "resetSecret": "Resetează link-ul",
-    "resetSecretConfirm": "Aceasta va invalida link-ul curent și va deconecta toți ascultătorii. Continuați?",
+    "resetSecret": "Resetează linkul",
+    "resetSecretConfirm": "Linkul actual nu va mai merge și toți ascultătorii vor fi deconectați. Continui?",
     "listenersCount_one": "{{count}} ascultător",
     "listenersCount_few": "{{count}} ascultători",
     "listenersCount_other": "{{count}} de ascultători",
@@ -77,7 +79,7 @@
     "output": "Ieșire"
   },
   "transcription": {
-    "waitingForSpeech": "Se așteaptă vorbirea...",
-    "startSpeaking": "Începeți să vorbiți pentru a începe traducerea"
+    "waitingForSpeech": "Se așteaptă să vorbească cineva...",
+    "startSpeaking": "Începe să vorbești ca să pornească traducerea"
   }
 }

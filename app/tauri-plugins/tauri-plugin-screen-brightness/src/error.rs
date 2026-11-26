@@ -7,9 +7,6 @@ pub enum Error {
     #[error(transparent)]
     Tauri(#[from] tauri::Error),
 
-    #[error("Platform not supported")]
-    UnsupportedPlatform,
-
     #[error("Plugin error: {0}")]
     Plugin(String),
 }

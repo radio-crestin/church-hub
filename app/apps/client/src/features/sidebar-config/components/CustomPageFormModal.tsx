@@ -179,13 +179,13 @@ export function CustomPageFormModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-lg w-full"
+      className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel max-w-lg w-full"
       onClose={onClose}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
     >
       <form onSubmit={handleSubmit} className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-base font-semibold text-fg mb-4">
           {isEditing
             ? t('sections.sidebar.modals.edit.title')
             : t('sections.sidebar.modals.create.title')}
@@ -196,7 +196,7 @@ export function CustomPageFormModal({
           <div className="space-y-1">
             <label
               htmlFor="custom-page-title"
-              className="text-sm font-medium text-gray-900 dark:text-white"
+              className="text-sm font-medium text-fg"
             >
               {t('sections.sidebar.fields.title')}
             </label>
@@ -208,11 +208,11 @@ export function CustomPageFormModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('sections.sidebar.fields.titlePlaceholder')}
               className={`
-                block w-full px-3 py-2.5 bg-white dark:bg-gray-700
-                border text-gray-900 dark:text-white text-sm rounded-lg
-                focus:ring-indigo-500 focus:border-indigo-500
-                placeholder:text-gray-500 dark:placeholder:text-gray-400
-                ${errors.title ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
+                block w-full h-9 px-3 bg-field
+                border text-fg text-sm rounded-[10px]
+                focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
+                placeholder:text-fg-hint
+                ${errors.title ? 'border-red-500' : 'border-transparent'}
               `}
             />
             {errors.title && (
@@ -224,7 +224,7 @@ export function CustomPageFormModal({
           <div className="space-y-1">
             <label
               htmlFor="custom-page-url"
-              className="text-sm font-medium text-gray-900 dark:text-white"
+              className="text-sm font-medium text-fg"
             >
               {t('sections.sidebar.fields.url')}
             </label>
@@ -235,15 +235,15 @@ export function CustomPageFormModal({
               onChange={(e) => setUrl(e.target.value)}
               placeholder={t('sections.sidebar.fields.urlPlaceholder')}
               className={`
-                block w-full px-3 py-2.5 bg-white dark:bg-gray-700
-                border text-gray-900 dark:text-white text-sm rounded-lg
-                focus:ring-indigo-500 focus:border-indigo-500
-                placeholder:text-gray-500 dark:placeholder:text-gray-400
-                ${errors.url ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
+                block w-full h-9 px-3 bg-field
+                border text-fg text-sm rounded-[10px]
+                focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus
+                placeholder:text-fg-hint
+                ${errors.url ? 'border-red-500' : 'border-transparent'}
               `}
             />
             {errors.url && <p className="text-sm text-red-500">{errors.url}</p>}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-hint">
               {t('sections.sidebar.fields.urlHint')}
             </p>
           </div>
@@ -251,10 +251,10 @@ export function CustomPageFormModal({
           {/* Icon Source Selection */}
           <div className="space-y-3">
             <div>
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+              <h4 className="text-sm font-medium text-fg">
                 {t('sections.sidebar.fields.icon')}
               </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-fg-hint mt-0.5">
                 {t('sections.sidebar.fields.iconSourceDescription')}
               </p>
             </div>
@@ -266,11 +266,11 @@ export function CustomPageFormModal({
                 onClick={() => setIconSource('favicon')}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
                   iconSource === 'favicon'
-                    ? 'bg-indigo-50 dark:bg-indigo-950 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
-                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    ? 'bg-selected border-transparent text-fg'
+                    : 'bg-field border-transparent text-fg-body hover:bg-hover'
                 }`}
               >
-                <Globe size={16} />
+                <Globe size={16} strokeWidth={1.5} />
                 {t('sections.sidebar.fields.useFavicon')}
               </button>
               <button
@@ -278,8 +278,8 @@ export function CustomPageFormModal({
                 onClick={() => setIconSource('icon')}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${
                   iconSource === 'icon'
-                    ? 'bg-indigo-50 dark:bg-indigo-950 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
-                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    ? 'bg-selected border-transparent text-fg'
+                    : 'bg-field border-transparent text-fg-body hover:bg-hover'
                 }`}
               >
                 {t('sections.sidebar.fields.useCustomIcon')}
@@ -292,7 +292,7 @@ export function CustomPageFormModal({
                 <div className="flex items-center gap-3">
                   {/* Favicon Preview */}
                   <div
-                    className="w-12 h-12 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden"
+                    className="w-12 h-12 rounded-lg border border-line flex items-center justify-center overflow-hidden"
                     style={{
                       backgroundColor:
                         customIconUrl && faviconColor
@@ -302,8 +302,9 @@ export function CustomPageFormModal({
                   >
                     {isFetchingFavicon ? (
                       <Loader2
-                        size={20}
-                        className="text-gray-400 animate-spin"
+                        strokeWidth={1.5}
+                        size={16}
+                        className="text-fg-hint animate-spin"
                       />
                     ) : customIconUrl ? (
                       <img
@@ -312,7 +313,11 @@ export function CustomPageFormModal({
                         className="w-7 h-7 object-contain"
                       />
                     ) : (
-                      <Globe size={20} className="text-gray-400" />
+                      <Globe
+                        strokeWidth={1.5}
+                        size={16}
+                        className="text-fg-hint"
+                      />
                     )}
                   </div>
 
@@ -325,12 +330,16 @@ export function CustomPageFormModal({
                       !url.trim() ||
                       !isValidUrl(url.trim())
                     }
-                    className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-gray-700 dark:text-gray-300"
+                    className="flex items-center gap-2 px-3 py-2 text-sm bg-field hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-fg-body"
                   >
                     {isFetchingFavicon ? (
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2
+                        strokeWidth={1.5}
+                        size={16}
+                        className="animate-spin"
+                      />
                     ) : (
-                      <RefreshCw size={16} />
+                      <RefreshCw strokeWidth={1.5} size={16} />
                     )}
                     {customIconUrl
                       ? t('sections.sidebar.fields.refetchFavicon')
@@ -339,7 +348,7 @@ export function CustomPageFormModal({
                 </div>
 
                 {!customIconUrl && !isFetchingFavicon && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-fg-hint">
                     {t('sections.sidebar.fields.faviconHint')}
                   </p>
                 )}
@@ -359,16 +368,16 @@ export function CustomPageFormModal({
               type="checkbox"
               checked={useIframeEmbedding}
               onChange={(e) => setUseIframeEmbedding(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 h-4 w-4 rounded border-line accent-primary text-primary focus:ring-focus"
             />
             <div className="flex flex-col">
               <label
                 htmlFor="use-iframe-embedding"
-                className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
+                className="text-sm font-medium text-fg cursor-pointer"
               >
                 {t('sections.sidebar.fields.useIframeEmbedding')}
               </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-fg-hint">
                 {t('sections.sidebar.fields.useIframeEmbeddingHint')}
               </p>
             </div>
@@ -380,13 +389,13 @@ export function CustomPageFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg transition-colors"
           >
             {t('common:buttons.cancel', { defaultValue: 'Cancel' })}
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {isEditing
               ? t('sections.sidebar.modals.edit.submit')

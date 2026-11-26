@@ -1,0 +1,25 @@
+{
+  "appName": "Church Hub",
+  "retry": "Try again",
+  "removed": {
+    "title": "This device was removed",
+    "body": "The church took back this device's access. Ask for a new link to join again."
+  },
+  "joinFailed": {
+    "invalid": {
+      "title": "This is not a Church Hub link",
+      "body": "Check that the whole link was copied, or scan the code again."
+    },
+    "refused": {
+      "title": "This link no longer works",
+      "body": "It was revoked. Ask for a new link."
+    },
+    "offline": {
+      "title": "Could not reach Church Hub Cloud",
+      "body": "Check the internet connection and try again."
+    }
+  },
+  "guest": {
+    "button": "Use Church Hub as a guest"
+  }
+}

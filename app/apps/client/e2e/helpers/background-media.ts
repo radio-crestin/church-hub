@@ -187,15 +187,16 @@ export async function listMediaIds(
 }
 
 /**
- * Deletes every upload not in `keep` — including one whose test failed before
- * noting its id. The built-in video is always kept.
+ * Deletes every upload but the built-in video — including one whose test
+ * failed before noting its id, or one an interrupted run left behind: the test
+ * database's gallery holds nothing else, and a leftover video would be the
+ * first one other specs see.
  */
-export async function deleteMediaExcept(
+export async function deleteUploadedMedia(
   request: APIRequestContext,
-  keep: ReadonlySet<string>,
 ): Promise<void> {
   for (const id of await listMediaIds(request)) {
-    if (!keep.has(id) && id !== BUILT_IN_VIDEO.id) {
+    if (id !== BUILT_IN_VIDEO.id) {
       await request.delete(`${MEDIA_API}/${id}`)
     }
   }

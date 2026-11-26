@@ -1,6 +1,7 @@
 import { parseManifest } from './bundle/parseManifest'
 import { fetchLink } from './links/fetchLink'
 import { findSongSource } from './listSongSources'
+import { readPublishedChecksum } from './readPublishedChecksum'
 
 const decode = (bytes: Uint8Array) => new TextDecoder().decode(bytes).trim()
 
@@ -22,9 +23,7 @@ export async function readSourceChecksum(sourceId: string): Promise<string> {
   const source = findSongSource(sourceId)
   switch (source.format) {
     case 'song-bundle-file':
-      return (
-        decode(await fetchLink(`${source.url}.sha256`)).split(/\s/)[0] ?? ''
-      )
+      return readPublishedChecksum(source.url)
     case 'song-bundle-folder':
       return parseManifest(decode(await fetchLink(source.url))).checksum ?? ''
     case 'cantaricrestine-api':

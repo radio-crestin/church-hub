@@ -12,7 +12,7 @@
     "save": "Save",
     "delete": "Delete",
     "back": "Back to Songs",
-    "addToSchedule": "Add to Schedule",
+    "addToSchedule": "Add to Presentation",
     "saveToFile": "Save to File",
     "exportPdf": "Export as PDF",
     "exportDocx": "Export as Word",
@@ -88,7 +88,7 @@
     "aiSearchTooltip": "AI Search - find songs by topic",
     "aiProcessing": "AI analyzing...",
     "presentedOnly": "Presented songs",
-    "inSchedulesOnly": "In schedules",
+    "inSchedulesOnly": "In presentations",
     "hasKeyLine": "Has key line",
     "bookmarkedOnly": "Bookmarked",
     "filters": "Filters",
@@ -102,7 +102,7 @@
     "label": "Jump to letter",
     "jumpTo": "Jump to songs starting with {{letter}}"
   },
-  "dragToPanel": "Drag onto Marcaje or Programe",
+  "dragToPanel": "Drag onto Marcaje or Presentations",
   "picker": {
     "selectSong": "Select Song",
     "searchResults": "Showing {{shown}} of {{total}} results",
@@ -191,7 +191,7 @@
     "collapse": "Collapse",
     "markSung": "Mark as sung",
     "markNotSung": "Mark as not sung",
-    "dragToProgram": "Drag onto a program to add it",
+    "dragToProgram": "Drag onto a presentation to add it",
     "filterAll": "All",
     "filterPending": "Pending",
     "filterSung": "Sung",
@@ -218,6 +218,7 @@
     "songTitle": "Song Title",
     "createSong": "Create Song",
     "dropHint": "Drop PPTX file to import as song",
+    "dropHintPresentation": "Drop to import the PowerPoint",
     "slideNumber": "Slide {{number}}",
     "duplicateIdentical": "A song named \"{{title}}\" already exists with identical content. Import was skipped.",
     "duplicateDifferent": "A song named \"{{title}}\" already exists but with different content. Import as a new song with an auto-numbered title?",
@@ -257,10 +258,13 @@
     "slideCounter": "Slide {{current}} of {{total}}",
     "chorusRepeat": "Auto-inserted chorus",
     "previewMode": "Preview",
-    "previewModeHint": "Preview mode: stage a slide before projecting it",
+    "previewModeHint": "Preview: stage the verse here, for the singers, before showing it",
     "project": "Project",
     "projectHint": "Project the staged slide",
-    "hideBackground": "Hide background in preview"
+    "hideBackground": "Hide background in preview",
+    "liveMode": "Live",
+    "liveModeHint": "Live: a click on a verse shows it on screen",
+    "modeLabel": "How a click on a verse behaves"
   },
   "metadata": {
     "detailsSection": "Details",
@@ -300,7 +304,7 @@
     "foundMessage": "A song with this title already exists in the library:",
     "clickToPreview": "Click the title above to preview the existing song in a new window.",
     "replaceExisting": "Replace Existing Song",
-    "replaceExistingDescription": "Delete the existing song and save this one instead. All schedule and queue references will be automatically updated to use this song."
+    "replaceExistingDescription": "Delete the existing song and save this one instead. All presentation and queue references will be automatically updated to use this song."
   },
   "categoryDialog": {
     "title": "Set Category",
@@ -324,6 +328,32 @@
     "title": "Reset Presentation Count",
     "message": "Are you sure you want to reset the presentation count to 0?",
     "confirm": "Reset"
+  },
+  "sameTheme": {
+    "title": "Same theme",
+    "menuDescription": "Other songs on the same theme as this one",
+    "close": "Close",
+    "empty": "No other songs found on this theme.",
+    "sharedWords": "Shared words: {{words}}",
+    "themes": {
+      "christmas": "Christmas",
+      "easter": "Easter",
+      "cross": "The Cross",
+      "lordsSupper": "The Lord's Supper",
+      "baptism": "Baptism",
+      "pentecost": "Pentecost",
+      "thanksgiving": "Thanksgiving",
+      "wedding": "Wedding",
+      "farewell": "Farewell and comfort",
+      "secondComing": "The Lord's return",
+      "heaven": "Heaven",
+      "shepherd": "The Shepherd",
+      "prayer": "Prayer",
+      "mother": "Mother",
+      "repentance": "Repentance",
+      "mission": "Mission",
+      "scripture": "God's Word"
+    }
   },
   "versions": {
     "title": "Song versions",

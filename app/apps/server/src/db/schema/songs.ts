@@ -103,6 +103,21 @@ export const songs = sqliteTable(
     presentationCount: integer('presentation_count').notNull().default(0),
     lastPresentedAt: integer('last_presented_at', { mode: 'timestamp' }),
     lastManualEdit: integer('last_manual_edit', { mode: 'timestamp' }),
+    /**
+     * Where the song came from: the song source's id and the song's id there
+     * (T-176), set when a source adds the song or is matched to it. Local to
+     * this device, like `background`.
+     */
+    sourceId: text('source_id'),
+    sourceSongId: text('source_song_id'),
+    /** `content_hash` as the source last gave the lyrics: equal while nobody changed them here. */
+    sourceHash: text('source_hash'),
+    /**
+     * SHA-256 of the normalized lyrics (lyricsFingerprint in
+     * @church-hub/song-formats). A trigger clears it whenever a slide changes;
+     * fillContentHashes computes the missing ones.
+     */
+    contentHash: text('content_hash'),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -118,6 +133,8 @@ export const songs = sqliteTable(
     // (matchCandidatesAgainstLibrary), which probes source_filename per
     // external candidate before falling back to title/fuzzy matching.
     index('idx_songs_source_filename').on(table.sourceFilename),
+    index('idx_songs_source_song').on(table.sourceId, table.sourceSongId),
+    index('idx_songs_content_hash').on(table.contentHash),
   ],
 )
 
@@ -160,6 +177,8 @@ export const songBookmarks = sqliteTable(
   'song_bookmarks',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     songId: integer('song_id')
       .notNull()
       .references(() => songs.id, { onDelete: 'cascade' }),
@@ -169,6 +188,9 @@ export const songBookmarks = sqliteTable(
     isSung: integer('is_sung', { mode: 'boolean' }).notNull().default(false),
     sungAt: integer('sung_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
   },
@@ -185,6 +207,8 @@ export const songTags = sqliteTable(
   'song_tags',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     name: text('name').notNull().unique(),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
@@ -220,9 +244,14 @@ export const songBookmarkNotes = sqliteTable(
   'song_bookmark_notes',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     content: text('content').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
   },

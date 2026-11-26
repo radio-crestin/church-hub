@@ -1,11 +1,5 @@
 import { sql } from 'drizzle-orm'
-import {
-  index,
-  integer,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 import { songSlides } from './songs'
 
@@ -69,9 +63,19 @@ export const screens = sqliteTable(
     openOnStartup: integer('open_on_startup', { mode: 'boolean' })
       .notNull()
       .default(true),
-    width: integer('width').notNull().default(1920),
-    height: integer('height').notNull().default(1080),
-    globalSettings: text('global_settings').notNull().default('{}'),
+    /**
+     * The slide template this screen draws with (slide_templates.id); its
+     * design canvas, layouts, clock and next-slide strip. Set for every screen
+     * (move-screen-layouts-into-templates, seed-screens, createScreen).
+     */
+    templateId: integer('template_id'),
+    /**
+     * Draw a running presentation (and its items) with the presentation's
+     * template instead of this screen's own. On for the projector and kiosk.
+     */
+    followsPresentation: integer('follows_presentation', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
@@ -84,50 +88,6 @@ export const screens = sqliteTable(
     index('idx_screens_is_active').on(table.isActive),
     index('idx_screens_type').on(table.type),
     index('idx_screens_sort_order').on(table.sortOrder),
-  ],
-)
-
-// Per-content-type configuration for each screen
-export const screenContentConfigs = sqliteTable(
-  'screen_content_configs',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    screenId: integer('screen_id')
-      .notNull()
-      .references(() => screens.id, { onDelete: 'cascade' }),
-    contentType: text('content_type', { enum: contentTypes }).notNull(),
-    config: text('config').notNull().default('{}'),
-    createdAt: integer('created_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer('updated_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    index('idx_screen_content_configs_screen_id').on(table.screenId),
-    index('idx_screen_content_configs_content_type').on(table.contentType),
-  ],
-)
-
-// Next slide section configuration (for stage screens)
-export const screenNextSlideConfigs = sqliteTable(
-  'screen_next_slide_configs',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    screenId: integer('screen_id')
-      .notNull()
-      .references(() => screens.id, { onDelete: 'cascade' }),
-    config: text('config').notNull().default('{}'),
-    createdAt: integer('created_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer('updated_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    index('idx_screen_next_slide_configs_screen_id').on(table.screenId),
   ],
 )
 
@@ -158,34 +118,6 @@ export const presentationState = sqliteTable('presentation_state', {
   // Store as milliseconds (not seconds) for precise ordering of rapid updates
   updatedAt: integer('updated_at').notNull().default(sql`(unixepoch() * 1000)`),
 })
-
-// Per-scene config overrides for each screen+contentType combination
-export const screenSceneOverrides = sqliteTable(
-  'screen_scene_overrides',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    screenId: integer('screen_id')
-      .notNull()
-      .references(() => screens.id, { onDelete: 'cascade' }),
-    obsSceneName: text('obs_scene_name').notNull(),
-    contentType: text('content_type', { enum: contentTypes }).notNull(),
-    config: text('config').notNull().default('{}'),
-    createdAt: integer('created_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer('updated_at', { mode: 'timestamp' })
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    uniqueIndex('idx_screen_scene_overrides_unique').on(
-      table.screenId,
-      table.obsSceneName,
-      table.contentType,
-    ),
-    index('idx_screen_scene_overrides_screen_id').on(table.screenId),
-  ],
-)
 
 // Bible verse history - tracks all displayed verses, cleared on graceful app exit
 export const bibleHistory = sqliteTable(

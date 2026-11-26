@@ -1,3 +1,4 @@
+import { emptyLibrary as emptyLibraryOf } from './libraryCollections'
 import { dirtyKey, mergeLibraries } from './mergeLibraries'
 import type { LibraryFile, LibrarySong } from './types'
 import { describe, expect, test } from 'bun:test'
@@ -5,15 +6,7 @@ import { describe, expect, test } from 'bun:test'
 const NOW = 1_800_000_000
 
 function emptyLibrary(device = 'device-a'): LibraryFile {
-  return {
-    schemaVersion: 1,
-    updatedByDevice: device,
-    categories: [],
-    groups: [],
-    songs: [],
-    schedules: [],
-    tombstones: [],
-  }
+  return emptyLibraryOf(device)
 }
 
 function song(overrides: Partial<LibrarySong> & { uuid: string }): LibrarySong {

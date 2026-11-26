@@ -91,6 +91,8 @@ export const bibleBookmarks = sqliteTable(
   'bible_bookmarks',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     verseId: integer('verse_id').notNull(),
     reference: text('reference').notNull(),
     text: text('text').notNull(),
@@ -114,6 +116,9 @@ export const bibleBookmarks = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
   },
   (table) => [
     // Deliberately NOT unique - the same verse may be bookmarked several times
@@ -128,9 +133,14 @@ export const bibleBookmarkNotes = sqliteTable(
   'bible_bookmark_notes',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    // Sync identity (service/sync/syncedTables.ts), set by the add-sync triggers.
+    uuid: text('uuid').notNull().default(''),
     content: text('content').notNull(),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
   },

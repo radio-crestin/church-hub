@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router'
 import { GripVertical, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-import { formatShortcutForDisplay } from '~/features/keyboard-shortcuts'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import type { OBSScene } from '../types'
 
 interface SceneSettingsItemProps {
@@ -35,41 +35,33 @@ export function SceneSettingsItem({ scene }: SceneSettingsItemProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`
-        flex items-center gap-3 p-3 bg-white dark:bg-gray-800
-        border border-gray-200 dark:border-gray-700 rounded-lg
-        ${isDragging ? 'shadow-lg ring-2 ring-indigo-500' : ''}
-        ${!scene.isVisible ? 'opacity-60' : ''}
-      `}
+      className={`flex items-center gap-3 rounded-lg border border-line bg-panel p-3 ${
+        isDragging ? 'ring-1 ring-focus' : ''
+      } ${!scene.isVisible ? 'opacity-60' : ''}`}
     >
       <button
         type="button"
-        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
+        className="p-1 text-fg-hint hover:text-fg cursor-grab active:cursor-grabbing"
         {...attributes}
         {...listeners}
       >
-        <GripVertical size={20} />
+        <GripVertical size={16} strokeWidth={1.5} />
       </button>
 
       <div className="flex-1 min-w-0">
-        <span className="font-medium text-gray-900 dark:text-white truncate block">
+        <span className="block truncate text-sm font-medium text-fg">
           {scene.displayName}
         </span>
         <div className="flex flex-wrap items-center gap-2">
           {scene.displayName !== scene.obsSceneName && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <span className="text-xs text-fg-hint truncate">
               {scene.obsSceneName}
             </span>
           )}
           {hasShortcuts && (
             <div className="flex flex-wrap gap-1">
               {scene.shortcuts.map((shortcut) => (
-                <span
-                  key={shortcut}
-                  className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
-                >
-                  {formatShortcutForDisplay(shortcut)}
-                </span>
+                <KeyboardShortcutBadge key={shortcut} shortcut={shortcut} />
               ))}
             </div>
           )}
@@ -80,10 +72,10 @@ export function SceneSettingsItem({ scene }: SceneSettingsItemProps) {
         to="/livestream/scenes/$sceneId"
         params={{ sceneId: String(scene.id) }}
         aria-label={t('scenes.settings')}
-        className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label transition-colors hover:bg-hover hover:text-fg"
         title={t('scenes.settings')}
       >
-        <Settings size={18} />
+        <Settings size={16} strokeWidth={1.5} />
       </Link>
     </div>
   )

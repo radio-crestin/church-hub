@@ -3,8 +3,8 @@ import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Bookmark,
-  BookmarkCheck,
   CalendarPlus,
+  Compass,
   Download,
   Eye,
   FileText,
@@ -57,6 +57,8 @@ import {
 import {
   CategoryEditDialog,
   type CategoryEditDialogHandle,
+  PreviewModeToggle,
+  SameThemeModal,
   SongBookmarksPanel,
   SongControlPanel,
   SongEditor,
@@ -96,7 +98,6 @@ import type { ActionMenuItem } from '~/ui/menu'
 import { ActionMenu } from '~/ui/menu'
 import { ConfirmModal } from '~/ui/modal'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
-import { Switch } from '~/ui/switch/Switch'
 import { useToast } from '~/ui/toast'
 
 interface SongSearchParams {
@@ -322,6 +323,7 @@ function SongPreviewPage() {
     'song-detail:versions-open',
     true,
   )
+  const [showSameThemeModal, setShowSameThemeModal] = useState(false)
   // Plain black behind the lyrics in this page's previews (both layouts), so
   // they are easy to read. Never changes what the screens show. Only an image
   // or a video has anything to hide: without one the "More" menu drops the
@@ -772,7 +774,7 @@ function SongPreviewPage() {
     }
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg-hint" />
       </div>
     )
   }
@@ -872,6 +874,7 @@ function SongPreviewPage() {
           onToggleCollapse={
             isLargeScreen ? () => setVersionsOpen(!versionsOpen) : undefined
           }
+          onShowSameTheme={() => setShowSameThemeModal(true)}
           attentionBadge={
             undismissedSuggestionCount > 0
               ? `+${undismissedSuggestionCount}`
@@ -934,16 +937,10 @@ function SongPreviewPage() {
                 testId="song-phone-stage"
                 isLive={isThisSongLive}
                 headerActions={
-                  <label className="flex items-center gap-1.5 select-none shrink-0">
-                    <Switch
-                      id="song-preview-mode"
-                      checked={previewMode}
-                      onCheckedChange={togglePreviewMode}
-                    />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {t('preview.previewMode')}
-                    </span>
-                  </label>
+                  <PreviewModeToggle
+                    previewMode={previewMode}
+                    onTogglePreviewMode={togglePreviewMode}
+                  />
                 }
                 previewContent={stagedPreviewContent}
                 hideBackground={hidePreviewBackground}
@@ -955,11 +952,11 @@ function SongPreviewPage() {
           title: isLargeScreen ? t('preview.slides') : t('layout.versesTab'),
           render: () => (
             <div
-              className={`overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 ${
+              className={`overflow-hidden rounded-xl border border-line bg-panel ${
                 isLargeScreen ? 'relative h-full' : ''
               }`}
             >
-              <div className={isLargeScreen ? 'absolute inset-0 p-4' : 'p-3'}>
+              <div className={`p-3 ${isLargeScreen ? 'absolute inset-0' : ''}`}>
                 {showsLiveProgramItem ? (
                   <ScheduleLiveItemPanel nav={scheduleNav} />
                 ) : (
@@ -993,7 +990,7 @@ function SongPreviewPage() {
       id: 'save-to-file',
       label: t('actions.saveToFile'),
       description: t('actionsMenu.saveToFileDescription'),
-      icon: <Download size={18} />,
+      icon: <Download size={16} strokeWidth={1.5} />,
       disabled: isSaving,
       onSelect: handleOpenExportModal,
       testId: 'song-save-to-file',
@@ -1002,7 +999,7 @@ function SongPreviewPage() {
       id: 'export-pdf',
       label: t('actions.exportPdf'),
       description: t('actionsMenu.exportPdfDescription'),
-      icon: <FileText size={18} />,
+      icon: <FileText size={16} strokeWidth={1.5} />,
       disabled: isSaving,
       onSelect: () => saveSongAs('pdf'),
       testId: 'song-export-pdf',
@@ -1011,7 +1008,7 @@ function SongPreviewPage() {
       id: 'export-docx',
       label: t('actions.exportDocx'),
       description: t('actionsMenu.exportDocxDescription'),
-      icon: <FileText size={18} />,
+      icon: <FileText size={16} strokeWidth={1.5} />,
       disabled: isSaving,
       onSelect: () => saveSongAs('docx'),
       testId: 'song-export-docx',
@@ -1022,7 +1019,7 @@ function SongPreviewPage() {
             id: 'hide-background',
             label: t('preview.hideBackground'),
             description: t('actionsMenu.hideBackgroundDescription'),
-            icon: <ImageOff size={18} />,
+            icon: <ImageOff size={16} strokeWidth={1.5} />,
             active: hidePreviewBackground,
             onSelect: () => setHideBackgroundChoice(!hideBackgroundChoice),
             testId: 'song-preview-hide-background',
@@ -1035,9 +1032,7 @@ function SongPreviewPage() {
             id: 'toggle-layout',
             label: t('stageEditor.toggleLayout'),
             description: t('actionsMenu.toggleLayoutDescription'),
-            icon: <Projector size={18} />,
-            iconClassName:
-              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+            icon: <Projector size={16} strokeWidth={1.5} />,
             active: editorLayout === 'powerpoint',
             onSelect: () =>
               setEditorLayout(
@@ -1047,6 +1042,14 @@ function SongPreviewPage() {
           },
         ]
       : []),
+    {
+      id: 'same-theme',
+      label: t('sameTheme.title'),
+      description: t('sameTheme.menuDescription'),
+      icon: <Compass size={16} strokeWidth={1.5} />,
+      onSelect: () => setShowSameThemeModal(true),
+      testId: 'song-same-theme',
+    },
     ...(songHistory.menuItem ? [songHistory.menuItem] : []),
     // Panels only form movable columns on a large screen; on a phone they are
     // a plain stack, so there is nothing to rearrange.
@@ -1054,7 +1057,7 @@ function SongPreviewPage() {
   ]
 
   return (
-    <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
+    <div className="flex flex-col h-full lg:overflow-hidden">
       {/* Header - Back button, title, and action buttons */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 lg:mb-4 flex-shrink-0">
         <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 lg:gap-4 min-w-0 flex-1">
@@ -1062,12 +1065,13 @@ function SongPreviewPage() {
             <button
               type="button"
               onClick={handleGoBack}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0 flex items-center gap-2"
+              className="h-8 px-2 rounded-lg hover:bg-hover shrink-0 flex items-center gap-2"
               title="Back (Esc)"
             >
               <ArrowLeft
-                size={20}
-                className="text-gray-600 dark:text-gray-400"
+                size={16}
+                strokeWidth={1.5}
+                className="text-fg-label"
               />
               <KeyboardShortcutBadge
                 shortcut="Escape"
@@ -1075,7 +1079,7 @@ function SongPreviewPage() {
                 className="hidden sm:inline-block"
               />
             </button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+            <h1 className="text-base font-semibold text-fg truncate">
               {song.title}
             </h1>
           </div>
@@ -1084,7 +1088,7 @@ function SongPreviewPage() {
               <button
                 type="button"
                 onClick={handleOpenCategoryDialog}
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs transition-colors hover:bg-hover text-fg-hint"
                 title={t('categoryDialog.title')}
               >
                 <Tag className="w-3 h-3" />
@@ -1096,7 +1100,7 @@ function SongPreviewPage() {
                 <button
                   type="button"
                   onClick={() => setShowResetCountConfirm(true)}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 rounded hover:bg-sky-200 dark:hover:bg-sky-800/40 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs transition-colors hover:bg-hover text-fg-hint tabular-nums"
                   title={t('resetCountDialog.title')}
                 >
                   <Eye className="w-3 h-3" />
@@ -1108,7 +1112,7 @@ function SongPreviewPage() {
                 type="button"
                 onClick={handleOpenKeyLineDialog}
                 data-testid="song-key-button"
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
+                className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs transition-colors hover:bg-hover font-medium text-key"
                 title={t('actions.setKeyLine')}
               >
                 <Music2 className="w-3 h-3" />
@@ -1128,16 +1132,14 @@ function SongPreviewPage() {
             }
             title={isBookmarked ? t('bookmarks.remove') : t('bookmarks.add')}
             data-testid="song-bookmark-toggle"
-            className={`inline-flex items-center justify-center p-2 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              isBookmarked
-                ? 'bg-amber-500 border-amber-500 text-white hover:bg-amber-600'
-                : 'bg-white border-gray-300 text-amber-600 hover:bg-amber-50 dark:bg-gray-800 dark:border-gray-600 dark:text-amber-400 dark:hover:bg-gray-700'
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+              isBookmarked ? 'text-bookmark' : 'text-fg-label hover:text-fg'
             }`}
           >
             {isBookmarked ? (
-              <BookmarkCheck size={16} />
+              <Bookmark size={16} strokeWidth={1.5} fill="currentColor" />
             ) : (
-              <Bookmark size={16} />
+              <Bookmark size={16} strokeWidth={1.5} />
             )}
           </button>
           <button
@@ -1146,9 +1148,9 @@ function SongPreviewPage() {
             aria-label={t('actions.addToSchedule')}
             title={t('actions.addToSchedule')}
             data-testid="song-add-to-schedule"
-            className="inline-flex items-center justify-center p-2 rounded-lg border bg-white border-gray-300 text-green-600 hover:bg-green-50 dark:bg-gray-800 dark:border-gray-600 dark:text-green-400 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-focus text-fg-label hover:text-fg"
           >
-            <CalendarPlus size={16} />
+            <CalendarPlus size={16} strokeWidth={1.5} />
           </button>
           <button
             type="button"
@@ -1156,9 +1158,9 @@ function SongPreviewPage() {
             aria-label={t('actions.setKeyLine')}
             title={t('actions.setKeyLine')}
             data-testid="song-set-key-line"
-            className="inline-flex items-center justify-center p-2 rounded-lg border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-focus text-fg-label hover:text-fg"
           >
-            <Music size={16} />
+            <Music size={16} strokeWidth={1.5} />
           </button>
           <ActionMenu
             items={actionMenuItems}
@@ -1172,9 +1174,9 @@ function SongPreviewPage() {
               onClick={handleEdit}
               data-testid="song-edit"
               title={t('actionsMenu.editDescription')}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <Pencil size={16} />
+              <Pencil size={16} strokeWidth={1.5} />
               {t('preview.edit')}
             </button>
           )}
@@ -1239,6 +1241,13 @@ function SongPreviewPage() {
         isOpen={showExportFormatModal}
         onConfirm={handleExportFormatConfirm}
         onCancel={() => setShowExportFormatModal(false)}
+      />
+
+      <SameThemeModal
+        isOpen={showSameThemeModal}
+        onClose={() => setShowSameThemeModal(false)}
+        songId={song.id}
+        songTitle={song.title}
       />
 
       {songHistory.dialog}

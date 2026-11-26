@@ -41,6 +41,7 @@ import { normalizeForSearch } from '~/utils/normalizeForSearch'
 import { saveTextFile } from '~/utils/saveTextFile'
 import { ImportBibleBookmarksModal } from './ImportBibleBookmarksModal'
 import { useBookmarkSlideshowActions } from './useBookmarkSlideshowActions'
+import { VerseProgressSlot } from './VerseProgressSlot'
 import {
   useAddBibleBookmarkNote,
   useBibleBookmarkNotes,
@@ -52,6 +53,10 @@ import {
   useReorderBibleBookmarkItems,
   useUpdateBibleBookmarkNote,
 } from '../hooks'
+import {
+  slideshowOrder,
+  useLiveBookmarkId,
+} from '../hooks/useBookmarkSlideshow'
 import type { BibleBookmark, BibleBookmarkNote } from '../service'
 
 /** One row of the list verses and notes share. */
@@ -67,14 +72,22 @@ interface SortableBookmarkItemProps {
   bookmark: BibleBookmark
   isActive: boolean
   onSelect: () => void
+  onPresent: () => void
   onRemove: () => void
+  /** Its place in the bookmarks slideshow, for the progress ring. */
+  slideshowIndex: number
+  /** On screen through the bookmarks slideshow. */
+  isLive: boolean
 }
 
 function SortableBookmarkItem({
   bookmark,
   isActive,
   onSelect,
+  onPresent,
   onRemove,
+  slideshowIndex,
+  isLive,
 }: SortableBookmarkItemProps) {
   const { t } = useTranslation('bible')
   const uniqueId = `verse-${bookmark.id}`
@@ -101,37 +114,43 @@ function SortableBookmarkItem({
       ref={setNodeRef}
       style={style}
       data-testid="bible-bookmark-item"
-      className={`flex items-start gap-1 rounded-lg border transition-colors ${
+      data-live={isLive || undefined}
+      className={`flex items-start gap-1 rounded-lg transition-colors ${
         isDragging
-          ? 'opacity-80 shadow-lg border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-          : isActive
-            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-            : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 bg-white dark:bg-gray-800 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
+          ? 'bg-panel opacity-90 ring-1 ring-inset ring-line-strong'
+          : isLive
+            ? 'bg-live-tint ring-1 ring-inset ring-live'
+            : isActive
+              ? 'bg-selected'
+              : 'hover:bg-hover'
       }`}
     >
       <div
         {...attributes}
         {...listeners}
         data-testid="bible-bookmark-drag-handle"
-        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg"
       >
-        <GripVertical size={14} className="text-gray-400 dark:text-gray-500" />
+        <GripVertical size={14} className="text-fg-hint" strokeWidth={1.75} />
       </div>
 
       <button
         type="button"
         onClick={onSelect}
+        onDoubleClick={onPresent}
         className="flex-1 min-w-0 text-left py-1.5 pr-1"
       >
         <div className="flex items-baseline gap-1.5">
           <span
-            className="text-sm font-medium truncate text-gray-900 dark:text-white"
+            className={`text-sm font-medium truncate ${
+              isLive ? 'text-live' : 'text-fg'
+            }`}
             data-testid="bible-bookmark-reference"
           >
             {bookmark.reference}
           </span>
           {bookmark.translationAbbreviation && (
-            <span className="text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400 shrink-0">
+            <span className="text-xs text-fg-hint shrink-0">
               {bookmark.translationAbbreviation}
             </span>
           )}
@@ -143,17 +162,23 @@ function SortableBookmarkItem({
         {bookmark.styleRanges.length > 0 ? (
           <p
             data-testid="bible-bookmark-styled-text"
-            className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_mark]:text-gray-900"
+            className="mt-0.5 text-xs text-fg-hint line-clamp-2 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_mark]:text-gray-900"
             dangerouslySetInnerHTML={{
               __html: applyStylesToText(bookmark.text, bookmark.styleRanges),
             }}
           />
         ) : (
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+          <p className="mt-0.5 text-xs text-fg-hint line-clamp-2">
             {bookmark.text}
           </p>
         )}
       </button>
+
+      <VerseProgressSlot
+        slideshow="bookmarks"
+        entryIndex={slideshowIndex}
+        testId="bible-bookmark-progress"
+      />
 
       <button
         type="button"
@@ -161,10 +186,10 @@ function SortableBookmarkItem({
           e.stopPropagation()
           onRemove()
         }}
-        className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg transition-colors"
         title={t('bookmarks.remove')}
       >
-        <XIcon size={14} />
+        <XIcon size={14} strokeWidth={1.75} />
       </button>
     </div>
   )
@@ -220,19 +245,17 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
       ref={setNodeRef}
       style={style}
       data-testid="bible-bookmark-note"
-      className={`flex items-center gap-1 rounded-lg border transition-colors ${
-        isDragging
-          ? 'opacity-80 shadow-lg border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-          : 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 hover:border-blue-300 dark:hover:border-blue-700'
+      className={`flex items-center gap-1 rounded-lg bg-field transition-colors ${
+        isDragging ? 'opacity-90 ring-1 ring-inset ring-line-strong' : ''
       }`}
     >
       <div
         {...attributes}
         {...listeners}
         data-testid="bible-bookmark-note-drag-handle"
-        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-blue-100 dark:hover:bg-blue-900/30"
+        className="flex-shrink-0 p-1.5 cursor-grab active:cursor-grabbing rounded-l-lg hover:bg-hover"
       >
-        <GripVertical size={14} className="text-blue-400 dark:text-blue-500" />
+        <GripVertical size={14} className="text-fg-hint" strokeWidth={1.75} />
       </div>
 
       {isEditing ? (
@@ -246,21 +269,21 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
               if (e.key === 'Enter') handleSave()
               if (e.key === 'Escape') setIsEditing(false)
             }}
-            className="flex-1 min-w-0 text-xs bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded px-2 py-1 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 min-w-0 h-7 text-xs bg-panel rounded-md px-2 text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
           />
           <button
             type="button"
             onClick={handleSave}
-            className="p-1 text-green-600 hover:text-green-700 dark:text-green-400"
+            className="p-1 text-fg-label hover:text-fg"
           >
-            <Check size={14} />
+            <Check size={14} strokeWidth={1.75} />
           </button>
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="p-1 text-fg-hint hover:text-fg-label"
           >
-            <XIcon size={14} />
+            <XIcon size={14} strokeWidth={1.75} />
           </button>
         </div>
       ) : (
@@ -268,9 +291,10 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
           <div className="flex-1 min-w-0 py-1.5 pr-1 flex items-center gap-1.5">
             <StickyNote
               size={12}
-              className="flex-shrink-0 text-blue-400 dark:text-blue-500"
+              className="flex-shrink-0 text-fg-label"
+              strokeWidth={2}
             />
-            <span className="text-xs text-blue-700 dark:text-blue-300 italic truncate">
+            <span className="text-xs text-fg-body italic truncate">
               {note.content}
             </span>
           </div>
@@ -278,10 +302,10 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
           <button
             type="button"
             onClick={handleStartEdit}
-            className="flex-shrink-0 p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+            className="flex-shrink-0 p-1 text-fg-hint hover:text-fg transition-colors"
             title={t('bookmarks.editNote')}
           >
-            <Pencil size={12} />
+            <Pencil size={12} strokeWidth={2} />
           </button>
           <button
             type="button"
@@ -289,10 +313,10 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
               e.stopPropagation()
               onRemove()
             }}
-            className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="flex-shrink-0 p-1.5 text-fg-hint hover:text-red-500 dark:hover:text-red-400 rounded-r-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             title={t('bookmarks.deleteNote')}
           >
-            <XIcon size={14} />
+            <XIcon size={14} strokeWidth={1.75} />
           </button>
         </>
       )}
@@ -302,6 +326,8 @@ function SortableNoteItem({ note, onUpdate, onRemove }: SortableNoteItemProps) {
 
 interface BibleBookmarksPanelProps {
   onSelectVerse: (bookmark: BibleBookmark) => void
+  /** A double-click: show the verse on screen right away. */
+  onPresentVerse: (bookmark: BibleBookmark) => void
   /** Verse currently on screen, highlighted in the list. */
   activeVerseId?: number
   /** Translation used for imported references that do not name one. */
@@ -318,6 +344,7 @@ interface BibleBookmarksPanelProps {
 
 export function BibleBookmarksPanel({
   onSelectVerse,
+  onPresentVerse,
   activeVerseId,
   translationId,
   isCollapsed = false,
@@ -342,6 +369,11 @@ export function BibleBookmarksPanel({
   // Local order override for instant (synchronous) drag feedback
   const [localOrder, setLocalOrder] = useState<BookmarkListItem[] | null>(null)
   const slideshowActions = useBookmarkSlideshowActions(bookmarks)
+  const liveBookmarkId = useLiveBookmarkId()
+  const slideshowIds = useMemo(
+    () => slideshowOrder(bookmarks).map((bookmark) => bookmark.id),
+    [bookmarks],
+  )
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -493,7 +525,10 @@ export function BibleBookmarksPanel({
           bookmark={item.bookmark}
           isActive={activeVerseId === item.bookmark.verseId}
           onSelect={() => onSelectVerse(item.bookmark!)}
+          onPresent={() => onPresentVerse(item.bookmark!)}
           onRemove={() => removeBookmarkMutation.mutate(item.bookmark!.id)}
+          slideshowIndex={slideshowIds.indexOf(item.bookmark.id)}
+          isLive={liveBookmarkId === item.bookmark.id}
         />
       )
     }
@@ -521,8 +556,6 @@ export function BibleBookmarksPanel({
             id: 'add-note',
             label: t('bookmarks.addNote'),
             icon: <Plus size={18} />,
-            iconClassName:
-              'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
             onSelect: startAddingNote,
             testId: 'bible-bookmarks-add-note-menu',
             menuOnly: true as const,
@@ -554,8 +587,6 @@ export function BibleBookmarksPanel({
             id: 'clear',
             label: t('bookmarks.clear'),
             icon: <Trash2 size={18} />,
-            iconClassName:
-              'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
             disabled: clearBookmarksMutation.isPending,
             onSelect: () => clearBookmarksMutation.mutate(),
             testId: 'bible-bookmarks-clear-menu',
@@ -568,12 +599,12 @@ export function BibleBookmarksPanel({
   return (
     <div
       data-testid="bible-bookmarks-panel"
-      className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden h-full"
+      className="bg-panel rounded-xl border border-line flex flex-col overflow-hidden h-full"
     >
       {/* Header — action buttons stay reachable even when collapsed so the
           operator can still start a slideshow or reach "More"; in a narrow
           column the ones that do not fit move into "More" too. */}
-      <div className="flex items-center px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="flex items-center px-3 py-1.5 border-b border-line flex-shrink-0">
         <OverflowActions
           testId="bible-bookmarks-header-more"
           actions={headerActions}
@@ -589,21 +620,25 @@ export function BibleBookmarksPanel({
                       ? t('bookmarks.expand')
                       : t('bookmarks.collapse')
                   }
-                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-gray-500 transition-transform hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                  className="-ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded text-fg-hint transition-transform hover:bg-hover"
                 >
                   <ChevronDown
                     size={14}
                     className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                    strokeWidth={1.75}
                   />
                 </button>
               ) : null}
-              <Bookmark className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
+              <Bookmark
+                className="w-4 h-4 shrink-0 text-fg-label"
+                strokeWidth={1.5}
+              />
               {/* One truncating line, so a narrow column cuts the count
                   before it cuts into the title. */}
-              <span className="min-w-0 truncate text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="min-w-0 truncate text-sm font-medium text-fg">
                 {t('bookmarks.title')}
                 {totalCount > 0 && (
-                  <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                  <span className="ml-2 text-xs font-normal text-fg-hint tabular-nums">
                     ({isSearching ? `${filteredItems.length}/` : ''}
                     {totalCount})
                   </span>
@@ -619,7 +654,7 @@ export function BibleBookmarksPanel({
       {isCollapsed ? null : (
         <>
           {isAddingNote && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div className="flex items-center gap-1">
                 <input
                   ref={newNoteInputRef}
@@ -634,15 +669,15 @@ export function BibleBookmarksPanel({
                     }
                   }}
                   placeholder={t('bookmarks.notePlaceholder')}
-                  className="flex-1 min-w-0 text-xs bg-gray-50 dark:bg-gray-900 border border-blue-300 dark:border-blue-600 rounded px-2 py-1.5 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 min-w-0 h-8 text-sm bg-field rounded-[10px] px-2.5 text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 <button
                   type="button"
                   onClick={handleAddNote}
                   disabled={!newNoteContent.trim()}
-                  className="p-1.5 text-green-600 hover:text-green-700 dark:text-green-400 disabled:opacity-50"
+                  className="p-1.5 text-fg-label hover:text-fg disabled:opacity-50"
                 >
-                  <Check size={14} />
+                  <Check size={14} strokeWidth={1.75} />
                 </button>
                 <button
                   type="button"
@@ -650,18 +685,21 @@ export function BibleBookmarksPanel({
                     setIsAddingNote(false)
                     setNewNoteContent('')
                   }}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="p-1.5 text-fg-hint hover:text-fg-label"
                 >
-                  <XIcon size={14} />
+                  <XIcon size={14} strokeWidth={1.75} />
                 </button>
               </div>
             </div>
           )}
 
           {totalCount > 3 && (
-            <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+            <div className="px-3 py-1.5 border-b border-line flex-shrink-0">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-hint"
+                  strokeWidth={1.75}
+                />
                 <input
                   ref={searchInputRef}
                   data-slide-navigation=""
@@ -669,14 +707,14 @@ export function BibleBookmarksPanel({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t('bookmarks.searchPlaceholder')}
-                  className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full h-8 pl-8 pr-7 text-sm bg-field rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
                 {searchQuery && (
                   <ClearSearchButton
                     inputRef={searchInputRef}
                     onClear={() => setSearchQuery('')}
                     size={14}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-hint hover:text-fg-label"
                   />
                 )}
               </div>
@@ -689,21 +727,22 @@ export function BibleBookmarksPanel({
             className="flex-1 overflow-y-auto scrollbar-thin min-h-0"
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 ...
               </div>
             ) : totalCount === 0 ? (
               <div className="px-4 py-6 text-center">
-                <Bookmark className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('bookmarks.empty')}
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <Bookmark
+                  className="w-8 h-8 mx-auto mb-2 text-fg-hint"
+                  strokeWidth={1}
+                />
+                <p className="text-sm text-fg-hint">{t('bookmarks.empty')}</p>
+                <p className="text-xs text-fg-hint mt-1">
                   {t('bookmarks.emptyDescription')}
                 </p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="px-4 py-6 text-center text-sm text-fg-hint">
                 {t('bookmarks.noResults')}
               </div>
             ) : (
@@ -717,7 +756,7 @@ export function BibleBookmarksPanel({
                   items={filteredItems.map((item) => item.uniqueId)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="p-2 flex flex-col gap-1.5">
+                  <div className="p-1.5 flex flex-col gap-0.5">
                     {filteredItems.map(renderItem)}
                   </div>
                 </SortableContext>

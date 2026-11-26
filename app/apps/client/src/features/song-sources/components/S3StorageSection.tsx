@@ -44,6 +44,11 @@ export function S3StorageSection() {
     if (storage) setForm({ ...storage, secretAccessKey: '' })
   }, [storage])
 
+  // The saved secret is kept only for the endpoint it was saved for.
+  const keepsSecret =
+    !!storage?.hasSecret &&
+    form.endpoint.trim().replace(/\/+$/, '') === storage.endpoint
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     try {
@@ -69,18 +74,16 @@ export function S3StorageSection() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {FIELDS.map(([field, type, required]) => (
             <label key={field} className="block space-y-1">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-fg-body">
                 {t(`songSources.storage.${field}`)}
               </span>
               <Input
                 type={type}
-                required={
-                  field === 'secretAccessKey' ? !storage?.hasSecret : required
-                }
+                required={field === 'secretAccessKey' ? !keepsSecret : required}
                 value={form[field] ?? ''}
                 onChange={(e) => setForm({ ...form, [field]: e.target.value })}
                 placeholder={
-                  field === 'secretAccessKey' && storage?.hasSecret
+                  field === 'secretAccessKey' && keepsSecret
                     ? t('songSources.storage.secretKept')
                     : t(`songSources.storage.placeholder.${field}`)
                 }

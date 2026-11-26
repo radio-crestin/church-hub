@@ -17,7 +17,9 @@ pub fn init<R: Runtime, C: DeserializeOwned>(
         .register_ios_plugin(init_plugin_screen_brightness)
         .map_err(|e| crate::Error::Plugin(e.to_string()))?;
     #[cfg(target_os = "android")]
-    return Err(crate::Error::UnsupportedPlatform);
+    let handle = api
+        .register_android_plugin("com.plugin.screenbrightness", "ScreenBrightnessPlugin")
+        .map_err(|e| crate::Error::Plugin(e.to_string()))?;
 
     Ok(ScreenBrightness(handle))
 }

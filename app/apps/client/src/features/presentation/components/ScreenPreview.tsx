@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { CrossfadeScreenBackground } from './rendering/CrossfadeScreenBackground'
 import { ScreenBackground } from './rendering/ScreenBackground'
 import { ScreenContentLayers } from './rendering/ScreenContentLayers'
 import type { ContentData, NextSlideData } from './rendering/types'
+import { backgroundTransition } from './rendering/utils/backgroundTransition'
 import type { ShownContent } from '../hooks/useContentTypeHandoff'
 import type {
   ClockOverride,
@@ -11,7 +13,6 @@ import type {
   ScreenWithConfigs,
   TextStyleRange,
 } from '../types'
-import { resolveScreenBackground } from '../utils/resolveScreenBackground'
 
 /** What a preview draws instead of the background when it is hidden. */
 const HIDDEN_BACKGROUND: ScreenBackgroundConfig = {
@@ -25,8 +26,10 @@ interface ScreenPreviewProps {
   contentType: ContentType
   contentData: ContentData
   contentKey?: string
+  /** Animate only the changed lines on a slide change (usePresentationContent) */
+  morphLines?: boolean
   isVisible?: boolean
-  /** The previous content type's content, fading out (usePresentationContent) */
+  /** The previous content type's content, fading out (useContentTypeHandoff) */
   leaving?: ShownContent<ContentData, NextSlideData | undefined> | null
   styleRanges?: TextStyleRange[]
   /** Stage editor: make the main lyrics element editable in place */
@@ -46,6 +49,11 @@ interface ScreenPreviewProps {
    * an operator's preview. Never set for a projected screen.
    */
   hideBackground?: boolean
+  /**
+   * Dissolve into a new background as the projection does, for a preview of
+   * the live screen; editors leave it off, so a change shows at once.
+   */
+  crossfadeBackground?: boolean
 }
 
 export function ScreenPreview({
@@ -53,6 +61,7 @@ export function ScreenPreview({
   contentType,
   contentData,
   contentKey,
+  morphLines,
   isVisible = true,
   leaving,
   styleRanges,
@@ -63,6 +72,7 @@ export function ScreenPreview({
   clockOverride,
   playVideo = true,
   hideBackground = false,
+  crossfadeBackground = false,
 }: ScreenPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [displaySize, setDisplaySize] = useState({ width: 400, height: 225 })
@@ -87,20 +97,35 @@ export function ScreenPreview({
     }
   }, [])
 
-  const bg = hideBackground
-    ? HIDDEN_BACKGROUND
-    : resolveScreenBackground({ screen, contentType, contentData })
+  // Changes in step with the text (backgroundTransition)
+  const transition = backgroundTransition({
+    screen,
+    contentType,
+    contentData,
+    leaving,
+  })
+  const background = hideBackground
+    ? { ...transition, background: HIDDEN_BACKGROUND, exit: null }
+    : transition
 
   return (
     <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* First, so the (positioned) content paints above it */}
-      <ScreenBackground background={bg} playVideo={playVideo} />
+      {crossfadeBackground ? (
+        <CrossfadeScreenBackground {...background} playVideo={playVideo} />
+      ) : (
+        <ScreenBackground
+          background={background.background}
+          playVideo={playVideo}
+        />
+      )}
       <ScreenContentLayers
         leaving={leaving}
         screen={screen}
         contentType={contentType}
         contentData={contentData}
         contentKey={contentKey}
+        morphLines={morphLines}
         containerWidth={displaySize.width}
         containerHeight={displaySize.height}
         isVisible={isVisible}

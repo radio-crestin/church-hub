@@ -1,7 +1,8 @@
-# Rebuilds the Resurse Creștine song archive from resursecrestine.ro and
-# publishes it to the `song-sources` release, where the app's built-in
-# Resurse Creștine source downloads it. Daily, and on demand. Uploads only
-# when a song changed (the checksum differs from the published one).
+# Rebuilds Resurse Creștine, Church Hub's managed song source, from
+# resursecrestine.ro and publishes it to this repository's `song-sources`
+# release, where the app reads it (docs/managed-song-sources.md). Daily, and
+# on demand. The release is updated only when the songs changed (the
+# checksum differs from its `.sha256`).
 name: Resurse Creștine archive
 
 on:
@@ -38,24 +39,22 @@ jobs:
         working-directory: app
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Read the published checksum
-        id: published
+      - name: Build the archive
+        id: build
+        working-directory: app/apps/server
+        run: bun scripts/build-resurse-crestine-archive.ts "$RUNNER_TEMP/archive"
+
+      - name: Read the release's checksum
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           checksum=$(gh release download song-sources --repo "$GITHUB_REPOSITORY" \
             --pattern resurse-crestine.chsongs.sha256 --output - 2>/dev/null || true)
-          echo "checksum=${checksum}" >> "$GITHUB_OUTPUT"
-
-      - name: Build the archive
-        id: build
-        working-directory: app/apps/server
-        env:
-          PREVIOUS: ${{ steps.published.outputs.checksum }}
-        run: bun scripts/build-resurse-crestine-archive.ts "$RUNNER_TEMP/archive" "$PREVIOUS"
+          echo "checksum=$(echo "$checksum" | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
 
       - name: Publish to the song-sources release
-        if: steps.build.outputs.changed == 'true'
+        if: steps.build.outputs.checksum != steps.release.outputs.checksum
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -40,12 +40,10 @@ export function HeavyGifWarningModal({
             // One pick comes from one folder, so names are unique.
             key={gif.name}
             data-testid="heavy-gif-warning-item"
-            className="min-w-0 rounded-md bg-amber-50 px-3 py-2 text-sm dark:bg-amber-900/20"
+            className="min-w-0 rounded-lg bg-amber-50 px-3 py-2 text-sm dark:bg-amber-900/20"
           >
-            <p className="truncate font-medium text-gray-900 dark:text-white">
-              {gif.name}
-            </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="truncate font-medium text-fg">{gif.name}</p>
+            <p className="text-xs text-fg-label">
               {t('screens.background.heavyGif.details', {
                 size: formatFileSize(gif.size, i18n.language),
                 count: gif.frameCount,

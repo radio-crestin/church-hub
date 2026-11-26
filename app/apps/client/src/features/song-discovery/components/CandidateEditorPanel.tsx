@@ -72,9 +72,7 @@ export function CandidateEditorPanel({
         />
       </div>
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t('editorHint')}
-      </p>
+      <p className="text-xs text-fg-hint">{t('editorHint')}</p>
     </div>
   )
 }

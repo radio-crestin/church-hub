@@ -72,10 +72,10 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-900 dark:text-white">
+      <label className="text-sm font-medium text-fg">
         {t('sections.sidebar.fields.icon')}
       </label>
-      <div className="grid grid-cols-6 gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-6 gap-2 p-3 bg-field rounded-lg border border-line">
         {AVAILABLE_ICONS.map((iconName) => {
           const IconComponent = ICON_COMPONENTS[iconName]
           const isSelected = value === iconName
@@ -89,18 +89,18 @@ export function IconPicker({ value, onChange }: IconPickerProps) {
                 p-2.5 rounded-lg transition-all flex items-center justify-center
                 ${
                   isSelected
-                    ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 ring-2 ring-indigo-500'
-                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    ? 'bg-selected text-fg'
+                    : 'text-fg-label hover:bg-hover hover:text-fg'
                 }
               `}
               title={iconName}
             >
-              <IconComponent size={20} />
+              <IconComponent size={16} strokeWidth={1.5} />
             </button>
           )
         })}
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-xs text-fg-hint">
         {t('sections.sidebar.fields.selectIcon')}
       </p>
     </div>

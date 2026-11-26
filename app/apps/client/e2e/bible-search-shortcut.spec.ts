@@ -30,15 +30,14 @@ async function bibleShortcut(request: APIRequestContext): Promise<string> {
   return shortcut as string
 }
 
-const searchBox = (page: Page) =>
-  page.getByPlaceholder(/search|cauta|căuta/i).first()
+const searchBox = (page: Page) => page.getByPlaceholder(/search|caută/i).first()
 
 async function searchAndShow(page: Page, reference: string) {
   const search = searchBox(page)
   await search.fill(reference)
   await page.waitForTimeout(800)
   await search.press('Enter')
-  await expect(page.locator('button.ring-green-500')).toBeVisible({
+  await expect(page.locator('button.ring-live')).toBeVisible({
     timeout: 10000,
   })
 }

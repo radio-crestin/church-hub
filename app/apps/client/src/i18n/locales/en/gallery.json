@@ -1,7 +1,7 @@
 {
   "title": "Gallery",
   "description": "Every image and video you have uploaded, in one place.",
-  "usageNote": "Use these files as screen backgrounds (Settings › Screens) or as a song's background (song editor).",
+  "usageNote": "Double-click a file to present it. Files also work as screen backgrounds (Settings › Screens) and song backgrounds (song editor).",
   "filters": {
     "label": "Filter by type",
     "all": "All",
@@ -25,10 +25,15 @@
   },
   "item": {
     "preview": "Preview",
-    "delete": "Delete"
+    "delete": "Delete",
+    "present": "Present on the screens"
   },
   "preview": {
-    "close": "Close"
+    "close": "Close",
+    "present": "Present"
+  },
+  "present": {
+    "failed": "The file could not be shown on the screens. Please try again."
   },
   "delete": {
     "confirmTitle": "Delete this file?",

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 
 import type { ChurchProgramData } from '../types'
 import { parseChurchProgram } from '../utils/parseChurchProgram'
+import { parseMarkdownProgram } from '../utils/parseMarkdownProgram'
 
 // Check if we're running in Tauri mode
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
@@ -14,14 +15,22 @@ export interface LoadScheduleResult {
   error?: string
 }
 
+/** A saved presentation, or a Markdown list (such as a Marcaje export). */
+const EXTENSIONS = ['churchprogram', 'json', 'md', 'markdown']
+
+interface OpenedFile {
+  content: string
+  name: string
+}
+
 /**
- * Opens a file dialog in browser and returns the file content
+ * Opens a file dialog in browser and returns the file
  */
-function openBrowserFileDialog(): Promise<string | null> {
+function openBrowserFileDialog(): Promise<OpenedFile | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.churchprogram,.json'
+    input.accept = EXTENSIONS.map((extension) => `.${extension}`).join(',')
 
     input.onchange = async () => {
       const file = input.files?.[0]
@@ -31,8 +40,7 @@ function openBrowserFileDialog(): Promise<string | null> {
       }
 
       try {
-        const text = await file.text()
-        resolve(text)
+        resolve({ content: await file.text(), name: file.name })
       } catch {
         resolve(null)
       }
@@ -44,32 +52,41 @@ function openBrowserFileDialog(): Promise<string | null> {
 }
 
 /**
- * Opens a file dialog in Tauri and returns the file content
+ * Opens a file dialog in Tauri and returns the file and its path
  */
-async function openTauriFileDialog(): Promise<{
-  content: string | null
-  path: string | null
-}> {
+async function openTauriFileDialog(): Promise<
+  (OpenedFile & { path: string }) | null
+> {
   const { open } = await import('@tauri-apps/plugin-dialog')
   const { readTextFile } = await import('@tauri-apps/plugin-fs')
 
   const filePath = await open({
-    filters: [
-      { name: 'Church Program', extensions: ['churchprogram', 'json'] },
-    ],
+    filters: [{ name: 'Church Program, Markdown', extensions: EXTENSIONS }],
     multiple: false,
   })
 
-  if (!filePath || typeof filePath !== 'string') {
-    return { content: null, path: null }
-  }
+  if (!filePath || typeof filePath !== 'string') return null
 
   const content = await readTextFile(filePath)
-  return { content, path: filePath }
+  const name = filePath.split(/[\\/]/).pop() ?? filePath
+  return { content, name, path: filePath }
+}
+
+/** A Markdown file becomes a presentation of its songs, passages and notes. */
+function parseFile(file: OpenedFile) {
+  const markdown = file.name.match(/^(.*)\.(?:md|markdown)$/i)
+  if (markdown) {
+    return {
+      success: true,
+      data: parseMarkdownProgram(file.content, markdown[1]),
+    }
+  }
+  return parseChurchProgram(file.content)
 }
 
 /**
- * Hook for loading a schedule from a .churchprogram file
+ * Hook for loading a schedule from a .churchprogram file, or from a Markdown
+ * list of songs, Bible passages and notes
  */
 export function useLoadScheduleFromFile() {
   const [isPending, setIsPending] = useState(false)
@@ -78,22 +95,22 @@ export function useLoadScheduleFromFile() {
     setIsPending(true)
 
     try {
-      let content: string | null = null
+      let file: OpenedFile | null
       let filePath: string | undefined
 
       if (isTauri) {
         const result = await openTauriFileDialog()
-        content = result.content
-        filePath = result.path ?? undefined
+        file = result
+        filePath = result?.path
       } else {
-        content = await openBrowserFileDialog()
+        file = await openBrowserFileDialog()
       }
 
-      if (content === null) {
+      if (file === null) {
         return { success: false, cancelled: true }
       }
 
-      const parseResult = parseChurchProgram(content)
+      const parseResult = parseFile(file)
 
       if (!parseResult.success) {
         return {

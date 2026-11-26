@@ -2,12 +2,15 @@ import { Loader2, MonitorUp, Plus } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSlideTemplate } from '~/features/slide-templates/hooks/useSlideTemplates'
+import { templateDisplayName } from '~/features/slide-templates/utils/templateDisplayName'
 import { Button } from '~/ui/button/Button'
 import { Combobox } from '~/ui/combobox/Combobox'
 import { PageHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast/useToast'
 import { ScreenCard } from './ScreenCard'
 import { ScreenExportModal } from './ScreenExportModal'
+import { ScreenTabs } from './ScreenTabs'
 import {
   useBatchUpdateScreenConfig,
   useDeleteScreen,
@@ -29,7 +32,16 @@ import {
 import { resolvePreviewScreen } from '../../utils/resolvePreviewScreen'
 import { ScreenEditor } from '../screen-editor'
 
-export function ScreenManager() {
+export interface ScreenManagerProps {
+  /** The screen whose settings show; the first one when not given. */
+  selectedId?: number
+  onSelect: (screenId: number) => void
+}
+
+/**
+ * Settings → Screens: a tab per screen, and the chosen screen's settings.
+ */
+export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
   const { t } = useTranslation(['settings', 'presentation'])
   const { showToast } = useToast()
 
@@ -58,6 +70,8 @@ export function ScreenManager() {
 
   const { data: screens, isLoading } = useScreens()
   const previewScreenId = resolvePreviewScreen(screens)?.id
+  const selected =
+    screens?.find((screen) => screen.id === selectedId) ?? screens?.[0]
   const upsertScreen = useUpsertScreen()
   const deleteScreen = useDeleteScreen()
   const duplicateScreen = useDuplicateScreen()
@@ -67,7 +81,7 @@ export function ScreenManager() {
   const [newScreenName, setNewScreenName] = useState('')
   const [newScreenType, setNewScreenType] = useState<ScreenType>('primary')
   const [editingScreenId, setEditingScreenId] = useState<number | null>(null)
-  // The slide type the editor opens on (the empty slide from its thumbnail)
+  // The slide the editor opens on (a slide picked from the screen's theme)
   const [editingContentType, setEditingContentType] = useState<
     ContentType | undefined
   >()
@@ -76,6 +90,7 @@ export function ScreenManager() {
 
   // Fetch full screen config when editing
   const { data: editingScreen } = useScreen(editingScreenId)
+  const { data: editingTemplate } = useSlideTemplate(editingScreen?.templateId)
 
   const handleAddNew = () => {
     setNewScreenName('')
@@ -93,17 +108,13 @@ export function ScreenManager() {
       })
       setIsAddModalOpen(false)
       if (screen) {
+        onSelect(screen.id)
         setEditingScreenId(screen.id)
       }
       showToast(t('settings:sections.screens.toast.created'), 'success')
     } catch {
       showToast(t('settings:sections.screens.toast.createError'), 'error')
     }
-  }
-
-  const handleEdit = (screen: Screen, contentType?: ContentType) => {
-    setEditingContentType(contentType)
-    setEditingScreenId(screen.id)
   }
 
   const handleSaveScreen = useCallback(
@@ -150,6 +161,7 @@ export function ScreenManager() {
   const handleDuplicate = async (screen: Screen) => {
     try {
       const copy = await duplicateScreen.mutateAsync(screen.id)
+      onSelect(copy.id)
       showToast(
         t('settings:sections.screens.toast.duplicated', { name: copy.name }),
         'success',
@@ -177,7 +189,11 @@ export function ScreenManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2
+          size={24}
+          strokeWidth={1.5}
+          className="animate-spin text-fg-hint"
+        />
       </div>
     )
   }
@@ -185,10 +201,15 @@ export function ScreenManager() {
   // Full-screen editor mode
   if (editingScreenId && editingScreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-50 dark:bg-gray-950">
+      <div className="fixed inset-0 z-50 bg-app">
         <ScreenEditor
           screen={editingScreen}
           initialContentType={editingContentType}
+          title={
+            editingTemplate
+              ? templateDisplayName(editingTemplate, t)
+              : editingScreen.name
+          }
           onSave={handleSaveScreen}
           onClose={handleCloseEditor}
         />
@@ -202,44 +223,56 @@ export function ScreenManager() {
         title={t('settings:sections.screens.title')}
         description={t('settings:sections.screens.description')}
         actions={
-          <Button onClick={handleAddNew} variant="primary" className="gap-2">
-            <Plus size={16} />
+          <Button
+            onClick={handleAddNew}
+            variant="primary"
+            size="sm"
+            className="gap-2"
+          >
+            <Plus size={16} strokeWidth={1.5} />
             {t('settings:sections.screens.addScreen')}
           </Button>
         }
       />
 
       {/* Screens List */}
-      {screens && screens.length > 0 ? (
+      {screens && selected ? (
         <div className="space-y-3">
-          {screens.map((screen) => (
-            <ScreenCard
-              key={screen.id}
-              screen={screen}
-              onEdit={(contentType) => handleEdit(screen, contentType)}
-              onExport={() => setExportScreen(screen)}
-              onCopyUrl={() => handleCopyUrl(screen)}
-              onDuplicate={() => handleDuplicate(screen)}
-              onDelete={() => handleDelete(screen)}
-              isDuplicating={duplicateScreen.isPending}
-              isShownInPreviews={screen.id === previewScreenId}
-            />
-          ))}
+          <ScreenTabs
+            screens={screens}
+            selectedId={selected.id}
+            onSelect={onSelect}
+          />
+          <ScreenCard
+            key={selected.id}
+            screen={selected}
+            onEdit={(contentType) => {
+              setEditingContentType(contentType)
+              setEditingScreenId(selected.id)
+            }}
+            onExport={() => setExportScreen(selected)}
+            onCopyUrl={() => handleCopyUrl(selected)}
+            onDuplicate={() => handleDuplicate(selected)}
+            onDelete={() => handleDelete(selected)}
+            isDuplicating={duplicateScreen.isPending}
+            isShownInPreviews={selected.id === previewScreenId}
+          />
         </div>
       ) : (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-12 bg-panel rounded-xl border border-line">
           <MonitorUp
-            size={48}
-            className="mx-auto text-gray-400 dark:text-gray-500 mb-4"
+            size={32}
+            strokeWidth={1.25}
+            className="mx-auto text-fg-hint mb-4"
           />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <h3 className="text-base font-semibold text-fg mb-2">
             {t('settings:sections.screens.noScreens')}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-sm text-fg-hint mb-4">
             {t('presentation:screens.noScreensDescription')}
           </p>
           <Button onClick={handleAddNew} variant="primary">
-            <Plus size={20} className="mr-2" />
+            <Plus size={16} strokeWidth={1.5} className="mr-2" />
             {t('presentation:screens.addFirstScreen')}
           </Button>
         </div>
@@ -248,13 +281,13 @@ export function ScreenManager() {
       {/* Add Screen Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-panel rounded-xl border border-line shadow-popover w-full max-w-md mx-4 p-6">
+            <h3 className="text-base font-semibold text-fg mb-4">
               {t('settings:sections.screens.addScreen')}
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-fg-label mb-1">
                   {t('presentation:screens.screenName')}
                 </label>
                 <input
@@ -262,12 +295,12 @@ export function ScreenManager() {
                   value={newScreenName}
                   onChange={(e) => setNewScreenName(e.target.value)}
                   placeholder={t('presentation:screens.screenNamePlaceholder')}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-9 px-3 text-sm rounded-[10px] bg-field text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-fg-label mb-1">
                   {t('presentation:screens.screenType')}
                 </label>
                 <Combobox
@@ -288,7 +321,11 @@ export function ScreenManager() {
                 disabled={!newScreenName.trim() || upsertScreen.isPending}
               >
                 {upsertScreen.isPending && (
-                  <Loader2 size={16} className="animate-spin mr-2" />
+                  <Loader2
+                    size={16}
+                    strokeWidth={1.5}
+                    className="animate-spin mr-2"
+                  />
                 )}
                 {t('presentation:screens.createAndConfigure')}
               </Button>
@@ -300,11 +337,11 @@ export function ScreenManager() {
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-panel rounded-xl border border-line shadow-popover w-full max-w-sm mx-4 p-6">
+            <h3 className="text-base font-semibold text-fg mb-2">
               {t('presentation:screens.deleteConfirmTitle')}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-fg-label mb-4">
               {t('presentation:screens.deleteConfirmMessage', {
                 name: deleteConfirm.name,
               })}
@@ -319,7 +356,11 @@ export function ScreenManager() {
                 disabled={deleteScreen.isPending}
               >
                 {deleteScreen.isPending && (
-                  <Loader2 size={16} className="animate-spin mr-2" />
+                  <Loader2
+                    size={16}
+                    strokeWidth={1.5}
+                    className="animate-spin mr-2"
+                  />
                 )}
                 {t('presentation:actions.delete')}
               </Button>

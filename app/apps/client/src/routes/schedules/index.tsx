@@ -9,6 +9,7 @@ import { useImportScheduleFromFile } from '~/features/schedule-import'
 import { ScheduleList } from '~/features/schedules/components'
 import { getScheduleById } from '~/features/schedules/service/schedules'
 import { Button } from '~/ui/button'
+import { ActionMenu } from '~/ui/menu'
 import { PagePermissionGuard } from '~/ui/PagePermissionGuard'
 import { Page, PageHeader, PagePanel } from '~/ui/page'
 import { useToast } from '~/ui/toast'
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/schedules/')({
 
 function SchedulesPage() {
   const { t } = useTranslation('schedules')
+  const { t: tCommon } = useTranslation('common')
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { importSchedule, isPending: isImporting } = useImportScheduleFromFile()
@@ -102,26 +104,28 @@ function SchedulesPage() {
                 aria-label={t('actions.create')}
                 className="gap-2"
               >
-                <Plus size={16} />
+                <Plus size={16} strokeWidth={1.5} />
                 <span className="hidden sm:inline">{t('actions.create')}</span>
               </Button>
-              <Button
-                variant="secondary"
-                onClick={handleImportSchedule}
-                disabled={isImporting}
-                title={t('actions.importFromFile')}
-                aria-label={t('actions.importFromFile')}
-                className="gap-2"
-              >
-                {isImporting ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Upload size={16} />
-                )}
-                <span className="hidden sm:inline">
-                  {t('actions.importFromFile')}
-                </span>
-              </Button>
+              <ActionMenu
+                items={[
+                  {
+                    id: 'import-from-file',
+                    label: t('actions.loadFromFile'),
+                    description: t('actions.importFromFileDescription'),
+                    icon: isImporting ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Upload size={18} />
+                    ),
+                    onSelect: handleImportSchedule,
+                    disabled: isImporting,
+                    testId: 'schedules-import-from-file-action',
+                  },
+                ]}
+                label={tCommon('actionsMenu.trigger')}
+                testId="schedules-actions-menu"
+              />
             </>
           }
         />

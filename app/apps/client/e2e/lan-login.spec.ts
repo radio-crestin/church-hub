@@ -1,6 +1,7 @@
 import { request as httpRequest } from 'node:http'
 import { expect, type Page, test } from '@playwright/test'
 
+import { setAppLanguage } from './helpers/app-language'
 import { lanBaseUrl, lanLookup } from './helpers/lan-address'
 
 /**
@@ -23,8 +24,10 @@ interface LocalUser {
 
 const PASSWORD = 'lan-login-123'
 
-async function openLoginFromLan(page: Page, baseURL: string) {
-  await page.goto(`${lanBaseUrl(baseURL)}/present`)
+async function openLoginFromLan(page: Page) {
+  // The shipped fixtures save Romanian; the assertions read English.
+  await setAppLanguage(page, 'en')
+  await page.goto(`${lanBaseUrl()}/present`)
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible()
 }
 
@@ -42,7 +45,6 @@ test.describe('Login from the LAN', () => {
   test('an account with a password signs in by the PC address', async ({
     browser,
     request,
-    baseURL,
   }) => {
     const name = `LAN user ${Date.now()}`
     const created = await request.post('/api/users', {
@@ -60,7 +62,7 @@ test.describe('Login from the LAN', () => {
     })
     const page = await remote.newPage()
     try {
-      await openLoginFromLan(page, baseURL as string)
+      await openLoginFromLan(page)
       await page.getByRole('button', { name: new RegExp(name) }).click()
       await page.locator('#login-password').fill(PASSWORD)
       await page.getByRole('button', { name: 'Sign in' }).click()
@@ -75,7 +77,6 @@ test.describe('Login from the LAN', () => {
     browser,
     page: desktop,
     request,
-    baseURL,
   }) => {
     const users = (
       (await (await request.get('/api/auth/local-users')).json()) as {
@@ -85,6 +86,7 @@ test.describe('Login from the LAN', () => {
     const superAdmin = users.find((u) => u.isSuperAdmin) as LocalUser
 
     // The desktop app, signed in on the Church Hub computer.
+    await setAppLanguage(desktop, 'en')
     await desktop.goto('/')
     await expect(desktop.getByRole('heading', { name: 'Welcome' })).toBeHidden()
 
@@ -93,12 +95,15 @@ test.describe('Login from the LAN', () => {
     })
     const page = await remote.newPage()
     try {
-      await openLoginFromLan(page, baseURL as string)
-      await page
+      await openLoginFromLan(page)
+      // The only account, it skips the picker and asks for the code at once.
+      const pairing = page.getByText('Pairing code')
+      const pick = page
         .getByRole('button', { name: new RegExp(superAdmin.name) })
         .first()
-        .click()
-      await expect(page.getByText('Pairing code')).toBeVisible()
+      await expect(pairing.or(pick).first()).toBeVisible()
+      if (!(await pairing.isVisible())) await pick.click()
+      await expect(pairing).toBeVisible()
 
       const shown = desktop.getByTestId('login-pairing-code')
       await expect(shown).toHaveText(/^\d{6}$/)
@@ -122,7 +127,6 @@ test.describe('Login from the LAN', () => {
 
   test('a Host header of localhost does not make a LAN request local', async ({
     request,
-    baseURL,
   }) => {
     const users = (
       (await (await request.get('/api/auth/local-users')).json()) as {
@@ -132,7 +136,7 @@ test.describe('Login from the LAN', () => {
     const superAdmin = users.find((u) => u.isSuperAdmin) as LocalUser
 
     // Node's http client sends any Host header (browsers and fetch refuse).
-    const lan = new URL(lanBaseUrl(baseURL as string))
+    const lan = new URL(lanBaseUrl())
     const res = await new Promise<{
       status: number
       cookie: unknown

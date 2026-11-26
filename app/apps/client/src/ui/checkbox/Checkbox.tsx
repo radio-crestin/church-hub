@@ -25,13 +25,9 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           checked={checked}
           onChange={(e) => onCheckedChange?.(e.target.checked)}
           disabled={disabled}
-          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-white dark:focus:ring-offset-gray-900"
+          className="w-4 h-4 rounded accent-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         />
-        {label && (
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            {label}
-          </span>
-        )}
+        {label && <span className="text-sm text-fg-body">{label}</span>}
       </label>
     )
   },

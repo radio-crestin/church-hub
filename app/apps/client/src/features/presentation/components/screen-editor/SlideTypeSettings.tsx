@@ -2,6 +2,7 @@ import {
   BookOpen,
   Clock,
   Layers,
+  Lock,
   MonitorPlay,
   Music,
   Palette,
@@ -13,6 +14,7 @@ import { Label } from '~/ui/label/Label'
 import { SwitchRow } from '~/ui/switch/SwitchRow'
 import { BackgroundSongTypesHint } from './BackgroundSongTypesHint'
 import { ConstraintControls } from './ConstraintControls'
+import { getElementConfig } from './getElementConfig'
 import type { SelectedElement } from './hooks/useEditorState'
 import { SegmentedControl } from './SegmentedControl'
 import { SettingsSection } from './SettingsSection'
@@ -38,6 +40,7 @@ const SLIDE_ELEMENTS = [
   'personLabel',
   'songKey',
   'amen',
+  'songTitle',
 ] as const
 
 /** A shared screen with no saved placement fills the slide. */
@@ -81,7 +84,11 @@ export function SlideTypeSettings({
 
   const elements: NonNullable<SelectedElement>['type'][] = [
     ...SLIDE_ELEMENTS.filter(
-      (key) => key in config && !!config[key as keyof typeof config],
+      (key) =>
+        key in config &&
+        !!config[key as keyof typeof config] &&
+        // The song title is set on the song layout alone (every slide reads it).
+        (key !== 'songTitle' || contentType === 'song'),
     ),
     ...(clockEnabled && screen.globalSettings.clockConfig
       ? (['clock'] as const)
@@ -108,7 +115,7 @@ export function SlideTypeSettings({
           title={t('screens.editor.elementsTitle')}
           icon={Layers}
         >
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-hint">
             {t('screens.editor.elementsHint')}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -118,8 +125,15 @@ export function SlideTypeSettings({
                 type="button"
                 data-testid={`screen-editor-element-${type}`}
                 onClick={() => onSelectElement({ type })}
-                className="px-2.5 py-1 text-xs font-medium rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded-lg bg-field text-fg-body hover:bg-hover hover:text-fg"
               >
+                {getElementConfig(screen, config, type)?.locked && (
+                  <Lock
+                    size={12}
+                    strokeWidth={2}
+                    aria-label={t('screens.position.locked')}
+                  />
+                )}
                 {t(`screens.elements.${type}`)}
               </button>
             ))}
@@ -165,7 +179,7 @@ export function SlideTypeSettings({
           />
           {song.displayChords && (
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
+              <label className="text-xs text-fg-label whitespace-nowrap">
                 {t('screens.songOptions.chordFontSize')}
               </label>
               <input
@@ -176,9 +190,9 @@ export function SlideTypeSettings({
                 onChange={(e) =>
                   update({ chordFontSize: Number(e.target.value) || 32 })
                 }
-                className="w-16 px-2 py-1 text-xs border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                className="w-16 h-7 px-2 text-xs rounded-lg bg-field text-fg tabular-nums focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               />
-              <span className="text-xs text-gray-400">px</span>
+              <span className="text-xs text-fg-hint">px</span>
             </div>
           )}
         </SettingsSection>
@@ -201,7 +215,7 @@ export function SlideTypeSettings({
           />
           {bible.includeReferenceInContent && (
             <div>
-              <Label className="text-xs text-gray-500 dark:text-gray-400">
+              <Label className="text-xs text-fg-label">
                 {t('screens.bibleOptions.referenceWrapperStyle')}
               </Label>
               <SegmentedControl<ReferenceWrapperStyle>
@@ -227,7 +241,7 @@ export function SlideTypeSettings({
           icon={MonitorPlay}
         >
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400 mb-2 block">
+            <Label className="text-xs text-fg-label mb-2 block">
               {t('screens.screenShare.videoPosition')}
             </Label>
             <ConstraintControls
@@ -250,7 +264,7 @@ export function SlideTypeSettings({
             />
           </div>
           <div>
-            <Label className="text-xs text-gray-500 dark:text-gray-400">
+            <Label className="text-xs text-fg-label">
               {t('screens.screenShare.objectFit')}
             </Label>
             <SegmentedControl
@@ -265,7 +279,7 @@ export function SlideTypeSettings({
                 })
               }
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-fg-hint mt-1">
               {t('screens.screenShare.objectFitDescription')}
             </p>
           </div>

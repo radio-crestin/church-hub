@@ -1,7 +1,14 @@
 import { getApiUrl } from '~/config'
 import { fetcher } from '~/utils/fetcher'
 import { getAuthHeaders } from '~/utils/getAuthHeaders'
-import type { Publication, S3Storage, S3StorageInput } from '../types'
+import type {
+  LibraryShare,
+  LibraryShareInput,
+  LibraryShareState,
+  Publication,
+  S3Storage,
+  S3StorageInput,
+} from '../types'
 
 interface ApiResponse<T> {
   data?: T
@@ -59,3 +66,25 @@ export async function exportCategoryFile(
   if (!response.ok) throw new Error(`Export failed: ${response.status}`)
   return new Uint8Array(await response.arrayBuffer())
 }
+
+export async function getLibraryShare(): Promise<LibraryShareState> {
+  const response = await fetcher<{
+    data: LibraryShare | null
+    cloudSync: boolean
+    error?: string
+  }>('/api/song-sources/share')
+  if (response.error) throw new Error(response.error)
+  return { share: response.data, cloudSync: response.cloudSync }
+}
+
+export const saveLibraryShare = (input: LibraryShareInput) =>
+  call<LibraryShare>('/api/song-sources/share', {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  })
+
+export const syncLibraryShare = () =>
+  call<LibraryShare>('/api/song-sources/share/sync', { method: 'POST' })
+
+export const stopLibraryShare = () =>
+  call<null>('/api/song-sources/share', { method: 'DELETE' })

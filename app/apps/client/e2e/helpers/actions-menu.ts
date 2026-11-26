@@ -65,3 +65,21 @@ export async function selectAction(
   await item.click()
   await expect(page.getByTestId(`${triggerTestId}-panel`)).toBeHidden()
 }
+
+/**
+ * Clicks a panel header action wherever it sits: in the row while it fits,
+ * from the header's "More" menu once the column is too narrow for it.
+ */
+export async function clickHeaderAction(
+  page: Page,
+  panel: Locator,
+  actionTestId: string,
+  moreTestId: string,
+): Promise<void> {
+  const inline = panel.getByTestId(actionTestId)
+  if (await inline.isVisible()) {
+    await inline.click()
+    return
+  }
+  await selectAction(page, moreTestId, `${actionTestId}-menu`)
+}

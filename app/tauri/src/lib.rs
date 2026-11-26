@@ -38,6 +38,7 @@ use std::path::PathBuf;
 #[cfg(desktop)]
 use std::sync::Arc;
 use std::time::Instant;
+#[cfg(desktop)]
 use tauri::Emitter;
 use tauri::RunEvent;
 #[cfg(desktop)]
@@ -45,10 +46,9 @@ use tauri::Manager;
 #[cfg(desktop)]
 use tauri::WindowEvent;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-
 /// Files the app opens when the OS hands them over: a PowerPoint to import,
 /// an OpenSong song, a program, or a Church Hub song file (.chsongs).
+#[cfg(desktop)]
 fn is_opened_file(path: &std::path::Path) -> bool {
     path.extension().is_some_and(|ext| {
         ["pptx", "opensong", "churchprogram", "chsongs"]
@@ -56,6 +56,7 @@ fn is_opened_file(path: &std::path::Path) -> bool {
             .any(|known| ext.eq_ignore_ascii_case(known))
     })
 }
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // File logging — initialize before anything else so we capture startup
     // events. Best-effort: a logging failure must never block the app.
@@ -148,6 +149,10 @@ pub fn run() {
         .plugin(tauri_plugin_os::init());
     println!("[startup] plugins_core: {:?}", t.elapsed());
 
+    // The phone apps scan the computer's pairing QR code (Settings > Phones).
+    #[cfg(mobile)]
+    let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
+
     // Start the embedded audio player (rodio) with internal HTTP API
     #[cfg(desktop)]
     {
@@ -175,6 +180,15 @@ pub fn run() {
         println!("[startup] plugin_updater: {:?}", t.elapsed());
         b
     };
+
+    // "Open Church Hub when the computer starts", switched from Settings.
+    // A LaunchAgent on macOS, the Run registry key on Windows, an XDG
+    // autostart entry on Linux.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_autostart::init(
+        tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+        None,
+    ));
 
     // Window state plugin is desktop-only
     #[cfg(desktop)]

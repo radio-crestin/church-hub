@@ -1,3 +1,4 @@
+import { isWebApp } from '~/config'
 import { AISearchSettings } from '~/features/ai-search'
 import { SynonymManager } from '~/features/search'
 import { DiscoverySyncSettings } from '~/features/song-discovery'
@@ -7,8 +8,7 @@ import { CategoryManager } from './CategoryManager'
 import { SongEditorLayoutSetting } from './SongEditorLayoutSetting'
 import { TagManager } from './TagManager'
 
-const cardClass =
-  'rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900'
+const cardClass = 'rounded-lg border border-line bg-panel p-4 sm:p-6'
 
 /**
  * Songs settings, rendered as a settings-page panel (extracted from the former
@@ -30,9 +30,12 @@ export function SongsSettingsPanel() {
       <div className={cardClass}>
         <ImportExportManager />
       </div>
-      <div className={cardClass}>
-        <DiscoverySyncSettings />
-      </div>
+      {/* Song updates are checked by the church PC */}
+      {!isWebApp && (
+        <div className={cardClass}>
+          <DiscoverySyncSettings />
+        </div>
+      )}
       <div className={cardClass}>
         <SongSourcesSettings />
       </div>

@@ -2,6 +2,8 @@ import { Plus, Search, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useUserDeviceCounts } from '~/features/cloud-devices'
+import { SectionHeader } from '~/ui/page'
 import { UserCard } from './UserCard'
 import { UserForm, type UserFormData } from './UserForm'
 import { UserQRModal } from './UserQRModal'
@@ -25,6 +27,7 @@ type ModalState =
   | { type: 'edit'; user: UserWithPermissions }
   | { type: 'qr'; user: UserWithPermissions }
   | { type: 'delete'; user: UserWithPermissions }
+  | { type: 'deactivate'; user: UserWithPermissions }
   | { type: 'regenerate'; user: UserWithPermissions }
 
 export function UserList() {
@@ -37,6 +40,7 @@ export function UserList() {
   const updatePermissions = useUpdatePermissions()
   const setUserPassword = useSetUserPassword()
   const regenerateToken = useRegenerateToken()
+  const deviceCounts = useUserDeviceCounts()
 
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [search, setSearch] = useState('')
@@ -113,6 +117,7 @@ export function UserList() {
     try {
       await deleteUser.mutateAsync(modal.user.id)
       setModal({ type: 'none' })
+      deviceCounts.refresh()
       showToast(t('sections.users.toast.deleted'), 'success')
     } catch {
       showToast(t('sections.users.toast.error'), 'error')
@@ -131,16 +136,34 @@ export function UserList() {
     }
   }
 
-  const handleToggleActive = async (user: UserWithPermissions) => {
+  const setActive = async (user: UserWithPermissions, isActive: boolean) => {
     try {
-      await updateUser.mutateAsync({
-        id: user.id,
-        input: { isActive: !user.isActive },
-      })
+      await updateUser.mutateAsync({ id: user.id, input: { isActive } })
+      setModal({ type: 'none' })
+      if (!isActive) deviceCounts.refresh()
       showToast(t('sections.users.toast.updated'), 'success')
     } catch {
       showToast(t('sections.users.toast.error'), 'error')
     }
+  }
+
+  // Deactivating signs out the user's cloud devices: asked first, if any.
+  const handleToggleActive = (user: UserWithPermissions) => {
+    if (user.isActive && deviceCounts.countFor(user.id) > 0) {
+      setModal({ type: 'deactivate', user })
+    } else {
+      setActive(user, !user.isActive)
+    }
+  }
+
+  const devicesNote = (user: UserWithPermissions) => {
+    const count = deviceCounts.countFor(user.id)
+    if (count === 0) return null
+    return (
+      <p className="text-sm text-fg" data-testid="user-devices-signed-out">
+        {t('sections.users.modals.devicesSignedOut', { count })}
+      </p>
+    )
   }
 
   const handleShowQR = (user: UserWithPermissions) => {
@@ -151,7 +174,7 @@ export function UserList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fg-label" />
       </div>
     )
   }
@@ -166,35 +189,35 @@ export function UserList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            {t('sections.users.title')}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('sections.users.description')}
-          </p>
-        </div>
-        <button
-          onClick={() => setModal({ type: 'create' })}
-          className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700
+      <SectionHeader
+        title={t('sections.users.title')}
+        description={t('sections.users.description')}
+        actions={
+          <button
+            type="button"
+            onClick={() => setModal({ type: 'create' })}
+            className="flex items-center gap-2 h-8 px-3 font-medium bg-primary hover:bg-primary/90
             text-white rounded-lg transition-colors text-sm"
-        >
-          <Plus size={16} />
-          {t('sections.users.addUser')}
-        </button>
-      </div>
+          >
+            <Plus strokeWidth={1.5} size={16} />
+            {t('sections.users.addUser')}
+          </button>
+        }
+      />
 
       {users && users.length > 0 && (
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search
+            strokeWidth={1.5}
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-hint"
+          />
           <input
             ref={searchInputRef}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('sections.users.searchPlaceholder')}
-            className={`w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 text-sm text-gray-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white ${
+            className={`h-9 w-full rounded-[10px] bg-field pl-9 text-sm text-fg placeholder:text-fg-hint outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
               search ? 'pr-9' : 'pr-3'
             }`}
           />
@@ -225,20 +248,21 @@ export function UserList() {
             ))}
           </div>
         ) : (
-          <p className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-center py-8 text-sm text-fg-hint">
             {t('sections.users.noResults')}
           </p>
         )
       ) : (
-        <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+        <div className="text-center py-12 border border-dashed border-line rounded-lg">
           <Users
+            strokeWidth={1.5}
             size={48}
-            className="mx-auto text-gray-400 dark:text-gray-500 mb-3"
+            className="mx-auto text-fg-hint mb-3"
           />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">
+          <p className="text-fg-label font-medium">
             {t('sections.users.noUsers')}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+          <p className="text-sm text-fg-hint mt-1">
             {t('sections.users.noUsersDescription')}
           </p>
         </div>
@@ -252,7 +276,7 @@ export function UserList() {
           tiny) all the time. */}
       <dialog
         ref={formDialogRef}
-        className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800 max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-hidden"
+        className="fixed inset-0 m-auto p-0 rounded-xl border border-line shadow-popover backdrop:bg-black/50 bg-panel max-w-2xl w-[calc(100%-2rem)] max-h-[90vh] overflow-hidden"
         onClose={() => setModal({ type: 'none' })}
         onClick={(e) => {
           if (e.target === formDialogRef.current) {
@@ -261,8 +285,8 @@ export function UserList() {
         }}
       >
         <div className="flex max-h-[90vh] flex-col overflow-hidden">
-          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line px-6 py-4">
+            <h2 className="text-base font-semibold text-fg">
               {modal.type === 'create'
                 ? t('sections.users.modals.create.title')
                 : t('sections.users.modals.edit.title')}
@@ -271,9 +295,9 @@ export function UserList() {
               type="button"
               onClick={() => setModal({ type: 'none' })}
               aria-label={t('sections.users.modals.cancel')}
-              className="-mr-1.5 shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              className="-mr-1.5 shrink-0 rounded-lg p-1.5 text-fg-hint transition-colors hover:bg-hover hover:text-fg-body"
             >
-              <X size={20} />
+              <X strokeWidth={1.5} size={16} />
             </button>
           </div>
           <UserForm
@@ -309,7 +333,29 @@ export function UserList() {
           onConfirm={handleDelete}
           onCancel={() => setModal({ type: 'none' })}
           variant="danger"
-        />
+          testId="user-delete-confirm"
+        >
+          {devicesNote(modal.user)}
+        </ConfirmModal>
+      )}
+
+      {/* Deactivate Confirmation (only for a user with cloud devices) */}
+      {modal.type === 'deactivate' && (
+        <ConfirmModal
+          isOpen={true}
+          title={t('sections.users.modals.deactivate.title')}
+          message={t('sections.users.modals.deactivate.message', {
+            name: modal.user.name,
+          })}
+          confirmLabel={t('sections.users.modals.deactivate.confirm')}
+          cancelLabel={t('sections.users.modals.cancel')}
+          onConfirm={() => setActive(modal.user, false)}
+          onCancel={() => setModal({ type: 'none' })}
+          testId="user-deactivate-confirm"
+          isLoading={updateUser.isPending}
+        >
+          {devicesNote(modal.user)}
+        </ConfirmModal>
       )}
 
       {/* Regenerate Token Confirmation */}

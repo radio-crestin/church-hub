@@ -1,4 +1,9 @@
 import { LIBRARY_SCHEMA_VERSION, TOMBSTONE_RETENTION_DAYS } from './constants'
+import {
+  collectionOf,
+  emptyLibrary,
+  LIBRARY_COLLECTIONS,
+} from './libraryCollections'
 import type {
   ApplyOp,
   LibraryAggregate,
@@ -6,37 +11,6 @@ import type {
   LibraryTombstone,
   MergeResult,
 } from './types'
-import type { SyncEntityType } from '../../db/schema/sync'
-
-interface Collection {
-  entityType: SyncEntityType
-  key: 'categories' | 'groups' | 'songs' | 'schedules'
-  titleOf: (item: LibraryAggregate) => string
-}
-
-/** Merge order respects FK-ish dependencies (songs need categories/groups). */
-const COLLECTIONS: Collection[] = [
-  {
-    entityType: 'song_category',
-    key: 'categories',
-    titleOf: (item) => ('name' in item ? item.name : ''),
-  },
-  {
-    entityType: 'song_group',
-    key: 'groups',
-    titleOf: (item) => ('canonicalTitle' in item ? item.canonicalTitle : ''),
-  },
-  {
-    entityType: 'song',
-    key: 'songs',
-    titleOf: (item) => ('title' in item ? item.title : ''),
-  },
-  {
-    entityType: 'schedule',
-    key: 'schedules',
-    titleOf: (item) => ('title' in item ? item.title : ''),
-  },
-]
 
 /** Per-device usage fields that should never surface a "new version" badge. */
 const USAGE_FIELDS = new Set([
@@ -64,10 +38,12 @@ function canonicalize(file: LibraryFile): string {
     a.uuid < b.uuid ? -1 : a.uuid > b.uuid ? 1 : 0
   return JSON.stringify({
     schemaVersion: file.schemaVersion,
-    categories: [...file.categories].sort(sortByUuid),
-    groups: [...file.groups].sort(sortByUuid),
-    songs: [...file.songs].sort(sortByUuid),
-    schedules: [...file.schedules].sort(sortByUuid),
+    ...Object.fromEntries(
+      LIBRARY_COLLECTIONS.map(({ key }) => [
+        key,
+        [...collectionOf(file, key)].sort(sortByUuid),
+      ]),
+    ),
     tombstones: [...file.tombstones].sort((a, b) =>
       dirtyKey(a.entityType, a.uuid) < dirtyKey(b.entityType, b.uuid) ? -1 : 1,
     ),
@@ -96,15 +72,7 @@ export function mergeLibraries(
     )
   }
 
-  const merged: LibraryFile = {
-    schemaVersion: LIBRARY_SCHEMA_VERSION,
-    updatedByDevice: local.updatedByDevice,
-    categories: [],
-    groups: [],
-    songs: [],
-    schedules: [],
-    tombstones: [],
-  }
+  const merged = emptyLibrary(local.updatedByDevice)
   const applyOps: ApplyOp[] = []
   const deleteOps: ApplyOp[] = []
   const tombstoneCutoff = nowSeconds - TOMBSTONE_RETENTION_DAYS * 24 * 3600
@@ -119,12 +87,15 @@ export function mergeLibraries(
   }
   const mergedTombs = new Map<string, LibraryTombstone>()
 
-  for (const collection of COLLECTIONS) {
+  for (const collection of LIBRARY_COLLECTIONS) {
     const localItems = new Map(
-      local[collection.key].map((item) => [item.uuid, item]),
+      collectionOf(local, collection.key).map((item) => [item.uuid, item]),
     )
     const remoteItems = new Map(
-      (remote?.[collection.key] ?? []).map((item) => [item.uuid, item]),
+      (remote ? collectionOf(remote, collection.key) : []).map((item) => [
+        item.uuid,
+        item,
+      ]),
     )
 
     const uuids = new Set<string>([...localItems.keys(), ...remoteItems.keys()])

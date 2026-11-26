@@ -28,7 +28,9 @@ export function OBSAccessSection() {
 
   const isDirty =
     !!config &&
-    (host !== config.host || port !== config.port || !config.password)
+    (host !== config.host ||
+      port !== config.port ||
+      !(config.password || config.passwordSet))
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(password)
@@ -79,7 +81,7 @@ export function OBSAccessSection() {
       >
         {() => (
           <div className="flex items-center gap-2">
-            <code className="flex-1 break-all rounded bg-gray-100 px-3 py-2 font-mono text-sm text-gray-900 dark:bg-gray-700 dark:text-gray-100">
+            <code className="flex-1 break-all rounded-lg bg-field px-3 py-2 font-mono text-xs text-fg">
               {password}
             </code>
             <Button variant="secondary" size="sm" onClick={handleCopy}>

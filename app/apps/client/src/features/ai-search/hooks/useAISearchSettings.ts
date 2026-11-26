@@ -37,7 +37,8 @@ export function useAISearchSettings(configKey: AISearchConfigKey) {
   return {
     config: query.data,
     isLoading: query.isLoading,
-    isEnabled: query.data?.enabled && !!query.data?.apiKey,
+    isEnabled:
+      query.data?.enabled && !!(query.data?.apiKey || query.data?.apiKeySet),
     updateConfig: mutation.mutateAsync,
     isUpdating: mutation.isPending,
   }

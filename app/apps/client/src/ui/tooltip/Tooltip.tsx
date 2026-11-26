@@ -14,6 +14,7 @@ import {
 } from './placeTooltip'
 
 interface TooltipProps {
+  /** What it says; empty: nothing shows. */
   content: string
   children: ReactNode
   /** The side it prefers; it flips and slides on its own to stay in the window. */
@@ -22,12 +23,10 @@ interface TooltipProps {
 }
 
 const arrowSideStyles: Record<TooltipSide, string> = {
-  top: 'top-full border-t-gray-900 dark:border-t-gray-700 border-x-transparent border-b-transparent',
-  bottom:
-    'bottom-full border-b-gray-900 dark:border-b-gray-700 border-x-transparent border-t-transparent',
-  left: 'left-full border-l-gray-900 dark:border-l-gray-700 border-y-transparent border-r-transparent',
-  right:
-    'right-full border-r-gray-900 dark:border-r-gray-700 border-y-transparent border-l-transparent',
+  top: 'top-full border-t-fg border-x-transparent border-b-transparent',
+  bottom: 'bottom-full border-b-fg border-x-transparent border-t-transparent',
+  left: 'left-full border-l-fg border-y-transparent border-r-transparent',
+  right: 'right-full border-r-fg border-y-transparent border-l-transparent',
 }
 
 function arrowStyle({ side, arrowOffset }: TooltipPlacement): CSSProperties {
@@ -82,11 +81,13 @@ export function Tooltip({
     <div
       ref={triggerRef}
       className={`relative inline-flex ${className ?? ''}`}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={hide}
+      // A tap is not a hover: on touch the tooltip would stick over the page.
+      onPointerEnter={(e) => e.pointerType !== 'touch' && setIsVisible(true)}
+      onPointerLeave={hide}
     >
       {children}
       {isVisible &&
+        content &&
         createPortal(
           <div
             ref={tooltipRef}
@@ -99,7 +100,7 @@ export function Tooltip({
               zIndex: 99999,
             }}
           >
-            <div className="px-3 py-1.5 text-sm font-medium text-white dark:text-gray-100 bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg break-words">
+            <div className="px-2 py-1 text-xs font-medium text-app bg-fg rounded-md break-words">
               {content}
             </div>
             {placement && (

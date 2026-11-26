@@ -1,0 +1,8 @@
+export { clickGroupMs } from './clickGroupMs'
+export { deckSlideText } from './deckSlideText'
+export { deckStepMs } from './deckStepMs'
+export { deckSteps } from './deckSteps'
+export { parseSlideDeck } from './parseSlideDeck'
+export { sanitizeDeckHtml } from './sanitizeDeckHtml'
+export { slideTimeline } from './slideTimeline'
+export type * from './types'

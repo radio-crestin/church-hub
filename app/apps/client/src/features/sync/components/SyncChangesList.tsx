@@ -3,6 +3,7 @@ import { CheckCheck, Inbox, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { SyncChangeKindBadge } from './SyncChangeKindBadge'
+import { SyncRefusalReason } from './SyncRefusalReason'
 import { useMarkSyncUpdatesSeen } from '../hooks/useMarkSyncUpdatesSeen'
 import { useSyncRecentUpdates } from '../hooks/useSyncRecentUpdates'
 import type { SyncUpdate } from '../service'
@@ -44,9 +45,9 @@ export function SyncChangesList() {
     (update.entityType === 'song' || update.entityType === 'schedule')
 
   return (
-    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+    <div className="rounded-xl border border-line p-4">
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+        <h4 className="text-sm font-medium text-fg">
           {t('sections.sync.changes.received')}
         </h4>
         {hasUnseen && (
@@ -54,24 +55,24 @@ export function SyncChangesList() {
             type="button"
             onClick={() => markSeenMutation.mutate(undefined)}
             disabled={markSeenMutation.isPending}
-            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
+            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50"
           >
             {markSeenMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <CheckCheck className="h-3.5 w-3.5" />
+              <CheckCheck strokeWidth={1.75} className="h-3.5 w-3.5" />
             )}
             {t('sections.sync.changes.markAllSeen')}
           </button>
         )}
       </div>
       {displayed.length === 0 ? (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-          <Inbox className="h-3.5 w-3.5" />
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-fg-hint">
+          <Inbox strokeWidth={1.75} className="h-3.5 w-3.5" />
           {t('sections.sync.changes.receivedEmpty')}
         </p>
       ) : (
-        <ul className="mt-2 divide-y divide-gray-200 dark:divide-gray-700">
+        <ul className="mt-2 divide-y divide-line">
           {displayed.map((update) => {
             const navigable = isNavigable(update)
             const row = (
@@ -80,26 +81,29 @@ export function SyncChangesList() {
                 {!update.seen && (
                   <span
                     aria-hidden
-                    className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-500"
+                    className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary"
                   />
                 )}
                 <span
                   className={`min-w-0 flex-1 truncate text-sm ${
-                    update.seen
-                      ? 'text-gray-700 dark:text-gray-300'
-                      : 'font-medium text-gray-900 dark:text-white'
+                    update.seen ? 'text-fg-body' : 'font-medium text-fg'
                   }`}
                 >
                   {update.title}
                 </span>
-                <span className="hidden flex-shrink-0 text-xs text-gray-500 sm:inline dark:text-gray-400">
+                {update.changeKind === 'rejected' && update.detail && (
+                  <span className="flex-shrink-0 text-xs text-fg-hint">
+                    <SyncRefusalReason permission={update.detail} />
+                  </span>
+                )}
+                <span className="hidden flex-shrink-0 text-xs text-fg-hint sm:inline">
                   {update.sourceDevice
                     ? t('sections.sync.changes.onDevice', {
                         device: update.sourceDevice,
                       })
                     : ''}
                 </span>
-                <span className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                <span className="flex-shrink-0 text-xs text-fg-hint">
                   {formatRelativeTime(update.occurredAt * 1000, i18n.language)}
                 </span>
               </>
@@ -110,7 +114,7 @@ export function SyncChangesList() {
                   <button
                     type="button"
                     onClick={() => openEntity(update)}
-                    className="flex w-full items-center gap-2 rounded-md py-1.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                    className="flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 text-left hover:bg-hover"
                   >
                     {row}
                   </button>

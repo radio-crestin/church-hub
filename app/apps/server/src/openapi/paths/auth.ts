@@ -1,40 +1,62 @@
+const userLinkToken = {
+  name: 'token',
+  in: 'path',
+  required: true,
+  schema: { type: 'string' },
+  description: "The user's token (usr_...)",
+}
+
+const signedInRedirect = {
+  description: 'Signed in, redirecting to the app',
+  headers: {
+    'Set-Cookie': {
+      description: 'Authentication cookie',
+      schema: { type: 'string' },
+    },
+    Location: {
+      description: 'The app on the host the link was opened from',
+      schema: { type: 'string' },
+    },
+  },
+}
+
+const invalidUserLink = {
+  description: 'Invalid or inactive user token',
+  content: {
+    'application/json': {
+      schema: { $ref: '#/components/schemas/Error' },
+    },
+  },
+}
+
 export const authPaths = {
-  '/api/auth/device/{token}': {
+  '/api/auth/user/{token}': {
     get: {
       tags: ['Authentication'],
-      summary: 'Authenticate device',
+      summary: 'Open a user sign-in link',
       description:
-        'Authenticates a device using its token and sets an authentication cookie. Redirects to the main app on success.',
-      parameters: [
-        {
-          name: 'token',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-          description: 'Device authentication token',
-        },
-      ],
+        "The link in a user's QR code (Settings > Users, Settings > Phones). Opened by the user (scanned, typed or pasted: `Sec-Fetch-Site` `none` or `same-origin`), it sets the user's authentication cookie and redirects to the app on the host it was opened from. Opened from another site's page, or without `Sec-Fetch-Site` (browsers send it only to https and to this machine, so every plain-http network address), it answers a page that asks the user to confirm, whose button posts the link back.",
+      parameters: [userLinkToken],
       responses: {
-        '302': {
-          description: 'Authentication successful, redirecting to app',
-          headers: {
-            'Set-Cookie': {
-              description: 'Authentication cookie',
-              schema: { type: 'string' },
-            },
-            Location: {
-              description: 'Redirect location',
-              schema: { type: 'string', example: '/' },
-            },
-          },
+        '200': {
+          description: 'The confirmation page (opened from another page)',
+          content: { 'text/html': { schema: { type: 'string' } } },
         },
-        '401': {
-          description: 'Invalid or inactive device token',
-          content: {
-            'application/json': {
-              schema: { $ref: '#/components/schemas/Error' },
-            },
-          },
+        '302': signedInRedirect,
+        '401': invalidUserLink,
+      },
+    },
+    post: {
+      tags: ['Authentication'],
+      summary: 'Sign a device in with a user sign-in link',
+      description:
+        "The confirmation page's button: sets the user's authentication cookie and redirects to the app. Like every write, refused from an origin the server doesn't trust.",
+      parameters: [userLinkToken],
+      responses: {
+        '303': signedInRedirect,
+        '401': invalidUserLink,
+        '403': {
+          description: 'Sent from an origin the server does not trust',
         },
       },
     },
@@ -70,6 +92,54 @@ export const authPaths = {
             },
           },
         },
+      },
+    },
+  },
+  '/api/auth/device-login': {
+    post: {
+      tags: ['Authentication'],
+      summary: 'Sign in a joined phone with its device token',
+      description:
+        "For a phone that joined the church with a link (cloud sync) and reaches this computer over WebRTC: the sync service is asked whose the device token is, and the answer is that user and a session of that device, which the phone sends back as `X-User-Auth` (a WebRTC tunnel carries no cookies). The session is never the user's own token: it ends when the device is revoked (at once from this computer, within 30 s from anywhere else, checked with the sync service). A revoked token, the church server's own, or a user who is unknown here or inactive is refused; after five refusals a minute from one address the answer is 429.",
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['token'],
+              properties: {
+                token: {
+                  type: 'string',
+                  description: 'The device token of the join link.',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Signed in',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/CurrentUser' },
+                  token: {
+                    type: 'string',
+                    description: 'The device session token, for `X-User-Auth`.',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': { description: 'No token' },
+        '401': { description: 'The sync service refused the token' },
+        '429': { description: 'Too many failed device logins (Retry-After)' },
+        '502': { description: 'The sync service did not answer' },
       },
     },
   },
@@ -120,8 +190,14 @@ export const authPaths = {
                   data: { $ref: '#/components/schemas/CurrentUser' },
                   ticket: {
                     type: 'string',
+                    example: 'signed-in',
                     description:
-                      'One-time ticket to finalize the session via GET /api/auth/login-redirect/{ticket} (top-level navigation).',
+                      'Always `signed-in`: phone apps released before 2026-11-27 read it as the sign of success.',
+                  },
+                  token: {
+                    type: 'string',
+                    description:
+                      'The session token, only to a request from this machine (the desktop app sends it back as `X-User-Auth`).',
                   },
                 },
               },
@@ -148,42 +224,6 @@ export const authPaths = {
                 },
               },
             },
-          },
-        },
-      },
-    },
-  },
-  '/api/auth/login-redirect/{ticket}': {
-    get: {
-      tags: ['Authentication'],
-      summary: 'Finalize a login via top-level navigation',
-      description:
-        'Consumes a one-time login ticket, sets the `user_auth` cookie on a 302 response (reliable cookie overwrite in webviews), and redirects back to the app. Used by "switch user".',
-      parameters: [
-        {
-          name: 'ticket',
-          in: 'path',
-          required: true,
-          schema: { type: 'string' },
-        },
-        {
-          name: 'return',
-          in: 'query',
-          required: false,
-          schema: { type: 'string' },
-          description:
-            'App origin to return to (only same-machine origins are allowed).',
-        },
-      ],
-      responses: {
-        '302': {
-          description: 'Session established; redirecting to the app',
-          headers: {
-            'Set-Cookie': {
-              description: 'Session cookie',
-              schema: { type: 'string' },
-            },
-            Location: { schema: { type: 'string' } },
           },
         },
       },

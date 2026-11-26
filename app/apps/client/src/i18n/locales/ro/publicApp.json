@@ -1,0 +1,25 @@
+{
+  "appName": "Church Hub",
+  "retry": "Încearcă din nou",
+  "removed": {
+    "title": "Acest dispozitiv a fost scos",
+    "body": "Biserica a retras accesul acestui dispozitiv. Cere un link nou ca să te conectezi din nou."
+  },
+  "joinFailed": {
+    "invalid": {
+      "title": "Acesta nu este un link Church Hub",
+      "body": "Verifică dacă ai copiat tot linkul sau scanează din nou codul."
+    },
+    "refused": {
+      "title": "Linkul nu mai este valabil",
+      "body": "A fost revocat. Cere un link nou."
+    },
+    "offline": {
+      "title": "Church Hub Cloud nu răspunde",
+      "body": "Verifică conexiunea la internet și încearcă din nou."
+    }
+  },
+  "guest": {
+    "button": "Folosește Church Hub ca invitat"
+  }
+}

@@ -6,13 +6,10 @@ import { useToast } from '~/ui/toast'
 import {
   getYouTubeAuthStatus,
   logoutYouTube,
+  startYouTubeSignIn,
   storeYouTubeTokens,
 } from '../service'
 import { isTauri, openAuthUrl } from '../utils'
-
-const YOUTUBE_OAUTH_SERVER =
-  (import.meta.env.VITE_YOUTUBE_OAUTH_SERVER as string) ||
-  'https://churchub-backend.radiocrestin.ro'
 
 export function useYouTubeAuth() {
   const queryClient = useQueryClient()
@@ -73,43 +70,17 @@ export function useYouTubeAuth() {
   }, [query.data?.isAuthenticated, isAuthenticating])
 
   const openLoginPopup = useCallback(async () => {
-    // biome-ignore lint/suspicious/noConsole: Debug logging
-    console.log('[useYouTubeAuth] openLoginPopup called')
-    // biome-ignore lint/suspicious/noConsole: Debug logging
-    console.log('[useYouTubeAuth] YOUTUBE_OAUTH_SERVER:', YOUTUBE_OAUTH_SERVER)
-    // biome-ignore lint/suspicious/noConsole: Debug logging
-    console.log('[useYouTubeAuth] isTauri:', isTauri())
-
-    if (!YOUTUBE_OAUTH_SERVER) {
-      // biome-ignore lint/suspicious/noConsole: Debug logging
-      console.error('[useYouTubeAuth] OAuth server not configured!')
-      setAuthError('YouTube OAuth server not configured')
-      return
-    }
-
     setIsAuthenticating(true)
     setAuthError(null)
 
     try {
-      // Always use localhost:3000 for OAuth callbacks (server handles the app)
-      const callbackOrigin = 'http://localhost:3000'
+      const mode = isTauri() ? 'redirect' : 'postMessage'
+      const { state, authUrl } = await startYouTubeSignIn(mode)
 
-      // Build auth server URL
-      const authUrl = new URL('/auth/youtube', YOUTUBE_OAUTH_SERVER)
-      authUrl.searchParams.set('origin', callbackOrigin)
-
-      // In Tauri, use redirect mode with a return URL
-      if (isTauri()) {
-        authUrl.searchParams.set('mode', 'redirect')
-        authUrl.searchParams.set(
-          'returnUrl',
-          `${callbackOrigin}/auth/youtube/callback`,
-        )
-
-        // biome-ignore lint/suspicious/noConsole: Debug logging
-        console.log('[useYouTubeAuth] Opening auth URL:', authUrl.toString())
-        await openAuthUrl(authUrl.toString(), { popupName: 'youtube-auth' })
-        // In Tauri, we don't wait for the popup - the WebSocket will notify us
+      // In Tauri, the backend redirects back to the app's callback page with
+      // the state; the WebSocket tells us when the tokens are stored.
+      if (mode === 'redirect') {
+        await openAuthUrl(authUrl, { popupName: 'youtube-auth' })
         // Keep authenticating state until WebSocket updates or timeout
         setTimeout(() => {
           if (!storeMutation.isPending) {
@@ -119,16 +90,12 @@ export function useYouTubeAuth() {
         return
       }
 
-      // Browser popup flow - use postMessage mode (default)
-      authUrl.searchParams.set('mode', 'postMessage')
-
-      const popup = await openAuthUrl(authUrl.toString(), {
-        popupName: 'youtube-auth',
-      })
+      // Browser popup flow: the backend posts the tokens to this window
+      const oauthServerOrigin = new URL(authUrl).origin
+      const popup = await openAuthUrl(authUrl, { popupName: 'youtube-auth' })
 
       const handleMessage = async (event: MessageEvent) => {
         // Validate origin is from our OAuth server
-        const oauthServerOrigin = new URL(YOUTUBE_OAUTH_SERVER).origin
         if (event.origin !== oauthServerOrigin) return
 
         if (event.data?.type === 'youtube-auth-success') {
@@ -142,7 +109,9 @@ export function useYouTubeAuth() {
 
           try {
             // Send tokens to server for storage
+            // Tokens from the OAuth server's own window (origin checked above)
             await storeMutation.mutateAsync({
+              state,
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
               expiresAt: tokens.expiresAt,

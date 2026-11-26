@@ -49,15 +49,17 @@ export function ChangedSongPanel({
   return (
     <div
       ref={ref}
-      className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
+      className="space-y-3 rounded-xl border border-line bg-panel p-4"
     >
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="truncate text-base font-semibold text-fg">
             {item.library.title}
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('changed.subtitle', { source: sourceName })}
+          <p className="text-sm text-fg-hint">
+            {item.edited
+              ? t('changed.editedSubtitle', { source: sourceName })
+              : t('changed.subtitle', { source: sourceName })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -85,8 +87,8 @@ export function ChangedSongPanel({
         libraryLines={libraryLines}
         candidateLines={sourceLines}
       />
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t('changed.editedNeverHere')}
+      <p className="text-xs text-fg-hint">
+        {item.edited ? t('changed.editedUpdate') : t('changed.followsSource')}
       </p>
     </div>
   )

@@ -7,6 +7,8 @@
   },
   "tracks": {
     "title": "Tracks",
+    "count_one": "{{count}} track",
+    "count_other": "{{count}} tracks",
     "search": "Search all music…",
     "recentSearches": "Recent searches:",
     "resultsFor": "Results for “{{query}}”",
@@ -21,7 +23,6 @@
     "queue": "Queue",
     "more": "More",
     "viewActions": "Actions for this list",
-    "addToPlaylist": "Add to {{name}}",
     "newPlaylistWith": "New playlist with this track",
     "removeFromPlaylist": "Remove from this playlist",
     "hint": "Click a track to play it · the ⋮ menu adds it to a playlist",
@@ -65,16 +66,17 @@
   },
   "player": {
     "title": "Player",
-    "nowPlaying": "Now Playing",
+    "nowPlaying": "Now playing",
     "queue": "Queue",
-    "queueCount": "{{count}} tracks in queue",
     "queueCount_one": "{{count}} track in queue",
-    "clearQueue": "Clear Queue",
+    "queueCount_other": "{{count}} tracks in queue",
+    "clearQueue": "Clear queue",
     "previous": "Previous",
     "next": "Next",
     "play": "Play",
     "pause": "Pause",
     "volume": "Volume",
+    "position": "Position in track",
     "mute": "Mute",
     "unmute": "Unmute",
     "noTrack": "No track playing",
@@ -100,7 +102,7 @@
     "description": "Description",
     "empty": "No playlists",
     "emptyDescription": "Create a playlist to organize your music",
-    "addTo": "Add to Playlist",
+    "addTo": "Add to playlist",
     "removeFrom": "Remove from Playlist",
     "items": "{{count}} items",
     "duration": "{{duration}} total",
@@ -113,5 +115,10 @@
     "removed": "{{count}} files removed",
     "updated": "{{count}} files updated",
     "errors": "{{count}} errors"
+  },
+  "playlistPicker": {
+    "search": "Search playlists…",
+    "noMatch": "No playlist matches",
+    "close": "Close"
   }
 }

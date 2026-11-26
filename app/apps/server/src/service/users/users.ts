@@ -14,6 +14,7 @@ import { ALL_PERMISSIONS } from './types'
 import { getDatabase } from '../../db'
 import { rolePermissions, roles, userPermissions, users } from '../../db/schema'
 import { createLogger } from '../../utils/logger'
+import { openSecret, sealSecret, secretPlaces } from '../secret-store'
 
 const logger = createLogger('users')
 
@@ -187,13 +188,13 @@ export function getUserPermissions(userId: number): Permission[] {
  * Converts database user record to API format
  */
 function toUserWithPermissions(
-  user: typeof users.$inferSelect & { roleName: string | null },
+  user: Omit<typeof users.$inferSelect, 'uuid'> & { roleName: string | null },
   permissions: Permission[],
 ): UserWithPermissions {
   return {
     id: user.id,
     name: user.name,
-    token: user.token,
+    token: openSecret(user.token, secretPlaces.userToken(user.tokenHash)) ?? '',
     isActive: user.isActive,
     isSuperAdmin: user.isSuperAdmin,
     hasPassword: !!user.passwordHash,
@@ -237,7 +238,7 @@ export async function createUser(
       .insert(users)
       .values({
         name: input.name,
-        token,
+        token: sealSecret(token, secretPlaces.userToken(tokenHash)),
         tokenHash,
         isActive: true,
         roleId: input.roleId ?? null,
@@ -580,7 +581,7 @@ export async function regenerateUserToken(
     // Update both token and token_hash so QR code can be displayed
     db.update(users)
       .set({
-        token,
+        token: sealSecret(token, secretPlaces.userToken(tokenHash)),
         tokenHash,
         updatedAt: sql`(unixepoch())` as unknown as Date,
       })
@@ -659,6 +660,7 @@ export async function verifyLogin(
     const user = db
       .select({
         token: users.token,
+        tokenHash: users.tokenHash,
         isActive: users.isActive,
         passwordHash: users.passwordHash,
       })
@@ -688,7 +690,12 @@ export async function verifyLogin(
       return null
     }
 
-    return { token: user.token }
+    const token = openSecret(user.token, secretPlaces.userToken(user.tokenHash))
+    if (!token) {
+      logger.error(`Login failed: user ${userId}'s token can't be opened`)
+      return null
+    }
+    return { token }
   } catch (error) {
     logger.error(`Failed to verify login: ${error}`)
     return null

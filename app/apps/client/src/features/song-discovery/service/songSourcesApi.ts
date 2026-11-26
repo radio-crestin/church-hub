@@ -110,6 +110,8 @@ export interface ChangedSong {
   library: { title: string; slides: string[] }
   /** The source's newer version. */
   song: { id: string; sourceFilename: string | null; parsed: ParsedOpenSong }
+  /** Changed here since the source gave it: never updated on its own. */
+  edited: boolean
 }
 
 /** The library songs a source changed, waiting for the user's choice. */
@@ -117,3 +119,18 @@ export const getChangedSongs = (sourceId: string) =>
   call<ChangedSong[]>(
     `/api/song-sources/${encodeURIComponent(sourceId)}/changed`,
   )
+
+/** A shared library a church listed in the public catalog. */
+export interface CatalogLibrary {
+  sourceId: string
+  name: string
+  publisher: string
+  songCount: number
+  updatedAt: string
+  /** What to add as a song source. */
+  manifestUrl: string
+}
+
+/** The shared libraries in the public catalog. */
+export const getLibraryCatalog = () =>
+  call<CatalogLibrary[]>('/api/song-sources/catalog')

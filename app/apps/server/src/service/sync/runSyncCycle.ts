@@ -1,12 +1,15 @@
 import { adoptRemoteIdentities } from './adoptRemoteIdentities'
 import { applyRemoteChanges } from './applyRemoteChanges'
+import { runCloudSyncCycle } from './cloud/runCloudSyncCycle'
 import { TOMBSTONE_RETENTION_DAYS } from './constants'
 import {
   downloadLibrary,
   findLibraryFile,
   uploadLibrary,
 } from './driveLibraryFile'
-import { dirtyKey, mergeLibraries } from './mergeLibraries'
+import { getLatestPendingSeq } from './getLatestPendingSeq'
+import { getPendingKeys } from './getPendingKeys'
+import { mergeLibraries } from './mergeLibraries'
 import { serializeLibrary } from './serializeLibrary'
 import { getSyncConfig, upsertSyncConfig } from './syncConfigStore'
 import { getSyncState, updateRemoteFileRef } from './syncStateStore'
@@ -21,27 +24,22 @@ const logger = createLogger('sync')
 
 let isRunning = false
 
-function getPendingKeys(): Set<string> {
-  const db = getRawDatabase()
-  const rows = db
-    .query<{ entity_type: string; entity_uuid: string }, []>(
-      'SELECT entity_type, entity_uuid FROM sync_pending',
-    )
-    .all()
-  return new Set(rows.map((row) => dirtyKey(row.entity_type, row.entity_uuid)))
-}
-
 /**
- * Runs one full sync cycle against the shared Drive library file:
+ * Runs one sync cycle on the configured transport: the cloud sync service
+ * (runCloudSyncCycle) or, as the backup option, the shared Drive library file:
  * download → adopt identities → merge (last-writer-wins) → apply remote
  * changes locally → upload the merged file. Concurrent calls coalesce into a
- * no-op; failures are recorded on sync_config.lastError for the UI.
+ * no-op (on the cloud, one that `waitsItsTurn` runs after the current one);
+ * failures are recorded on sync_config.lastError for the UI.
  */
-export async function runSyncCycle(): Promise<SyncCycleResult> {
+export async function runSyncCycle(
+  options: { waitsItsTurn?: boolean } = {},
+): Promise<SyncCycleResult> {
   if (isRunning) return { success: true, skipped: 'no_changes' }
 
   const config = await getSyncConfig()
   if (!config.syncEnabled) return { success: false, skipped: 'disabled' }
+  if (config.transport === 'cloud') return runCloudSyncCycle(options)
 
   const drive = await getDriveService()
   if (!drive) {
@@ -77,6 +75,7 @@ export async function runSyncCycle(): Promise<SyncCycleResult> {
     if (remote) adoptRemoteIdentities(remote)
 
     // Re-read after adoption: dirty keys may have been remapped to new uuids.
+    const sentUpTo = getLatestPendingSeq()
     const dirtyKeys = getPendingKeys()
     const local = serializeLibrary(state.deviceId, state.deviceName, dirtyKeys)
 
@@ -98,10 +97,9 @@ export async function runSyncCycle(): Promise<SyncCycleResult> {
     }
     updateRemoteFileRef(newRef?.fileId ?? null, newRef?.version ?? null)
 
-    // Everything queued before this cycle is now reflected in the shared file.
-    db.query('DELETE FROM sync_pending WHERE queued_at <= ?').run(
-      cycleStartSeconds,
-    )
+    // Everything this cycle read is now in the shared file. An edit queued
+    // after, even in the same second, stays queued for the next cycle.
+    db.query('DELETE FROM sync_pending WHERE seq <= ?').run(sentUpTo)
     db.query('DELETE FROM sync_tombstones WHERE deleted_at < ?').run(
       cycleStartSeconds - TOMBSTONE_RETENTION_DAYS * 24 * 3600,
     )

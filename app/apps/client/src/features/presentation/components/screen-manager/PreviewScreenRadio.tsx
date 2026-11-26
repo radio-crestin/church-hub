@@ -40,14 +40,11 @@ export function PreviewScreenRadio({
       <div className="min-w-0">
         <label
           htmlFor={id}
-          className="block text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer"
+          className="block text-sm font-medium text-fg cursor-pointer"
         >
           {t('sections.screens.previewScreen.label')}
         </label>
-        <p
-          id={`${id}-description`}
-          className="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
-        >
+        <p id={`${id}-description`} className="mt-0.5 text-xs text-fg-hint">
           {t('sections.screens.previewScreen.description')}
         </p>
       </div>
@@ -60,7 +57,7 @@ export function PreviewScreenRadio({
         disabled={isPending}
         aria-describedby={`${id}-description`}
         data-testid="screen-preview-screen"
-        className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-indigo-600"
+        className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-primary"
       />
     </div>
   )

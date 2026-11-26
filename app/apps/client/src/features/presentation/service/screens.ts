@@ -1,7 +1,6 @@
-import { fetch as tauriFetch } from '@tauri-apps/plugin-http'
-
 import { getApiUrl, isMobile } from '~/config'
 import { getStoredUserToken } from '~/service/api-url'
+import { apiFetch } from '~/utils/apiFetch'
 import { createLogger } from '~/utils/logger'
 import type {
   ContentType,
@@ -17,9 +16,6 @@ const logger = createLogger('screens-service')
 
 // Check if we're running in Tauri context
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
-
-// Use Tauri fetch on mobile (iOS WKWebView blocks HTTP fetch)
-const fetchFn = isTauri && isMobile() ? tauriFetch : window.fetch.bind(window)
 
 // Get headers with auth token for mobile
 function getHeaders(contentType?: string): Record<string, string> {
@@ -50,7 +46,7 @@ function getHeaders(contentType?: string): Record<string, string> {
 export async function getAllScreens(): Promise<Screen[]> {
   logger.debug('Fetching all screens')
 
-  const response = await fetchFn(`${getApiUrl()}/api/screens`, {
+  const response = await apiFetch(`${getApiUrl()}/api/screens`, {
     credentials: 'include',
     headers: getHeaders(),
   })
@@ -69,7 +65,7 @@ export async function getAllScreens(): Promise<Screen[]> {
 export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
   logger.debug(`Fetching screen: ${id}`)
 
-  const response = await fetchFn(`${getApiUrl()}/api/screens/${id}`, {
+  const response = await apiFetch(`${getApiUrl()}/api/screens/${id}`, {
     credentials: 'include',
     headers: getHeaders(),
   })
@@ -88,7 +84,7 @@ export async function getScreenById(id: number): Promise<ScreenWithConfigs> {
 export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
   logger.debug(`Upserting screen: ${input.name}`)
 
-  const response = await fetchFn(`${getApiUrl()}/api/screens`, {
+  const response = await apiFetch(`${getApiUrl()}/api/screens`, {
     method: 'POST',
     headers: getHeaders('application/json'),
     body: JSON.stringify(input),
@@ -110,12 +106,15 @@ export async function upsertScreen(input: UpsertScreenInput): Promise<Screen> {
 export async function duplicateScreen(id: number): Promise<Screen> {
   logger.debug(`Duplicating screen: ${id}`)
 
-  const response = await fetchFn(`${getApiUrl()}/api/screens/${id}/duplicate`, {
-    method: 'POST',
-    headers: getHeaders('application/json'),
-    body: JSON.stringify({}),
-    credentials: 'include',
-  })
+  const response = await apiFetch(
+    `${getApiUrl()}/api/screens/${id}/duplicate`,
+    {
+      method: 'POST',
+      headers: getHeaders('application/json'),
+      body: JSON.stringify({}),
+      credentials: 'include',
+    },
+  )
 
   if (!response.ok) {
     throw new Error('Failed to duplicate screen')
@@ -131,7 +130,7 @@ export async function duplicateScreen(id: number): Promise<Screen> {
 export async function deleteScreen(id: number): Promise<void> {
   logger.debug(`Deleting screen: ${id}`)
 
-  const response = await fetchFn(`${getApiUrl()}/api/screens/${id}`, {
+  const response = await apiFetch(`${getApiUrl()}/api/screens/${id}`, {
     method: 'DELETE',
     headers: getHeaders(),
     credentials: 'include',
@@ -152,7 +151,7 @@ export async function updateScreenContentConfig(
 ): Promise<ContentTypeConfig> {
   logger.debug(`Updating screen content config: ${screenId} / ${contentType}`)
 
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/screens/${screenId}/config/${contentType}`,
     {
       method: 'PUT',
@@ -179,7 +178,7 @@ export async function updateScreenNextSlideConfig(
 ): Promise<NextSlideSectionConfig> {
   logger.debug(`Updating screen next slide config: ${screenId}`)
 
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/screens/${screenId}/next-slide-config`,
     {
       method: 'PUT',
@@ -206,7 +205,7 @@ export async function updateScreenGlobalSettings(
 ): Promise<Screen> {
   logger.debug(`Updating screen global settings: ${screenId}`)
 
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/screens/${screenId}/global-settings`,
     {
       method: 'PUT',
@@ -230,14 +229,14 @@ export async function updateScreenGlobalSettings(
 export async function batchUpdateScreenConfig(
   screenId: number,
   globalSettings: ScreenGlobalSettings,
-  contentConfigs: Record<ContentType, ContentTypeConfig>,
+  contentConfigs: ScreenWithConfigs['contentConfigs'],
   nextSlideConfig?: NextSlideSectionConfig,
   width?: number,
   height?: number,
 ): Promise<ScreenWithConfigs> {
   logger.debug(`Batch updating screen config: ${screenId}`)
 
-  const response = await fetchFn(
+  const response = await apiFetch(
     `${getApiUrl()}/api/screens/${screenId}/batch-config`,
     {
       method: 'PUT',
@@ -259,78 +258,4 @@ export async function batchUpdateScreenConfig(
 
   const result = await response.json()
   return result.data
-}
-
-/**
- * Upserts a scene override for a specific screen/scene/contentType combination
- */
-export async function upsertSceneOverride(
-  screenId: number,
-  obsSceneName: string,
-  contentType: ContentType,
-  config: Record<string, unknown>,
-): Promise<void> {
-  logger.debug(
-    `Upserting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
-  )
-
-  const response = await fetchFn(
-    `${getApiUrl()}/api/screens/${screenId}/scene-overrides/${encodeURIComponent(obsSceneName)}/${contentType}`,
-    {
-      method: 'PUT',
-      headers: getHeaders('application/json'),
-      body: JSON.stringify({ config }),
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to upsert scene override')
-  }
-}
-
-/**
- * Deletes a specific scene override
- */
-export async function deleteSceneOverride(
-  screenId: number,
-  obsSceneName: string,
-  contentType: ContentType,
-): Promise<void> {
-  logger.debug(
-    `Deleting scene override: screen=${screenId}, scene=${obsSceneName}, type=${contentType}`,
-  )
-
-  const response = await fetchFn(
-    `${getApiUrl()}/api/screens/${screenId}/scene-overrides/${encodeURIComponent(obsSceneName)}/${contentType}`,
-    {
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to delete scene override')
-  }
-}
-
-/**
- * Deletes all scene overrides for a screen
- */
-export async function deleteAllSceneOverrides(screenId: number): Promise<void> {
-  logger.debug(`Deleting all scene overrides for screen=${screenId}`)
-
-  const response = await fetchFn(
-    `${getApiUrl()}/api/screens/${screenId}/scene-overrides`,
-    {
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include',
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to delete all scene overrides')
-  }
 }

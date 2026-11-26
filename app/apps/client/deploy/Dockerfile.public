@@ -1,0 +1,35 @@
+# The public web app (T-168, `bun run build:public`) served by an unprivileged,
+# read-only nginx. Build from the repository root:
+#   docker buildx build --platform linux/amd64 -f app/apps/client/deploy/Dockerfile.public -t <image> .
+# The runtime stage only copies files (no RUN), so an arm64 host builds the
+# amd64 image without emulation; the build output is platform independent.
+
+FROM --platform=$BUILDPLATFORM oven/bun:1.4.2-alpine@sha256:d888c0ae6c86d7866ff10c5aafdd9077b36aee6455b33dd270fb93c0dd5cef6f AS build
+WORKDIR /src/app
+COPY app/package.json app/bun.lock app/bunfig.toml app/tsconfig.json ./
+COPY app/apps/client/package.json apps/client/
+COPY app/apps/server/package.json apps/server/
+COPY app/packages packages
+RUN bun install --frozen-lockfile --ignore-scripts
+COPY app/tauri/tauri.conf.json tauri/
+# The browser server (T-175) compiles the server's own code into the web app.
+COPY app/apps/server/tsconfig.json apps/server/
+COPY app/apps/server/src apps/server/src
+COPY app/apps/client apps/client
+# Empty = the sync service built into the code (defaultSyncServiceUrl.ts).
+ARG VITE_SYNC_SERVICE_URL=""
+ENV VITE_SYNC_SERVICE_URL=$VITE_SYNC_SERVICE_URL
+WORKDIR /src/app/apps/client
+RUN bun run build:public \
+  && bun deploy/writeSecurityHeaders.ts dist-public/index.html /src/security-headers.conf
+
+# nginx (slim: no curl, xml or image libraries, so fewer CVEs) as user 101 on
+# port 8080; its entrypoint scripts are skipped (they would edit files under
+# the read-only root).
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine3.24-slim@sha256:a8cb0f33d51fa107c96fd2bd3a71aaf564ec131e9d2bdf8700944f0ed8b170d7
+COPY app/apps/client/deploy/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /src/security-headers.conf /etc/nginx/security-headers.conf
+COPY --from=build /src/app/apps/client/dist-public /usr/share/nginx/html
+USER 101:101
+EXPOSE 8080
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

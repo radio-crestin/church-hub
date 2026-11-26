@@ -1,4 +1,7 @@
 import { MAX_SYNC_UPDATES, SEARCH_INDEX_BATCH } from './constants'
+import { COLLECTION_BY_TYPE } from './libraryCollections'
+import { idByUuid } from './records/idByUuid'
+import { writeSchedulePlayback } from './records/writeSchedulePlayback'
 import { withTriggersSuppressed } from './syncStateStore'
 import type {
   ApplyOp,
@@ -10,10 +13,12 @@ import type {
 import type { SQLQueryBindings } from 'bun:sqlite'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
+import { nestingProblem } from '../schedules/nestingLimits'
 import {
   type ResolvedLegacyBiblePassage,
   resolveLegacyBiblePassage,
 } from '../schedules/resolveLegacyBiblePassage'
+import { scheduleContains } from '../schedules/scheduleContains'
 import {
   removeFromScheduleSearchIndex,
   updateScheduleSearchIndex,
@@ -21,21 +26,6 @@ import {
 import { batchUpdateSearchIndex, removeFromSearchIndex } from '../songs/search'
 
 const logger = createLogger('sync')
-
-const TABLE_BY_TYPE: Record<ApplyOp['entityType'], string> = {
-  song: 'songs',
-  song_category: 'song_categories',
-  song_group: 'song_groups',
-  schedule: 'schedules',
-}
-
-function idByUuid(table: string, uuid: string): number | null {
-  const db = getRawDatabase()
-  const row = db
-    .query<{ id: number }, [string]>(`SELECT id FROM ${table} WHERE uuid = ?`)
-    .get(uuid)
-  return row?.id ?? null
-}
 
 function upsertCategory(category: LibraryCategory): number | null {
   const db = getRawDatabase()
@@ -83,9 +73,9 @@ function upsertSong(song: LibrarySong): number | null {
     `INSERT INTO songs (
        uuid, title, category_id, song_group_id, source_filename, author,
        copyright, ccli, tempo, time_signature, theme, alt_theme, hymn_number,
-       key_line, presentation_order, presentation_count, last_presented_at,
-       last_manual_edit, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       key_line, presentation_order, alternate_titles, presentation_count,
+       last_presented_at, last_manual_edit, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (uuid) DO UPDATE SET
        title = excluded.title, category_id = excluded.category_id,
        song_group_id = excluded.song_group_id,
@@ -95,6 +85,7 @@ function upsertSong(song: LibrarySong): number | null {
        theme = excluded.theme, alt_theme = excluded.alt_theme,
        hymn_number = excluded.hymn_number, key_line = excluded.key_line,
        presentation_order = excluded.presentation_order,
+       alternate_titles = excluded.alternate_titles,
        presentation_count = excluded.presentation_count,
        last_presented_at = excluded.last_presented_at,
        last_manual_edit = excluded.last_manual_edit,
@@ -115,6 +106,7 @@ function upsertSong(song: LibrarySong): number | null {
     song.hymnNumber,
     song.keyLine,
     song.presentationOrder,
+    song.alternateTitles ?? null,
     song.presentationCount,
     song.lastPresentedAt,
     song.lastManualEdit,
@@ -124,6 +116,17 @@ function upsertSong(song: LibrarySong): number | null {
 
   const songId = idByUuid('songs', song.uuid)
   if (songId === null) return null
+
+  // Its tags, by uuid (tags are applied before songs); a library written
+  // before songs carried them leaves them as they are.
+  if (song.tagUuids) {
+    db.query('DELETE FROM song_tag_assignments WHERE song_id = ?').run(songId)
+    const assign = db.query(
+      `INSERT OR IGNORE INTO song_tag_assignments (song_id, tag_id)
+       SELECT ?, id FROM song_tags WHERE uuid = ?`,
+    )
+    for (const tagUuid of song.tagUuids) assign.run(songId, tagUuid)
+  }
 
   // Slides are replaced wholesale — the aggregate's newer version won.
   db.query('DELETE FROM song_slides WHERE song_id = ?').run(songId)
@@ -165,6 +168,7 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
 
   const scheduleId = idByUuid('schedules', schedule.uuid)
   if (scheduleId === null) return null
+  if (schedule.playback) writeSchedulePlayback(scheduleId, schedule.playback)
 
   // Items (and their nested verses, via CASCADE) are replaced wholesale.
   db.query('DELETE FROM schedule_items WHERE schedule_id = ?').run(scheduleId)
@@ -173,8 +177,9 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
     `INSERT INTO schedule_items (
        schedule_id, item_type, song_id, slide_type, slide_content,
        bible_passage_reference, bible_passage_translation, obs_scene_name,
+       item_config, child_schedule_id, advance_seconds, is_sung, sung_at,
        sort_order, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
   )
   const insertVerse = db.query(
     `INSERT INTO schedule_bible_passage_verses (schedule_item_id, verse_id, reference, text, sort_order)
@@ -191,6 +196,30 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
   )
 
   for (const item of schedule.items) {
+    // A presentation it plays that this device doesn't have yet is left out:
+    // an item playing nothing has nothing to show.
+    const childScheduleId = item.childScheduleUuid
+      ? idByUuid('schedules', item.childScheduleUuid)
+      : null
+    if (item.itemType === 'schedule' && childScheduleId === null) {
+      logger.warning(
+        `Schedule "${schedule.title}": presentation ${item.childScheduleUuid ?? '?'} missing locally, item left out`,
+      )
+      continue
+    }
+    // Held to the same rules as one added here: no loop, within the limits.
+    const nestingIssue =
+      childScheduleId === null
+        ? null
+        : scheduleContains(childScheduleId, scheduleId)
+          ? 'it would make a loop'
+          : nestingProblem(scheduleId, childScheduleId)
+    if (nestingIssue) {
+      logger.warning(
+        `Schedule "${schedule.title}": presentation ${item.childScheduleUuid ?? '?'} left out: ${nestingIssue}`,
+      )
+      continue
+    }
     const songId = item.songUuid ? idByUuid('songs', item.songUuid) : null
     if (item.itemType === 'song' && item.songUuid && songId === null) {
       logger.warning(
@@ -232,6 +261,11 @@ function upsertSchedule(schedule: LibrarySchedule): number | null {
       mergedEntry ? null : item.biblePassageReference,
       mergedEntry ? null : item.biblePassageTranslation,
       item.obsSceneName,
+      item.itemConfig ?? null,
+      childScheduleId,
+      item.advanceSeconds ?? null,
+      item.isSung ?? 0,
+      item.sungAt ?? null,
       item.sortOrder,
       schedule.updatedAt,
       schedule.updatedAt,
@@ -316,11 +350,11 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
 
   const run = db.transaction(() => {
     for (const op of ops) {
-      const table = TABLE_BY_TYPE[op.entityType]
+      const { table, uuidColumn, records } = COLLECTION_BY_TYPE[op.entityType]
       let localId: number | null = null
 
       if (op.op === 'delete') {
-        localId = idByUuid(table, op.uuid)
+        localId = idByUuid(table, op.uuid, uuidColumn)
         if (localId !== null) {
           if (op.entityType === 'song') removeFromSearchIndex(localId)
           if (op.entityType === 'schedule') {
@@ -329,6 +363,8 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
           db.query(`DELETE FROM ${table} WHERE id = ?`).run(localId)
         }
         localId = null
+      } else if (op.op === 'keep') {
+        localId = idByUuid(table, op.uuid, uuidColumn)
       } else if (op.data) {
         switch (op.entityType) {
           case 'song_category':
@@ -348,6 +384,8 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
             localId = upsertSchedule(op.data as LibrarySchedule)
             if (localId !== null) scheduleFtsUpdates.push(localId)
             break
+          default:
+            localId = records?.upsert(op.data as never) ?? null
         }
         // The local row now equals the applied remote version; a resurrected
         // entity must also drop its local tombstone.
@@ -365,8 +403,8 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
       if (!op.silent) {
         reportedCount++
         db.query(
-          `INSERT INTO sync_updates (entity_type, entity_uuid, local_id, change_kind, title, source_device, occurred_at, seen)
-           VALUES (?, ?, ?, ?, ?, ?, unixepoch(), 0)`,
+          `INSERT INTO sync_updates (entity_type, entity_uuid, local_id, change_kind, title, source_device, detail, occurred_at, seen)
+           VALUES (?, ?, ?, ?, ?, ?, ?, unixepoch(), 0)`,
         ).run(
           op.entityType,
           op.uuid,
@@ -374,6 +412,7 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
           op.changeKind,
           op.title,
           op.sourceDevice ?? null,
+          op.detail ?? null,
         )
       }
     }
@@ -406,6 +445,6 @@ export function applyRemoteChanges(ops: ApplyOp[]): ApplyResult {
     updateScheduleSearchIndex(scheduleId)
   }
 
-  logger.info(`Applied ${appliedCount} remote change(s) from Drive sync`)
+  logger.info(`Applied ${appliedCount} remote change(s) from library sync`)
   return { appliedCount, reportedCount }
 }

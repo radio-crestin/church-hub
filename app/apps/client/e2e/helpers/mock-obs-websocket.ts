@@ -5,11 +5,22 @@ import { type WebSocket, WebSocketServer } from 'ws'
  * A local stand-in for OBS's WebSocket server (protocol v5, no password):
  * it greets, identifies and answers every request, and StartStream /
  * StopStream switch its stream on and off, so a spec can start and stop a
- * livestream without OBS.
+ * livestream without OBS. The other methods play what an operator does in
+ * OBS itself, sending the events OBS sends.
  */
 export interface MockObs {
   port: number
   close: () => Promise<void>
+  /** The operator picks a scene in OBS. */
+  selectScene: (sceneName: string) => void
+  /** The stream goes live or ends, through OBS's in-between state. */
+  setStreaming: (active: boolean) => void
+  setRecording: (active: boolean) => void
+}
+
+interface MockObsOptions {
+  /** Already streaming when Church Hub connects. */
+  streaming?: boolean
 }
 
 const OP = {
@@ -21,8 +32,11 @@ const OP = {
   RequestResponse: 7,
 }
 
-export async function startMockObs(): Promise<MockObs> {
-  let streaming = false
+export async function startMockObs({
+  streaming: streamingAtStart = false,
+}: MockObsOptions = {}): Promise<MockObs> {
+  let streaming = streamingAtStart
+  let recording = false
   let scene = 'Live'
   const server = new WebSocketServer({
     host: '127.0.0.1',
@@ -32,6 +46,12 @@ export async function startMockObs(): Promise<MockObs> {
 
   const send = (ws: WebSocket, op: number, d: unknown) =>
     ws.send(JSON.stringify({ op, d }))
+  const emit = (eventType: string, eventData: Record<string, unknown>) => {
+    for (const ws of server.clients)
+      send(ws, OP.Event, { eventType, eventData })
+  }
+  const outputState = (active: boolean) =>
+    active ? 'OBS_WEBSOCKET_OUTPUT_STARTED' : 'OBS_WEBSOCKET_OUTPUT_STOPPED'
 
   const answer = (type: string, data: Record<string, unknown>) => {
     switch (type) {
@@ -45,7 +65,7 @@ export async function startMockObs(): Promise<MockObs> {
       case 'GetStreamStatus':
         return { outputActive: streaming }
       case 'GetRecordStatus':
-        return { outputActive: false }
+        return { outputActive: recording }
       default:
         return {}
     }
@@ -81,9 +101,7 @@ export async function startMockObs(): Promise<MockObs> {
           eventIntent: 64,
           eventData: {
             outputActive: streaming,
-            outputState: streaming
-              ? 'OBS_WEBSOCKET_OUTPUT_STARTED'
-              : 'OBS_WEBSOCKET_OUTPUT_STOPPED',
+            outputState: outputState(streaming),
           },
         })
       }
@@ -94,6 +112,30 @@ export async function startMockObs(): Promise<MockObs> {
   const { port } = server.address() as AddressInfo
   return {
     port,
+    selectScene: (sceneName) => {
+      scene = sceneName
+      emit('CurrentProgramSceneChanged', { sceneName })
+    },
+    setStreaming: (active) => {
+      streaming = active
+      emit('StreamStateChanged', {
+        outputActive: false,
+        outputState: active
+          ? 'OBS_WEBSOCKET_OUTPUT_STARTING'
+          : 'OBS_WEBSOCKET_OUTPUT_STOPPING',
+      })
+      emit('StreamStateChanged', {
+        outputActive: active,
+        outputState: outputState(active),
+      })
+    },
+    setRecording: (active) => {
+      recording = active
+      emit('RecordStateChanged', {
+        outputActive: active,
+        outputState: outputState(active),
+      })
+    },
     close: () =>
       new Promise((resolve) => {
         for (const client of server.clients) client.terminate()

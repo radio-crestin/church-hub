@@ -1,13 +1,13 @@
 {
   "login": {
     "title": "Bun venit",
-    "tagline": "Centrul tău de prezentare pentru fiecare slujbă.",
-    "selectUser": "Selectează contul tău pentru a continua",
-    "enterPassword": "Introdu parola pentru a continua",
+    "tagline": "Centrul tău de prezentare pentru fiecare serviciu.",
+    "selectUser": "Alege-ți contul ca să continui",
+    "enterPassword": "Introdu parola ca să continui",
     "passwordLabel": "Parolă",
     "passwordPlaceholder": "Introdu parola",
     "wrongPassword": "Parolă incorectă. Încearcă din nou.",
-    "signIn": "Autentificare",
+    "signIn": "Conectează-te",
     "back": "Înapoi",
     "noAccounts": "Nu s-a găsit niciun cont. Repornește Church Hub sau contactează administratorul.",
     "failed": "Autentificarea a eșuat. Verifică conexiunea și încearcă din nou.",
@@ -21,14 +21,14 @@
     "label": "Parolă",
     "optional": "Opțional",
     "setPlaceholder": "Setează o parolă (opțional)",
-    "changePlaceholder": "Lasă gol pentru a păstra parola curentă",
+    "changePlaceholder": "Lasă gol ca să păstrezi parola actuală",
     "hint": "Dacă este setată, utilizatorul trebuie să introducă parola la autentificare.",
     "show": "Afișează parola",
     "hide": "Ascunde parola",
     "hasPassword": "Protejat cu parolă",
     "remove": "Elimină parola",
-    "removed": "Parolă eliminată",
-    "updated": "Parolă actualizată"
+    "removed": "Parola a fost eliminată",
+    "updated": "Parola a fost actualizată"
   },
   "switchUser": "Schimbă utilizatorul",
   "logout": "Deconectare",
@@ -38,7 +38,7 @@
     "user": "Utilizator",
     "permissions": "Permisiuni",
     "fullAccess": "Acces complet la toate funcțiile",
-    "noPermissions": "Nicio permisiune atribuită",
+    "noPermissions": "Nu ai permisiuni",
     "close": "Închide"
   },
   "pairing": {
@@ -47,5 +47,11 @@
     "expires": "Expiră în {{seconds}} s",
     "warning": "Nu-l da mai departe dacă nu știi cine l-a cerut.",
     "dismiss": "Închide"
+  },
+  "leaveChurch": {
+    "button": "Ieși din biserică",
+    "title": "Ieși din această biserică?",
+    "message": "Dispozitivul uită biserica și se deschide ca invitat. Va avea nevoie de un link nou ca să se conecteze din nou.",
+    "cancel": "Anulează"
   }
 }
