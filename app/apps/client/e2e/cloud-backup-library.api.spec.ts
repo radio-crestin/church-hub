@@ -132,7 +132,7 @@ test.describe
         CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
         CHURCH_HUB_SONG_UPDATES_AT_START: 'false',
         CHURCH_HUB_SYNC_URL: service.url,
-        CHURCH_HUB_BACKUP_URL: service.url,
+        CHURCH_HUB_BACKEND_URL: service.url,
         CHURCH_HUB_BACKUP_PUBLIC_SOURCES: RC,
       })
       api = await server.adminRequest()

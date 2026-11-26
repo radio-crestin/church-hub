@@ -23,7 +23,7 @@ test.describe
 
     test.beforeAll(async ({ browser }) => {
       test.setTimeout(300_000)
-      // No CHURCH_HUB_BACKEND_URL / CHURCH_HUB_BACKUP_URL: the legacy backend.
+      // No CHURCH_HUB_BACKEND_URL, nothing baked in: the legacy backend.
       await server.start({ CHURCH_HUB_SONG_UPDATES_AT_START: 'false' })
       api = await server.adminRequest()
       context = await browser.newContext({

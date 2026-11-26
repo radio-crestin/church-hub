@@ -1,6 +1,6 @@
 import { readCloudBackupCredential } from './cloudBackupCredential'
 import { getCloudBackupSchedule } from './cloudBackupSchedule'
-import { isCloudBackupAvailable } from './getCloudBackupUrl'
+import { isCloudBackupAvailable } from './isCloudBackupAvailable'
 
 /**
  * Whether this PC is signed in to Church Hub Cloud backup, as which
