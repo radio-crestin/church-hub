@@ -48,8 +48,13 @@ export function ScreenLinkModal({
 
   const copy = async () => {
     if (!link) return
-    await navigator.clipboard.writeText(link.url)
-    showToast(t('sections.screens.link.copied'), 'success')
+    try {
+      await navigator.clipboard.writeText(link.url)
+      showToast(t('sections.screens.link.copied'), 'success')
+    } catch (error) {
+      logger.warn('Screen link not copied', error)
+      showToast(t('sections.screens.toast.copyError'), 'error')
+    }
   }
 
   const revoke = async () => {
