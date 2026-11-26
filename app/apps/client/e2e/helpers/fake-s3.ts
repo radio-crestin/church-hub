@@ -17,8 +17,6 @@ const etagOf = (body: Buffer) =>
  */
 export class FakeS3 {
   readonly objects = new Map<string, Buffer>()
-  /** Each object's Cache-Control, as its PUT sent it. */
-  readonly cacheControl = new Map<string, string>()
   /** Every request, as "METHOD /path", so a spec can see what was sent. */
   readonly requests: string[] = []
   /** Paths answered with a redirect to the given location. */
@@ -173,8 +171,6 @@ export class FakeS3 {
           }
           const body = Buffer.concat(chunks)
           this.objects.set(path, body)
-          const cacheControl = req.headers['cache-control']
-          if (cacheControl) this.cacheControl.set(path, cacheControl)
           res.writeHead(200, { ETag: etagOf(body) }).end()
         })
         return
