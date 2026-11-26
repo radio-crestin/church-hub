@@ -37,10 +37,11 @@ This worker provides a stateless OAuth flow using:
 
 The one writer of every church's synced library
 (`docs/design/cloud-sync-and-shared-library.md` §3-6). A church server
-registers, owned by a Google account or as a guest (`POST /sync/churches`), mirrors its roles and users
-(`PUT …/access`), mints device tokens for its users (`POST …/devices`), and
-every device writes through `POST …/changes`: authenticated by its token,
-authorized against its user's permissions, version-checked, then published to
+registers, owned by a Google account or as a guest (`POST /sync/churches`),
+mints device tokens for its users (`POST …/devices`), and every device writes
+through `POST …/changes` (roles and users included, T-173): authenticated by
+its token, each change authorized against its author's permissions (a phone's
+own user, or the user the church server names), version-checked, then published to
 an S3-compatible bucket as one segment under `churches/<churchId>-<pathSecret>/`.
 Reads never call the service: clients GET that public, unlisted path directly.
 
