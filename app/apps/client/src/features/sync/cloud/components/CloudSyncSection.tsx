@@ -29,7 +29,7 @@ export function CloudSyncSection() {
 
   if (isLoading || !status) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-4 text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+      <div className="flex items-center gap-2 rounded-xl border border-line p-4 text-[13px] text-fg-hint">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t('sections.sync.loading')}
       </div>
@@ -53,12 +53,12 @@ export function CloudSyncSection() {
         />
       )}
       {waitingFor && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-fg-hint">
           {t('sections.cloudSync.signIn.waiting')}
         </p>
       )}
       {error && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p className="text-xs text-live">
           {t('sections.cloudSync.signIn.failed')}
         </p>
       )}

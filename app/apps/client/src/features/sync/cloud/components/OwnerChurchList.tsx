@@ -21,11 +21,11 @@ export function OwnerChurchList({
   const accept = useCloudAction(acceptChurch)
 
   if (churches.isLoading) {
-    return <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+    return <Loader2 className="h-4 w-4 animate-spin text-fg-hint" />
   }
   if (churches.error) {
     return (
-      <p className="text-xs text-red-600 dark:text-red-400">
+      <p className="text-xs text-live">
         {t('sections.cloudSync.owner.listFailed')}
       </p>
     )
@@ -33,14 +33,14 @@ export function OwnerChurchList({
   const list = churches.data?.churches ?? []
   if (list.length === 0) {
     return (
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-xs text-fg-hint">
         {t('sections.cloudSync.owner.noChurches')}
       </p>
     )
   }
 
   return (
-    <ul className="divide-y divide-gray-200 rounded-md border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+    <ul className="divide-y divide-line rounded-lg border border-line">
       {list.map((church) => {
         const isHere = church.churchId === currentChurchId
         return (
@@ -50,17 +50,20 @@ export function OwnerChurchList({
             data-testid={`owner-church-${church.churchId}`}
           >
             <div className="flex min-w-0 items-start gap-2">
-              <Server className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+              <Server
+                strokeWidth={1.5}
+                className="mt-0.5 h-4 w-4 flex-shrink-0 text-fg-label"
+              />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                <p className="truncate text-[13px] font-medium text-fg">
                   {church.name}
                   {isHere && (
-                    <span className="ml-2 rounded bg-indigo-100 px-1.5 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                    <span className="ml-2 rounded-md bg-selected px-1.5 py-0.5 text-xs text-fg-label">
                       {t('sections.cloudSync.owner.thisPc')}
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-fg-hint">
                   {church.role === 'pending'
                     ? t('sections.cloudSync.owner.offered')
                     : t('sections.cloudSync.owner.churchDetails', {

@@ -57,7 +57,7 @@ export function CloudOwnerTools({
   return (
     <div className="space-y-4" data-testid="cloud-owner-tools">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-gray-600 dark:text-gray-300">
+        <p className="text-xs text-fg-label">
           {t('sections.cloudSync.owner.signedInAs', { email })}
         </p>
         <Button
@@ -66,23 +66,23 @@ export function CloudOwnerTools({
           onClick={() => signOut.mutate(undefined)}
           data-testid="cloud-owner-sign-out"
         >
-          <LogOut className="mr-1.5 h-3.5 w-3.5" />
+          <LogOut strokeWidth={1.75} className="h-3.5 w-3.5" />
           {t('sections.cloudSync.owner.signOut')}
         </Button>
       </div>
 
       <div>
-        <h5 className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+        <h5 className="mb-2 text-xs font-medium text-fg-label">
           {t('sections.cloudSync.owner.yourChurches')}
         </h5>
         <OwnerChurchList currentChurchId={churchId} />
       </div>
 
       <div>
-        <h5 className="text-xs font-medium text-gray-700 dark:text-gray-300">
+        <h5 className="text-xs font-medium text-fg-label">
           {t('sections.cloudSync.owner.transferTitle')}
         </h5>
-        <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mb-2 text-xs text-fg-hint">
           {t('sections.cloudSync.owner.transferHint')}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -94,7 +94,7 @@ export function CloudOwnerTools({
             data-testid="cloud-transfer-email"
           />
           <Button
-            size="sm"
+            size="md"
             variant="outline"
             disabled={!transferTo.includes('@') || transfer.isPending}
             onClick={handleTransfer}
@@ -105,11 +105,11 @@ export function CloudOwnerTools({
         </div>
       </div>
 
-      <div className="rounded-md border border-red-200 p-3 dark:border-red-900">
-        <h5 className="text-xs font-medium text-red-700 dark:text-red-400">
+      <div className="rounded-lg border border-line p-3">
+        <h5 className="text-xs font-medium text-fg">
           {t('sections.cloudSync.owner.revokeTitle')}
         </h5>
-        <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mb-2 text-xs text-fg-hint">
           {t('sections.cloudSync.owner.revokeHint')}
         </p>
         <Button
@@ -118,7 +118,7 @@ export function CloudOwnerTools({
           onClick={() => setConfirmRevoke(true)}
           data-testid="cloud-revoke-all"
         >
-          <ShieldOff className="mr-1.5 h-3.5 w-3.5" />
+          <ShieldOff strokeWidth={1.75} className="h-3.5 w-3.5" />
           {t('sections.cloudSync.owner.revokeAll')}
         </Button>
       </div>
