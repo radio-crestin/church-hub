@@ -99,6 +99,8 @@ interface Frame {
   leavingWords: string[]
   /** A whole slide fading out under the new one */
   slideCrossfade: boolean
+  /** Frames drawn since sampling began */
+  drawn: number
 }
 
 interface SlideChange {
@@ -118,7 +120,7 @@ interface SlideChange {
 
 /**
  * Marks every word of the slide on screen except `outgoing`, then samples
- * every frame from before `action` until the incoming word is fully shown and
+ * every frame and DOM change from before `action` until the incoming word is fully shown and
  * the outgoing one gone for 20 frames (or 10 s).
  */
 async function sampleSlideChange(
@@ -163,8 +165,6 @@ async function sampleSlideChange(
           (animation.effect as KeyframeEffect)
             .getKeyframes()
             .some((keyframe) => 'opacity' in keyframe)
-        // Seen even between two sparse frames: a slow machine may draw no
-        // frame in the middle of a 300 ms fade.
         const isAnimatingOpacity = (element: HTMLElement | undefined) => {
           for (let el = element ?? null; el; el = el.parentElement) {
             if (
@@ -192,10 +192,11 @@ async function sampleSlideChange(
 
         const frames: Frame[] = []
         let settledFrames = 0
+        let drawn = 0
         const end = performance.now() + 10_000
         ;(window as unknown as { __frames: Promise<Frame[]> }).__frames =
           new Promise((resolve) => {
-            const sample = () => {
+            const record = () => {
               const text = currentText()
               const incomingWord = wordsIn(text).find(
                 (word) => word.textContent === incoming,
@@ -230,11 +231,28 @@ async function sampleSlideChange(
                     ? layer.textContent?.includes(holds)
                     : layer.textContent?.trim(),
                 ),
+                drawn,
               }
               frames.push(frame)
+              return frame
+            }
+            // Also right after each DOM change: a slow machine may draw no
+            // frame while a 300 ms fade runs, but the change's animations
+            // exist from the moment it commits.
+            const changes = new MutationObserver(() => record())
+            changes.observe(document.body, {
+              subtree: true,
+              childList: true,
+              attributes: true,
+              characterData: true,
+            })
+            const sample = () => {
+              drawn++
+              const frame = record()
               const atRest = frame.incoming === 1 && frame.outgoing === 0
               settledFrames = atRest ? settledFrames + 1 : 0
               if (settledFrames >= 20 || performance.now() > end) {
+                changes.disconnect()
                 resolve(frames)
               } else requestAnimationFrame(sample)
             }
@@ -255,6 +273,34 @@ const incomingFades = (frame: Frame) =>
   frame.incomingFades || isFading(frame.incoming)
 const outgoingFades = (frame: Frame) =>
   frame.outgoingFades || isFading(frame.outgoing)
+
+/**
+ * Waits until the slide's text is fully shown and nothing animates: its
+ * entrance fade has ended, so its last frames (opacity 0.99999…) don't read
+ * as a kept word fading. A slow first paint delays when that fade starts.
+ */
+async function waitForStillScreen(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const texts = [
+          ...document.querySelectorAll<HTMLElement>('[data-style-anchor]'),
+        ]
+        const shown = (text: HTMLElement) => {
+          for (let el: HTMLElement | null = text; el; el = el.parentElement) {
+            if (getComputedStyle(el).opacity !== '1') return false
+          }
+          return true
+        }
+        return (
+          texts.length > 0 &&
+          texts.every(shown) &&
+          document.getAnimations().length === 0
+        )
+      }),
+    )
+    .toBe(true)
+}
 
 function nextSlide(request: APIRequestContext) {
   return request.post('/api/presentation/navigate-temporary', {
@@ -367,7 +413,7 @@ test.describe('Slide changes animate only the words that changed', () => {
     await page.goto(`/screen/${screenId}`)
     await expect(page.locator('[data-style-anchor]')).toContainText(TAKEOVER[0])
     expect(await wordRows(page, ''), 'the line wraps').toBeGreaterThan(1)
-    await page.waitForTimeout(800)
+    await waitForStillScreen(page)
 
     await expectOnlyTheWordChanges(page, request, {
       root: '',
@@ -386,7 +432,7 @@ test.describe('Slide changes animate only the words that changed', () => {
     })
     await page.goto(`/screen/${screenId}`)
     await expect(page.locator('[data-style-anchor]')).toContainText(CHORUS[1])
-    await page.waitForTimeout(800)
+    await waitForStillScreen(page)
 
     await expectOnlyTheWordChanges(page, request, {
       root: '',
@@ -397,7 +443,7 @@ test.describe('Slide changes animate only the words that changed', () => {
     })
 
     // A slide that shares no line: the whole slide crossfades, as before.
-    await page.waitForTimeout(500)
+    await waitForStillScreen(page)
     const crossfade = await sampleSlideChange(
       page,
       { root: '', incoming: 'Păstorul', outgoing: 'Mărire' },
@@ -411,10 +457,15 @@ test.describe('Slide changes animate only the words that changed', () => {
       crossfade.every((frame) => frame.leavingWords.length === 0),
       'no word leaves on its own',
     ).toBe(true)
+    // The new slide starts fading in while the old one fades out, not after
+    // it: mounted, then faded in two frames later (useSlideAnimation), plus
+    // a render. Counted in frames, as a GPU-less WebKit draws one in 250 ms.
+    const fadeOutStart = crossfade.find(outgoingFades)?.drawn ?? Infinity
+    const fadeInStart = crossfade.find(incomingFades)?.drawn ?? Infinity
     expect(
-      crossfade.some((frame) => incomingFades(frame) && outgoingFades(frame)),
-      'the slides cross',
-    ).toBe(true)
+      fadeInStart - fadeOutStart,
+      'frames from the old slide fading out to the new one fading in',
+    ).toBeLessThanOrEqual(4)
     expect(crossfade.at(-1)).toMatchObject({ incoming: 1, outgoing: 0 })
   })
 
@@ -425,7 +476,7 @@ test.describe('Slide changes animate only the words that changed', () => {
     expect((await presentVerse(request, 0)).ok()).toBeTruthy()
     await page.goto(`/screen/${screenId}`)
     await expect(page.getByText(VERSES[0].text).last()).toBeVisible()
-    await page.waitForTimeout(800)
+    await waitForStillScreen(page)
 
     await expectOnlyTheWordChanges(
       page,
@@ -449,7 +500,7 @@ test.describe('Slide changes animate only the words that changed', () => {
       TAKEOVER[0],
       { timeout: 15_000 },
     )
-    await page.waitForTimeout(800)
+    await waitForStillScreen(page)
 
     await expectOnlyTheWordChanges(page, request, {
       root,
@@ -565,6 +616,9 @@ async function sampleExit(
   )
 }
 
+/** The longest frame a smooth fade may take (ms). */
+const LONGEST_FRAME_MS = 50
+
 /** Median frame interval about 16.7 ms or less and no frame over 50 ms. */
 function expectSteadyFrames(label: string, intervals: number[]) {
   const sorted = [...intervals].sort((a, b) => a - b)
@@ -583,30 +637,45 @@ function expectSteadyFrames(label: string, intervals: number[]) {
   expect(median, `${label}: median frame interval (ms)`).toBeLessThanOrEqual(
     17.5,
   )
-  expect(sorted.at(-1), `${label}: longest frame (ms)`).toBeLessThan(50)
+  expect(sorted.at(-1), `${label}: longest frame (ms)`).toBeLessThan(
+    LONGEST_FRAME_MS,
+  )
 }
 
-/** The median interval (ms) between frames of a page with nothing moving. */
-async function idleFrameInterval(page: Page) {
-  await page.setContent('<p>idle</p>')
-  const intervals = await frameIntervalsDuring(page, 500, async () => {})
-  return [...intervals].sort((a, b) => a - b)[Math.floor(intervals.length / 2)]
+/**
+ * Skips the test when the browser can't even draw the slide's text once
+ * within the longest frame allowed: a copy of it, shown with no app code and
+ * no animation. Every slide change draws new text at least once, so there
+ * no change could keep the budget, and it would time the machine, not the
+ * app. A GPU-less WebKit (CI, the VM) takes 200-400 ms to draw the large
+ * shadowed text, while a blank page still runs at 60 fps.
+ */
+async function skipUnlessTheBrowserDrawsTheTextInAFrame(page: Page) {
+  const intervals = await frameIntervalsDuring(page, 300, () =>
+    page.evaluate(() => {
+      const text = document.querySelector('[data-style-anchor]')
+      const copy = document.createElement('div')
+      copy.dataset.drawProbe = ''
+      copy.style.cssText = 'position:fixed;inset:0;pointer-events:none'
+      if (text) copy.append(text.cloneNode(true))
+      document.body.append(copy)
+    }),
+  )
+  await page.evaluate(() =>
+    document.querySelector('[data-draw-probe]')?.remove(),
+  )
+  const longest = Math.max(...intervals)
+  test.skip(
+    longest >= LONGEST_FRAME_MS,
+    `this browser takes ${longest.toFixed(0)} ms to draw the slide's text once`,
+  )
+  await waitForStillScreen(page)
 }
 
 test.describe('Slide changes and exits run at a steady frame rate on a full HD projector', () => {
   test.use({ viewport: { width: 1920, height: 1080 } })
   let screenId: number | undefined
   let songId: number | undefined
-
-  // Smoothness is judged against a machine that draws 60 fps at rest; CI's
-  // GPU-less WebKit draws about 5, so there it would time the runner.
-  test.beforeEach(async ({ page }) => {
-    const idle = await idleFrameInterval(page)
-    test.skip(
-      idle > 20,
-      `this browser draws a frame every ${idle.toFixed(0)} ms at rest`,
-    )
-  })
 
   test.beforeAll(async ({ request }) => {
     const screen = await request.post('/api/screens', {
@@ -635,7 +704,8 @@ test.describe('Slide changes and exits run at a steady frame rate on a full HD p
     })
     await page.goto(`/screen/${screenId}`)
     await expect(page.locator('[data-style-anchor]')).toContainText(TAKEOVER[0])
-    await page.waitForTimeout(800)
+    await waitForStillScreen(page)
+    await skipUnlessTheBrowserDrawsTheTextInAFrame(page)
 
     const intervals = await frameIntervalsDuring(page, 700, async () =>
       expect((await nextSlide(request)).ok()).toBeTruthy(),
@@ -651,7 +721,8 @@ test.describe('Slide changes and exits run at a steady frame rate on a full HD p
     expect((await presentVerse(request, 0)).ok()).toBeTruthy()
     await page.goto(`/screen/${screenId}`)
     await expect(page.getByText(VERSES[0].text).last()).toBeVisible()
-    await page.waitForTimeout(800)
+    await waitForStillScreen(page)
+    await skipUnlessTheBrowserDrawsTheTextInAFrame(page)
 
     const intervals = await frameIntervalsDuring(page, 700, async () =>
       expect((await presentVerse(request, 1)).ok()).toBeTruthy(),
@@ -669,7 +740,8 @@ test.describe('Slide changes and exits run at a steady frame rate on a full HD p
       await expect(page.locator('[data-style-anchor]')).toContainText(
         TAKEOVER[1],
       )
-      await page.waitForTimeout(800)
+      await waitForStillScreen(page)
+      await skipUnlessTheBrowserDrawsTheTextInAFrame(page)
 
       const frames = await sampleExit(page, TAKEOVER[1], async () =>
         expect((await leave(request)).ok()).toBeTruthy(),
