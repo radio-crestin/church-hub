@@ -45,7 +45,7 @@ export function SettingsLinkButton({
         aria-hidden
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium text-fg">
+        <span className="block truncate text-sm font-medium text-fg">
           {label}
         </span>
         <span className="flex items-center gap-1.5 text-xs text-fg-hint">

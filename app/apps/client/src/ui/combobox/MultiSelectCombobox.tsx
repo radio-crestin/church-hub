@@ -197,7 +197,7 @@ export function MultiSelectCombobox({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className="w-full h-9 flex items-center justify-between gap-2 px-3 text-[13px] bg-field rounded-[10px] text-left text-fg focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="w-full h-9 flex items-center justify-between gap-2 px-3 text-sm bg-field rounded-[10px] text-left text-fg focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         <span
           className={
@@ -245,7 +245,7 @@ export function MultiSelectCombobox({
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Search..."
-                  className={`w-full h-8 pl-2.5 bg-field rounded-lg text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
+                  className={`w-full h-8 pl-2.5 bg-field rounded-lg text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus ${
                     search ? 'pr-7' : 'pr-2'
                   }`}
                 />
@@ -267,7 +267,7 @@ export function MultiSelectCombobox({
                   onClick={() => {
                     if (value.length > 0) onChange([])
                   }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-left ${
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-left ${
                     value.length === 0
                       ? 'bg-selected text-fg font-medium'
                       : 'text-fg-body hover:bg-hover'
@@ -288,7 +288,7 @@ export function MultiSelectCombobox({
                 </button>
               )}
               {filteredOptions.length === 0 ? (
-                <div className="px-2.5 py-1.5 text-[13px] text-fg-hint">
+                <div className="px-2.5 py-1.5 text-sm text-fg-hint">
                   No options found
                 </div>
               ) : (
@@ -302,7 +302,7 @@ export function MultiSelectCombobox({
                       key={option.value}
                       type="button"
                       onClick={() => handleToggle(option.value)}
-                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[13px] text-left hover:bg-hover ${
+                      className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm text-left hover:bg-hover ${
                         isSelected ? 'text-fg' : 'text-fg-body'
                       }`}
                     >

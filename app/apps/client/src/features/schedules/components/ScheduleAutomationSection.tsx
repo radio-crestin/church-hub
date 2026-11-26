@@ -55,7 +55,7 @@ export function ScheduleAutomationSection({
     >
       <div className="flex items-center gap-2 border-b border-line px-3 py-2.5">
         <Timer size={16} className="shrink-0 text-fg-label" strokeWidth={1.5} />
-        <h2 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-fg">
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">
           {t('automation.title')}
         </h2>
         {running && runner?.running && (

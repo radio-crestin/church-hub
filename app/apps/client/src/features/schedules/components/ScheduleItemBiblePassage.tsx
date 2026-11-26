@@ -70,7 +70,7 @@ export function ScheduleItemBiblePassage({
           {/* Passage Reference & Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-[13px] truncate text-fg">
+              <span className="font-medium text-sm truncate text-fg">
                 {item.biblePassageReference || t('biblePassage.passage')}
               </span>
             </div>
@@ -109,7 +109,7 @@ export function ScheduleItemBiblePassage({
                     setShowMenu(false)
                     onInsertSongAfter()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-fg-body hover:bg-hover"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-fg-body hover:bg-hover"
                 >
                   <Plus size={14} strokeWidth={1.75} />
                   {t('actions.insertAfter')}
@@ -121,7 +121,7 @@ export function ScheduleItemBiblePassage({
                     setShowMenu(false)
                     onRemove()
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
                   <Trash2 size={14} strokeWidth={1.75} />
                   {t('actions.remove')}
@@ -136,7 +136,7 @@ export function ScheduleItemBiblePassage({
       {isExpanded && item.biblePassageVerses.length > 0 && (
         <div className="px-3 pb-3 space-y-1.5">
           {item.biblePassageVerses.map((verse) => (
-            <div key={verse.id} className="p-2 rounded bg-field text-[13px]">
+            <div key={verse.id} className="p-2 rounded bg-field text-sm">
               <div className="font-medium text-xs mb-1 text-fg">
                 {verse.reference}
               </div>

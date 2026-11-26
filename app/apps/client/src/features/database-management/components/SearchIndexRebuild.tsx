@@ -49,7 +49,7 @@ export function SearchIndexRebuild() {
           <Search strokeWidth={1.5} className="w-5 h-5 text-fg-label" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-[13px] font-medium text-fg">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.searchIndex.card.title')}
           </h4>
           <p className="text-xs text-fg-hint mt-0.5">
@@ -59,7 +59,7 @@ export function SearchIndexRebuild() {
             type="button"
             onClick={handleRebuild}
             disabled={isPending}
-            className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-[13px] font-medium"
+            className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
           >
             <RefreshCw
               className={`w-4 h-4 ${isPending ? 'animate-spin' : ''}`}

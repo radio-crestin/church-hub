@@ -12,7 +12,7 @@ interface ContentTypeButtonProps {
 // wider. Used in the song detail header where a long title used to crowd
 // out the LIVE indicator next to it.
 const baseClassName =
-  'flex min-w-0 shrink items-center gap-2 h-8 rounded-lg px-3 text-[13px] font-medium bg-field text-fg hover:bg-hover transition-colors'
+  'flex min-w-0 shrink items-center gap-2 h-8 rounded-lg px-3 text-sm font-medium bg-field text-fg hover:bg-hover transition-colors'
 
 export function ContentTypeButton({
   temporaryContent,

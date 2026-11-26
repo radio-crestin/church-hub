@@ -228,10 +228,10 @@ export function DatabaseManager() {
 
   return (
     <div>
-      <h3 className="text-[15px] font-semibold text-fg mb-1">
+      <h3 className="text-base font-semibold text-fg mb-1">
         {t('sections.database.title')}
       </h3>
-      <p className="text-fg-label text-[13px] mb-4">
+      <p className="text-fg-label text-sm mb-4">
         {t('sections.database.description')}
       </p>
 
@@ -239,7 +239,7 @@ export function DatabaseManager() {
         {/* Database Path Section */}
         <div className="rounded-xl border border-line p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[13px] font-medium text-fg-label">
+            <span className="text-sm font-medium text-fg-label">
               {t('sections.database.path')}
             </span>
             <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export function DatabaseManager() {
                 <Download strokeWidth={1.5} className="w-5 h-5 text-fg-label" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-[13px] font-medium text-fg">
+                <h4 className="text-sm font-medium text-fg">
                   {t('sections.database.export.title')}
                 </h4>
                 <p className="text-xs text-fg-hint mt-0.5">
@@ -298,7 +298,7 @@ export function DatabaseManager() {
                   type="button"
                   onClick={handleExport}
                   disabled={isExporting || isLoading || isImporting}
-                  className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-[13px] font-medium"
+                  className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
                 >
                   <Download strokeWidth={1.5} className="w-4 h-4" />
                   {isExporting
@@ -316,7 +316,7 @@ export function DatabaseManager() {
                 <Upload strokeWidth={1.5} className="w-5 h-5 text-fg-label" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-[13px] font-medium text-fg">
+                <h4 className="text-sm font-medium text-fg">
                   {t('sections.database.import.title')}
                 </h4>
                 <p className="text-xs text-fg-hint mt-0.5">
@@ -326,7 +326,7 @@ export function DatabaseManager() {
                   type="button"
                   onClick={handleImportClick}
                   disabled={isImporting || isLoading || isExporting}
-                  className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-field text-fg rounded-lg hover:bg-hover disabled:opacity-50 text-[13px] font-medium"
+                  className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-field text-fg rounded-lg hover:bg-hover disabled:opacity-50 text-sm font-medium"
                 >
                   <Upload strokeWidth={1.5} className="w-4 h-4" />
                   {isImporting
@@ -355,7 +355,7 @@ export function DatabaseManager() {
               <div className="absolute inset-0 bg-panel/80 rounded-xl flex items-center justify-center z-10">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="w-8 h-8 animate-spin text-fg-hint" />
-                  <span className="text-[13px] font-medium text-fg-label">
+                  <span className="text-sm font-medium text-fg-label">
                     {t('sections.database.import.importing')}
                   </span>
                 </div>
@@ -371,7 +371,7 @@ export function DatabaseManager() {
                 <h3 className="text-base font-semibold text-fg">
                   {t('sections.database.import.confirm.title')}
                 </h3>
-                <p className="mt-2 text-[13px] text-fg-label">
+                <p className="mt-2 text-sm text-fg-label">
                   {t('sections.database.import.categories.title')}
                 </p>
               </div>
@@ -389,7 +389,7 @@ export function DatabaseManager() {
                   className="mt-0.5 w-4 h-4 rounded border-line text-primary focus:ring-focus disabled:opacity-50"
                 />
                 <div>
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.database.import.categories.copyAndMigrate')}
                   </span>
                   <p className="text-xs text-fg-hint">
@@ -427,7 +427,7 @@ export function DatabaseManager() {
                   className="mt-0.5 w-4 h-4 rounded border-line text-primary focus:ring-focus disabled:opacity-50"
                 />
                 <div>
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.database.import.categories.songs')}
                   </span>
                   <p className="text-xs text-fg-hint">
@@ -447,7 +447,7 @@ export function DatabaseManager() {
                   className="mt-0.5 w-4 h-4 rounded border-line text-primary focus:ring-focus disabled:opacity-50"
                 />
                 <div>
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.database.import.categories.bible')}
                   </span>
                   <p className="text-xs text-fg-hint">
@@ -467,7 +467,7 @@ export function DatabaseManager() {
                   className="mt-0.5 w-4 h-4 rounded border-line text-primary focus:ring-focus disabled:opacity-50"
                 />
                 <div>
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.database.import.categories.schedules')}
                   </span>
                   <p className="text-xs text-fg-hint">
@@ -489,7 +489,7 @@ export function DatabaseManager() {
                   className="mt-0.5 w-4 h-4 rounded border-line text-primary focus:ring-focus disabled:opacity-50"
                 />
                 <div>
-                  <span className="text-[13px] font-medium text-fg">
+                  <span className="text-sm font-medium text-fg">
                     {t('sections.database.import.categories.configurations')}
                   </span>
                   <p className="text-xs text-fg-hint">
@@ -501,7 +501,7 @@ export function DatabaseManager() {
               </label>
             </div>
 
-            <p className="mt-4 text-[13px] font-medium text-amber-700 dark:text-amber-400">
+            <p className="mt-4 text-sm font-medium text-amber-700 dark:text-amber-400">
               {t('sections.database.import.confirm.warning')}
             </p>
 
@@ -510,7 +510,7 @@ export function DatabaseManager() {
                 type="button"
                 onClick={handleImportCancel}
                 disabled={isImporting}
-                className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50"
+                className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50"
               >
                 {t('sections.database.import.confirm.cancel')}
               </button>
@@ -518,7 +518,7 @@ export function DatabaseManager() {
                 type="button"
                 onClick={handleImportConfirm}
                 disabled={isImporting || !hasAnyOptionSelected}
-                className="h-9 px-3.5 text-[13px] font-medium bg-amber-600 text-white hover:bg-amber-700 rounded-lg disabled:opacity-50 flex items-center gap-2"
+                className="h-9 px-3.5 text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 rounded-lg disabled:opacity-50 flex items-center gap-2"
               >
                 {isImporting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t('sections.database.import.confirm.confirm')}
@@ -542,7 +542,7 @@ export function DatabaseManager() {
                 <h3 className="text-base font-semibold text-fg">
                   {t('sections.database.restart.title')}
                 </h3>
-                <p className="mt-2 text-[13px] text-fg-label">
+                <p className="mt-2 text-sm text-fg-label">
                   {t('sections.database.restart.message')}
                 </p>
               </div>
@@ -552,7 +552,7 @@ export function DatabaseManager() {
                 type="button"
                 onClick={handleRestartConfirm}
                 disabled={isRestarting}
-                className="h-9 px-3.5 text-[13px] font-medium bg-primary text-white hover:bg-indigo-700 rounded-lg disabled:opacity-50 flex items-center gap-2"
+                className="h-9 px-3.5 text-sm font-medium bg-primary text-white hover:bg-indigo-700 rounded-lg disabled:opacity-50 flex items-center gap-2"
               >
                 {isRestarting && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {isRestarting

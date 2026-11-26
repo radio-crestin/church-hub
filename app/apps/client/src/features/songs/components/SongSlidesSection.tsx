@@ -34,7 +34,7 @@ export function SongSlidesSection({
           onClick={() => setIsTextMode((current) => !current)}
           data-testid="song-slides-toggle-text-mode"
           disabled={isLoading}
-          className="flex items-center gap-2 h-8 px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 h-8 px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg transition-colors disabled:opacity-50"
         >
           {isTextMode ? (
             <LayoutList className="w-4 h-4" strokeWidth={1.5} />

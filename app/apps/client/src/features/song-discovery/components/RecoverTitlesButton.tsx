@@ -78,7 +78,7 @@ export function RecoverTitlesButton() {
         data-testid="recover-original-titles"
         onClick={() => void recover()}
         disabled={progress !== null}
-        className="h-8 rounded-lg px-3 text-[13px] font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-8 rounded-lg px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
         {progress ? t('recoverTitles.running') : t('recoverTitles.button')}
       </button>

@@ -20,7 +20,7 @@ interface ScreenshotMarkupProps {
 }
 
 const linkButton =
-  'flex items-center gap-1 px-2 py-1.5 text-[13px] font-medium rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent transition-colors'
+  'flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent transition-colors'
 
 /**
  * The screenshot, on top of the request form, with an iPad-style markup bar: pen,
@@ -75,7 +75,7 @@ export function ScreenshotMarkup({
           {tool === 'note' && (
             <p
               data-testid="feature-request-tool-hint"
-              className="text-center text-[13px] text-fg-label"
+              className="text-center text-sm text-fg-label"
             >
               {t('common:featureRequest.noteHint')}
             </p>
@@ -89,7 +89,7 @@ export function ScreenshotMarkup({
           />
         </>
       ) : (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-line p-4 text-[13px] text-fg-label">
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-line p-4 text-sm text-fg-label">
           <span data-testid="feature-request-no-screenshot">
             {t(
               screenshot
@@ -108,7 +108,7 @@ export function ScreenshotMarkup({
         />
       )}
       {hasCaptureError && (
-        <p role="alert" className="text-[13px] text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {t('common:featureRequest.captureError')}
         </p>
       )}

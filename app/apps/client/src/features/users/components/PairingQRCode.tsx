@@ -58,7 +58,7 @@ export function PairingQRCode({ token, fragment = '' }: PairingQRCodeProps) {
     <div className="flex flex-col gap-4">
       {interfaces.length > 0 && (
         <div>
-          <label className="mb-2 block text-[13px] font-medium text-fg-body">
+          <label className="mb-2 block text-sm font-medium text-fg-body">
             {t('sections.users.modals.qrCode.networkInterface')}
           </label>
           <Combobox

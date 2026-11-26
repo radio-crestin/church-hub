@@ -131,7 +131,7 @@ export function VerseteTineriEntryRow({
       </button>
 
       {/* Entry number */}
-      <span className="text-[13px] font-medium text-fg-hint mt-2 flex-shrink-0 w-6">
+      <span className="text-sm font-medium text-fg-hint mt-2 flex-shrink-0 w-6">
         {index + 1}.
       </span>
 
@@ -143,7 +143,7 @@ export function VerseteTineriEntryRow({
           value={entry.personName}
           onChange={(e) => onPersonNameChange(e.target.value)}
           placeholder={t('verseteTineri.personNamePlaceholder')}
-          className="w-full px-3 py-1.5 text-[13px] border border-line rounded bg-panel text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+          className="w-full px-3 py-1.5 text-sm border border-line rounded bg-panel text-fg focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
         />
 
         {/* Bible reference */}
@@ -153,7 +153,7 @@ export function VerseteTineriEntryRow({
             value={localReference}
             onChange={(e) => setLocalReference(e.target.value)}
             placeholder={t('biblePassage.referencePlaceholder')}
-            className={`w-full px-3 py-1.5 text-[13px] border rounded-[10px] bg-field text-fg focus:outline-none focus:ring-1 focus:ring-inset ${
+            className={`w-full px-3 py-1.5 text-sm border rounded-[10px] bg-field text-fg focus:outline-none focus:ring-1 focus:ring-inset ${
               hasError
                 ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
                 : 'border-transparent focus:ring-focus'

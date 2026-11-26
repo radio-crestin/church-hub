@@ -73,7 +73,7 @@ export function WorkspaceTabs({
                 aria-selected={panel.id === active?.id}
                 data-testid={`workspace-tab-${panel.id}`}
                 onClick={() => setActiveId(panel.id)}
-                className={`flex-1 min-w-0 truncate px-2 py-2 rounded-md text-[13px] font-medium transition-colors ${
+                className={`flex-1 min-w-0 truncate px-2 py-2 rounded-md text-sm font-medium transition-colors ${
                   panel.id === active?.id
                     ? 'bg-selected text-fg'
                     : 'text-fg-label hover:text-fg'

@@ -20,7 +20,7 @@ export function DoneStep({ selected }: DoneStepProps) {
           <CheckCircle2 strokeWidth={1.5} className="h-6 w-6 text-ok" />
           {t('done.title')}
         </h1>
-        <p className="text-[13px] text-fg-label">{t('done.description')}</p>
+        <p className="text-sm text-fg-label">{t('done.description')}</p>
       </div>
       <ul className="flex flex-wrap gap-2" data-testid="onboarding-summary">
         {ONBOARDING_FEATURES.filter((id) => selected.has(id)).map((id) => {
@@ -28,7 +28,7 @@ export function DoneStep({ selected }: DoneStepProps) {
           return (
             <li
               key={id}
-              className="flex items-center gap-1.5 rounded-lg bg-field px-2.5 py-1 text-[13px] text-fg-body"
+              className="flex items-center gap-1.5 rounded-lg bg-field px-2.5 py-1 text-sm text-fg-body"
             >
               <Icon strokeWidth={1.5} className="h-4 w-4 text-fg-label" />
               {t(labelKey)}
@@ -36,7 +36,7 @@ export function DoneStep({ selected }: DoneStepProps) {
           )
         })}
       </ul>
-      <p className="text-[13px] text-fg-hint">{t('done.later')}</p>
+      <p className="text-sm text-fg-hint">{t('done.later')}</p>
     </div>
   )
 }

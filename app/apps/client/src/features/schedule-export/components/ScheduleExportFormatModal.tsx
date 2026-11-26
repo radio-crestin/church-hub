@@ -104,7 +104,7 @@ export function ScheduleExportFormatModal({
                   {t('export.formats.churchprogram.name')}
                 </span>
               </div>
-              <p className="text-[13px] text-fg-label">
+              <p className="text-sm text-fg-label">
                 {t('export.formats.churchprogram.description')}
               </p>
             </div>
@@ -131,7 +131,7 @@ export function ScheduleExportFormatModal({
                   {t('export.formats.pptx.name')}
                 </span>
               </div>
-              <p className="text-[13px] text-fg-label">
+              <p className="text-sm text-fg-label">
                 {t('export.formats.pptx.description')}
               </p>
             </div>
@@ -142,14 +142,14 @@ export function ScheduleExportFormatModal({
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
+            className="h-9 px-3.5 text-sm font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
           >
             {t('modal.cancel')}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-sm bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {t('export.confirmButton')}
           </button>

@@ -40,7 +40,7 @@ export function LinkQRCode({ url, testId = 'pairing-qr' }: LinkQRCodeProps) {
       </div>
 
       <div>
-        <p className="mb-2 text-[13px] text-fg-label">
+        <p className="mb-2 text-sm text-fg-label">
           {t('sections.users.modals.qrCode.manualUrl')}
         </p>
         <div className="flex items-center gap-2 rounded-lg bg-field p-2">

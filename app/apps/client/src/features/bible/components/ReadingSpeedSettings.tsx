@@ -14,10 +14,10 @@ export function ReadingSpeedSettings() {
         <Timer className="h-5 w-5" strokeWidth={1.5} />
         {t('settings.readingSpeed.title')}
       </h3>
-      <p className="mt-1 text-[13px] text-fg-label">
+      <p className="mt-1 text-sm text-fg-label">
         {t('settings.readingSpeed.description')}
       </p>
-      <label className="mt-4 flex items-center gap-3 text-[13px] text-fg-body">
+      <label className="mt-4 flex items-center gap-3 text-sm text-fg-body">
         <input
           key={wordsPerMinute}
           type="number"

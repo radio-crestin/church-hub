@@ -1691,7 +1691,7 @@ function BiblePage() {
             <h2 className="text-base font-semibold text-fg mb-2">
               {t('empty.noTranslationsSelected')}
             </h2>
-            <p className="text-[13px] text-fg-hint mb-4">
+            <p className="text-sm text-fg-hint mb-4">
               {t('empty.noTranslationsSelectedDescription')}
             </p>
           </div>
@@ -1705,12 +1705,12 @@ function BiblePage() {
             <h2 className="text-base font-semibold text-fg mb-2">
               {t('empty.title')}
             </h2>
-            <p className="text-[13px] text-fg-hint mb-4">
+            <p className="text-sm text-fg-hint mb-4">
               {t('empty.description')}
             </p>
             <Link
               to="/settings/bible"
-              className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
+              className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
             >
               <Settings className="w-4 h-4" strokeWidth={1.5} />
               {t('actions.openSettings')}

@@ -35,10 +35,10 @@ export function FactoryReset() {
 
   return (
     <div>
-      <h3 className="text-[15px] font-semibold text-fg mb-1">
+      <h3 className="text-base font-semibold text-fg mb-1">
         {t('sections.factoryReset.title')}
       </h3>
-      <p className="text-fg-label text-[13px] mb-4">
+      <p className="text-fg-label text-sm mb-4">
         {t('sections.factoryReset.description')}
       </p>
 
@@ -48,7 +48,7 @@ export function FactoryReset() {
             <RotateCcw strokeWidth={1.5} className="w-5 h-5 text-fg-label" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-[13px] font-medium text-fg">
+            <h4 className="text-sm font-medium text-fg">
               {t('sections.factoryReset.card.title')}
             </h4>
             <p className="text-xs text-fg-hint mt-0.5">
@@ -58,7 +58,7 @@ export function FactoryReset() {
               type="button"
               onClick={() => setShowConfirm(true)}
               disabled={isPending}
-              className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-[13px] font-medium"
+              className="mt-3 inline-flex h-8 items-center gap-2 px-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
             >
               <RotateCcw strokeWidth={1.5} className="w-4 h-4" />
               {isPending
@@ -87,10 +87,10 @@ export function FactoryReset() {
                 <h3 className="text-base font-semibold text-fg">
                   {t('sections.factoryReset.confirm.title')}
                 </h3>
-                <p className="mt-2 text-[13px] text-fg-label">
+                <p className="mt-2 text-sm text-fg-label">
                   {t('sections.factoryReset.confirm.message')}
                 </p>
-                <p className="mt-2 text-[13px] font-medium text-red-600 dark:text-red-400">
+                <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
                   {t('sections.factoryReset.confirm.warning')}
                 </p>
               </div>
@@ -99,14 +99,14 @@ export function FactoryReset() {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg"
+                className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg"
               >
                 {t('sections.factoryReset.confirm.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleFactoryReset}
-                className="h-9 px-3.5 text-[13px] font-medium bg-red-600 text-white hover:bg-red-700 rounded-lg"
+                className="h-9 px-3.5 text-sm font-medium bg-red-600 text-white hover:bg-red-700 rounded-lg"
               >
                 {t('sections.factoryReset.confirm.confirm')}
               </button>

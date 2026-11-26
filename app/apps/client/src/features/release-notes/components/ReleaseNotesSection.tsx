@@ -48,7 +48,7 @@ export function ReleaseNotesSection({
       {hasMore && (
         <button
           onClick={() => setExpanded((prev) => !prev)}
-          className="mt-4 flex items-center gap-1.5 text-[13px] font-medium text-focus hover:underline"
+          className="mt-4 flex items-center gap-1.5 text-sm font-medium text-focus hover:underline"
         >
           {expanded ? (
             <>

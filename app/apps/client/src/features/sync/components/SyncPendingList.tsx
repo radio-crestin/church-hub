@@ -30,7 +30,7 @@ export function SyncPendingList() {
 
   return (
     <div className="rounded-xl border border-line p-4">
-      <h4 className="text-[13px] font-medium text-fg">
+      <h4 className="text-sm font-medium text-fg">
         {t('sections.sync.changes.toSend')}
       </h4>
       {!pending || pending.length === 0 ? (
@@ -53,7 +53,7 @@ export function SyncPendingList() {
                 >
                   <Icon strokeWidth={1.5} className="h-4 w-4" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[13px] text-fg-body">
+                <span className="min-w-0 flex-1 truncate text-sm text-fg-body">
                   {entry.title}
                 </span>
                 <span className="flex-shrink-0 text-xs text-fg-hint">

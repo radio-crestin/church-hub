@@ -142,7 +142,7 @@ export function BibleTranslationsManager({
           <Book className="w-5 h-5" strokeWidth={1.5} />
           {t('sections.bible.title')}
         </h3>
-        <p className="text-[13px] text-fg-label mt-1">
+        <p className="text-sm text-fg-label mt-1">
           {t('sections.bible.description')}
         </p>
       </div>
@@ -153,7 +153,7 @@ export function BibleTranslationsManager({
           <p className="text-fg-label font-medium">
             {t('sections.bible.noTranslations')}
           </p>
-          <p className="text-[13px] text-fg-hint mt-1">
+          <p className="text-sm text-fg-hint mt-1">
             {t('sections.bible.noTranslationsDescription')}
           </p>
         </div>
@@ -161,7 +161,7 @@ export function BibleTranslationsManager({
         <div className="space-y-4">
           {/* Primary Version Selector */}
           <div>
-            <label className="block text-[13px] font-medium text-fg-body mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.bible.primaryVersion')}
             </label>
             <Combobox
@@ -181,7 +181,7 @@ export function BibleTranslationsManager({
 
           {/* Secondary Version Selector */}
           <div>
-            <label className="block text-[13px] font-medium text-fg-body mb-1">
+            <label className="block text-sm font-medium text-fg-body mb-1">
               {t('sections.bible.secondaryVersion')}
             </label>
             <Combobox

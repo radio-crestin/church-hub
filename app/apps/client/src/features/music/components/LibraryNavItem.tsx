@@ -24,7 +24,7 @@ export function LibraryNavItem({
       onClick={onSelect}
       aria-current={isSelected ? 'page' : undefined}
       data-testid={testId}
-      className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] transition-colors w-full ${
+      className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors w-full ${
         isSelected
           ? 'bg-selected text-fg'
           : 'bg-field text-fg-label hover:bg-hover hover:text-fg lg:bg-transparent'

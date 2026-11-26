@@ -34,7 +34,7 @@ export function SceneChecklist({
           className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2"
         >
           <div className="min-w-0">
-            <span className="text-[13px] font-medium text-fg">
+            <span className="text-sm font-medium text-fg">
               {scene.obsSceneName}
             </span>
             {scene.contentTypes.length > 0 && (

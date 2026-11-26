@@ -69,7 +69,7 @@ export function LiveTranslationStreamsCard() {
         </Link>
       </div>
 
-      <p className="text-[13px] text-fg-label mb-4">
+      <p className="text-sm text-fg-label mb-4">
         {t('dashboard.cardDescription')}
       </p>
 
@@ -102,9 +102,7 @@ export function LiveTranslationStreamsCard() {
           {t('dashboard.configuredLanguages')}
         </div>
         {targets.length === 0 ? (
-          <p className="text-[13px] text-fg-hint">
-            {t('dashboard.noLanguages')}
-          </p>
+          <p className="text-sm text-fg-hint">{t('dashboard.noLanguages')}</p>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {targets.map((tgt) => (

@@ -76,7 +76,7 @@ export function ScheduleCard({
             )}
           </div>
           {schedule.description && (
-            <p className="text-[13px] text-fg-hint mt-0.5 line-clamp-1">
+            <p className="text-sm text-fg-hint mt-0.5 line-clamp-1">
               {schedule.description}
             </p>
           )}
@@ -102,7 +102,7 @@ export function ScheduleCard({
           {schedule.matchedContent && (
             <p
               data-testid="schedule-card-snippet"
-              className="text-[13px] text-fg-hint mt-1 line-clamp-1"
+              className="text-sm text-fg-hint mt-1 line-clamp-1"
             >
               <HighlightedText text={schedule.matchedContent} />
             </p>

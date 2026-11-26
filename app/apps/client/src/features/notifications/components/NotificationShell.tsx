@@ -71,7 +71,7 @@ export function NotificationShell({
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="flex items-center gap-2 text-[13px] font-semibold text-fg">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-fg">
               {isNew && (
                 <span
                   aria-hidden="true"
@@ -81,7 +81,7 @@ export function NotificationShell({
               <span className="min-w-0">{title}</span>
             </h3>
             {description && (
-              <p className="mt-0.5 text-[13px] text-fg-body">{description}</p>
+              <p className="mt-0.5 text-sm text-fg-body">{description}</p>
             )}
           </div>
           {createdAt !== undefined && (

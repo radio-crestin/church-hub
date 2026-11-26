@@ -193,7 +193,7 @@ export function LocalBackupPanel({
           />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-[13px] font-medium text-fg">
+          <h4 className="text-sm font-medium text-fg">
             {t('sections.backup.local.title')}
           </h4>
           <p className="mt-0.5 text-xs text-fg-hint">
@@ -223,7 +223,7 @@ export function LocalBackupPanel({
                   onClick={handleChooseFolder}
                   disabled={isLoading || local.isSettingPath}
                   data-testid="local-backup-choose"
-                  className="inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
+                  className="inline-flex h-8 shrink-0 items-center gap-2 rounded-lg bg-field px-3 text-sm font-medium text-fg hover:bg-hover disabled:opacity-50"
                 >
                   <FolderOpen strokeWidth={1.5} className="h-4 w-4" />
                   {t('sections.backup.local.chooseFolder')}
@@ -256,7 +256,7 @@ export function LocalBackupPanel({
                   placeholder={t('sections.backup.local.pathPlaceholder')}
                   disabled={isLoading}
                   data-testid="local-backup-path-input"
-                  className="h-8 min-w-0 flex-1 rounded-[10px] bg-field px-3 text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                  className="h-8 min-w-0 flex-1 rounded-[10px] bg-field px-3 text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
                 />
               </div>
             )}
@@ -272,7 +272,7 @@ export function LocalBackupPanel({
               onClick={handleBackupNow}
               disabled={!hasPath || local.isBackingUp}
               data-testid="local-backup-now"
-              className="inline-flex h-8 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex h-8 items-center gap-2 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {local.isBackingUp ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -288,7 +288,7 @@ export function LocalBackupPanel({
                 type="button"
                 onClick={handleBrowseFolder}
                 data-testid="local-backup-browse"
-                className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover"
+                className="inline-flex h-8 items-center gap-2 rounded-lg bg-field px-3 text-sm font-medium text-fg hover:bg-hover"
               >
                 <FolderSearch strokeWidth={1.5} className="h-4 w-4" />
                 {t('sections.backup.local.restoreFrom.button')}
@@ -314,7 +314,7 @@ export function LocalBackupPanel({
                 onBlur={(e) => setBrowseDir(e.target.value.trim() || null)}
                 placeholder={t('sections.backup.local.pathPlaceholder')}
                 data-testid="local-backup-browse-input"
-                className="mt-1 h-8 w-full rounded-[10px] bg-field px-3 text-[13px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
+                className="mt-1 h-8 w-full rounded-[10px] bg-field px-3 text-sm text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus"
               />
             </div>
           )}
@@ -387,7 +387,7 @@ export function LocalBackupPanel({
                       className="flex items-center justify-between gap-3 px-3 py-2"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-[13px] text-fg-body">
+                        <p className="truncate text-sm text-fg-body">
                           {formatDate(file.createdAtMs)}
                           {file.appVersion ? ` · v${file.appVersion}` : ''}
                         </p>
@@ -443,7 +443,7 @@ export function LocalBackupPanel({
             <h3 className="text-base font-semibold text-fg">
               {t('sections.backup.local.clearModal.title')}
             </h3>
-            <p className="mt-2 text-[13px] text-fg-label">
+            <p className="mt-2 text-sm text-fg-label">
               {t('sections.backup.local.clearModal.message')}
             </p>
             <p className="mt-2 break-all text-xs text-fg-hint">
@@ -454,7 +454,7 @@ export function LocalBackupPanel({
                 type="button"
                 onClick={() => setPendingClear(false)}
                 disabled={local.isSettingPath}
-                className="h-8 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
+                className="h-8 rounded-lg bg-field px-3 text-sm font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 {t('common:buttons.cancel')}
               </button>
@@ -463,7 +463,7 @@ export function LocalBackupPanel({
                 onClick={handleClearConfirm}
                 disabled={local.isSettingPath}
                 data-testid="local-backup-clear-confirm"
-                className="inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-[13px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {local.isSettingPath && (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -493,7 +493,7 @@ export function LocalBackupPanel({
                 <h3 className="text-base font-semibold text-fg">
                   {t('sections.backup.local.restoreModal.title')}
                 </h3>
-                <p className="mt-2 text-[13px] text-fg-label">
+                <p className="mt-2 text-sm text-fg-label">
                   {t('sections.backup.local.restoreModal.message', {
                     date: formatDate(pendingRestore.createdAtMs),
                   })}
@@ -501,7 +501,7 @@ export function LocalBackupPanel({
                 <p className="mt-2 break-all text-xs text-fg-hint">
                   {pendingRestore.path}
                 </p>
-                <p className="mt-2 text-[13px] font-medium text-amber-700 dark:text-amber-400">
+                <p className="mt-2 text-sm font-medium text-amber-700 dark:text-amber-400">
                   {t('sections.backup.local.restoreModal.warning')}
                 </p>
               </div>
@@ -511,7 +511,7 @@ export function LocalBackupPanel({
                 type="button"
                 onClick={() => setPendingRestore(null)}
                 disabled={local.isRestoring}
-                className="h-8 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
+                className="h-8 rounded-lg bg-field px-3 text-sm font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 {t('sections.backup.local.restoreModal.cancel')}
               </button>
@@ -520,7 +520,7 @@ export function LocalBackupPanel({
                 onClick={handleRestoreConfirm}
                 disabled={local.isRestoring}
                 data-testid="local-backup-restore-confirm"
-                className="inline-flex h-8 items-center gap-2 rounded-lg bg-amber-600 px-3 text-[13px] font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                className="inline-flex h-8 items-center gap-2 rounded-lg bg-amber-600 px-3 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
               >
                 {local.isRestoring && (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -546,7 +546,7 @@ export function LocalBackupPanel({
             <h3 className="text-base font-semibold text-fg">
               {t('sections.backup.deleteModal.title')}
             </h3>
-            <p className="mt-2 text-[13px] text-fg-label">
+            <p className="mt-2 text-sm text-fg-label">
               {t('sections.backup.deleteModal.message')}
             </p>
             <p className="mt-2 break-all text-xs text-fg-hint">
@@ -557,7 +557,7 @@ export function LocalBackupPanel({
                 type="button"
                 onClick={() => setPendingDelete(null)}
                 disabled={local.isDeleting}
-                className="h-8 rounded-lg bg-field px-3 text-[13px] font-medium text-fg hover:bg-hover disabled:opacity-50"
+                className="h-8 rounded-lg bg-field px-3 text-sm font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 {t('sections.backup.deleteModal.cancel')}
               </button>
@@ -566,7 +566,7 @@ export function LocalBackupPanel({
                 onClick={handleDeleteConfirm}
                 disabled={local.isDeleting}
                 data-testid="local-backup-delete-confirm"
-                className="inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-[13px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="inline-flex h-8 items-center gap-2 rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {local.isDeleting && (
                   <Loader2 className="h-4 w-4 animate-spin" />

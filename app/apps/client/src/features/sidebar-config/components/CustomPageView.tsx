@@ -142,7 +142,7 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
                 strokeWidth={1.5}
                 className="w-8 h-8 animate-spin text-fg-hint"
               />
-              <p className="text-[13px] text-fg-hint">
+              <p className="text-sm text-fg-hint">
                 {t('sections.sidebar.loadingPage', {
                   defaultValue: 'Loading page...',
                 })}
@@ -161,7 +161,7 @@ export function CustomPageView({ pageId }: CustomPageViewProps) {
                   defaultValue: 'Failed to load page',
                 })}
               </p>
-              <p className="text-[13px] text-fg-label">{webviewError}</p>
+              <p className="text-sm text-fg-label">{webviewError}</p>
             </div>
           </div>
         )}

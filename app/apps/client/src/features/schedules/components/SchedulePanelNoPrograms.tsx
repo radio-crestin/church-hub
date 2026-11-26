@@ -18,7 +18,7 @@ export function SchedulePanelNoPrograms({
       className="px-4 py-6 text-center"
     >
       <CalendarDays className="w-8 h-8 mx-auto mb-2 text-fg-hint" />
-      <p className="text-[13px] text-fg-hint">{t('panel.noSchedules')}</p>
+      <p className="text-sm text-fg-hint">{t('panel.noSchedules')}</p>
       {canCreate && (
         <p className="text-xs text-fg-hint mt-1">
           {t('panel.noSchedulesDescription')}

@@ -30,7 +30,7 @@ export function GuideStep({
         {isDone ? <Check size={14} strokeWidth={1.75} aria-hidden /> : number}
       </span>
       <div className="min-w-0 flex-1 space-y-2">
-        <h3 className="flex flex-wrap items-center gap-2 text-[13px] font-medium text-fg">
+        <h3 className="flex flex-wrap items-center gap-2 text-sm font-medium text-fg">
           {title}
           {isDone && (
             <span className="text-xs font-normal text-ok">
@@ -43,7 +43,7 @@ export function GuideStep({
             </span>
           )}
         </h3>
-        <div className="space-y-2 text-[13px] text-fg-label">{children}</div>
+        <div className="space-y-2 text-sm text-fg-label">{children}</div>
       </div>
     </li>
   )

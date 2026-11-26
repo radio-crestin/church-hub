@@ -58,9 +58,7 @@ function VersionRowInfo({
   return (
     <>
       <div className="flex items-center gap-2">
-        <span className="truncate text-[13px] font-medium text-fg">
-          {title}
-        </span>
+        <span className="truncate text-sm font-medium text-fg">{title}</span>
         {isCurrent ? (
           <span className="shrink-0 text-xs text-fg-hint">
             {t('versions.currentBadge')}
@@ -243,7 +241,7 @@ function SuggestionsSection({
                 params={{ songId: String(s.songId) }}
                 className="min-w-0 flex-1"
               >
-                <p className="truncate text-[13px] font-medium text-fg">
+                <p className="truncate text-sm font-medium text-fg">
                   {s.title}
                 </p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-fg-hint">
@@ -424,7 +422,7 @@ export function SongVersionsPanel({
             className="h-4 w-4 shrink-0 text-fg-label"
             strokeWidth={1.5}
           />
-          <span className="truncate text-[13px] font-medium text-fg">
+          <span className="truncate text-sm font-medium text-fg">
             {t('versions.title')}
           </span>
           {memberCount > 0 ? (
@@ -470,7 +468,7 @@ export function SongVersionsPanel({
       {isCollapsed ? null : (
         <div className="flex-1 min-h-0 overflow-y-auto p-3">
           {isLoading ? (
-            <div className="flex items-center gap-2 text-[13px] text-fg-hint">
+            <div className="flex items-center gap-2 text-sm text-fg-hint">
               <Loader2 size={14} className="animate-spin" />
             </div>
           ) : !group ? (
