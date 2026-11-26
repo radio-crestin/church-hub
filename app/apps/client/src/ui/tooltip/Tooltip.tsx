@@ -14,6 +14,7 @@ import {
 } from './placeTooltip'
 
 interface TooltipProps {
+  /** What it says; empty: nothing shows. */
   content: string
   children: ReactNode
   /** The side it prefers; it flips and slides on its own to stay in the window. */
@@ -85,6 +86,7 @@ export function Tooltip({
     >
       {children}
       {isVisible &&
+        content &&
         createPortal(
           <div
             ref={tooltipRef}

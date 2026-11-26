@@ -12,6 +12,9 @@ interface SliderProps {
   formatValue?: (value: number) => string
   /** Test id of the range input */
   testId?: string
+  ariaLabel?: string
+  /** What a screen reader says for the value, e.g. "160 words a minute". */
+  ariaValueText?: string
 }
 
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(
@@ -27,6 +30,8 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       showValue = true,
       formatValue,
       testId,
+      ariaLabel,
+      ariaValueText,
     },
     ref,
   ) => {
@@ -38,6 +43,8 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
           ref={ref}
           type="range"
           data-testid={testId}
+          aria-label={ariaLabel}
+          aria-valuetext={ariaValueText}
           value={value[0]}
           onChange={(e) => onValueChange?.([parseFloat(e.target.value)])}
           min={min}

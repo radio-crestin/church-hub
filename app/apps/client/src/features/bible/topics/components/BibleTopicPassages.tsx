@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 
 import { useNavigateTemporary } from '~/features/presentation'
 import { BibleTopicSlideshowBar } from './BibleTopicSlideshowBar'
+import { VerseProgressRing } from '../../components/VerseProgressRing'
+import { useVerseLoopTimer } from '../../hooks/useVerseLoopTimer'
 import { useVerseSlideshow } from '../../hooks/useVerseSlideshow'
 import type { BibleVerse } from '../../types'
 import { useTopicLoopTemplate } from '../hooks/useTopicLoopTemplate'
@@ -42,6 +44,7 @@ export function BibleTopicPassages({
   const entries = useMemo(() => toSlideshowEntries(passages), [passages])
   const [templateId, setTemplateId] = useTopicLoopTemplate()
   const slideshow = useVerseSlideshow(`topic:${topicId}`, entries, templateId)
+  const countdown = useVerseLoopTimer(`topic:${topicId}`)
   const navigateSlideshow = useNavigateTemporary()
   const activeIndex =
     slideshow.position?.index ??
@@ -91,7 +94,10 @@ export function BibleTopicPassages({
         >
           <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <span className="text-xs tabular-nums text-fg-hint">
+        <span
+          data-testid="bible-topic-position"
+          className="text-xs tabular-nums text-fg-hint"
+        >
           {activeIndex >= 0 ? activeIndex + 1 : '–'}/{passages.length}
         </span>
         <button
@@ -155,6 +161,15 @@ export function BibleTopicPassages({
                       ))}
                     </span>
                   </button>
+                  {slideshow.isPlaying && countdown?.entryIndex === index && (
+                    <span className="mt-2.5 flex-none">
+                      <VerseProgressRing
+                        key={countdown.endsAt}
+                        countdown={countdown}
+                        testId="bible-topic-progress"
+                      />
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => onOpenVerse(first)}

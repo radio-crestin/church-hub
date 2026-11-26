@@ -482,7 +482,8 @@
       "title": "Choose a theme",
       "change": "Change theme",
       "close": "Close",
-      "manage": "Manage themes"
+      "manage": "Manage themes",
+      "current": "Theme: {{name}}"
     },
     "page": {
       "title": "Themes",
