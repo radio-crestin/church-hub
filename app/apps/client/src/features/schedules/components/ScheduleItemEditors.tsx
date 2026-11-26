@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  type ReactNode,
   useCallback,
   useImperativeHandle,
   useRef,
@@ -13,6 +14,7 @@ import { PptxImportDialog } from '~/features/slides-deck/pptx-import/components/
 import { useImportPptxItem } from '~/features/slides-deck/pptx-import/hooks/useImportPptxItem'
 import { SongEditorModal } from '~/features/songs/components'
 import { useToast } from '~/ui/toast'
+import { AddPresentationItemsModal } from './AddPresentationItemsModal'
 import { AddScheduleItemModal } from './AddScheduleItemModal'
 import { BiblePassagePickerModal } from './BiblePassagePickerModal'
 import { InsertSlideModal } from './InsertSlideModal'
@@ -33,6 +35,12 @@ export interface ScheduleItemEditorsHandle {
 
 interface ScheduleItemEditorsProps {
   scheduleId: number
+  /** New items go right after this item; without it, at the end. */
+  afterItemId?: number
+  /** Where new items go, shown above the add menu's kinds (the control room's). */
+  placement?: ReactNode
+  /** The add menu also copies another presentation's items. */
+  canAddPresentation?: boolean
   /** Called after anything is added or saved, so the caller can refetch. */
   onChanged?: () => void
 }
@@ -54,7 +62,10 @@ interface ScheduleItemEditorsProps {
 export const ScheduleItemEditors = forwardRef<
   ScheduleItemEditorsHandle,
   ScheduleItemEditorsProps
->(function ScheduleItemEditors({ scheduleId, onChanged }, ref) {
+>(function ScheduleItemEditors(
+  { scheduleId, afterItemId, placement, canAddPresentation, onChanged },
+  ref,
+) {
   const { t } = useTranslation('schedules')
   const { showToast } = useToast()
   const addItemMutation = useAddItemToSchedule()
@@ -70,6 +81,7 @@ export const ScheduleItemEditors = forwardRef<
   const [editingBiblePassageItem, setEditingBiblePassageItem] =
     useState<ScheduleItem | null>(null)
   const [showScenePicker, setShowScenePicker] = useState(false)
+  const [showPresentationPicker, setShowPresentationPicker] = useState(false)
   const [editingSongId, setEditingSongId] = useState<number | null>(null)
   const mediaEditorsRef = useRef<MediaItemEditorsHandle>(null)
   const addDeck = useAddDeckItem(scheduleId, onChanged)
@@ -101,24 +113,27 @@ export const ScheduleItemEditors = forwardRef<
   const handleAddSong = useCallback(
     (songId: number) => {
       addItemMutation.mutate(
-        { scheduleId, input: { songId } },
+        { scheduleId, input: { songId, afterItemId } },
         {
           onSuccess: () => onChanged?.(),
           onError: () => showToast(t('messages.error'), 'error'),
         },
       )
     },
-    [addItemMutation, onChanged, scheduleId, showToast, t],
+    [addItemMutation, afterItemId, onChanged, scheduleId, showToast, t],
   )
 
   const handleSceneSelect = useCallback(
     (obsSceneName: string) => {
       addItemMutation.mutate(
-        { scheduleId, input: { slideType: 'scene', obsSceneName } },
+        {
+          scheduleId,
+          input: { slideType: 'scene', obsSceneName, afterItemId },
+        },
         { onSuccess: () => onChanged?.() },
       )
     },
-    [addItemMutation, onChanged, scheduleId],
+    [addItemMutation, afterItemId, onChanged, scheduleId],
   )
 
   return (
@@ -133,11 +148,27 @@ export const ScheduleItemEditors = forwardRef<
           setShowSlideModal(true)
         }}
         onAddScene={() => setShowScenePicker(true)}
-        onAddMedia={(type) => mediaEditorsRef.current?.add(type)}
-        onAddDeck={() => addDeck()}
-        onImportPptx={() => importPptx()}
+        onAddMedia={(type) => mediaEditorsRef.current?.add(type, afterItemId)}
+        onAddDeck={() => addDeck(afterItemId)}
+        onImportPptx={() => importPptx(afterItemId)}
+        onAddPresentation={
+          canAddPresentation ? () => setShowPresentationPicker(true) : undefined
+        }
+        placement={placement}
         showTrigger={false}
       />
+
+      {showPresentationPicker && (
+        <AddPresentationItemsModal
+          scheduleId={scheduleId}
+          afterItemId={afterItemId}
+          onClose={(added) => {
+            setShowPresentationPicker(false)
+            if (added) onChanged?.()
+            else setShowAddMenu(true)
+          }}
+        />
+      )}
 
       <PptxImportDialog pptx={pptx} />
 
@@ -157,6 +188,7 @@ export const ScheduleItemEditors = forwardRef<
           setEditingSlideItem(null)
         }}
         scheduleId={scheduleId}
+        afterItemId={editingSlideItem ? undefined : afterItemId}
         initialTemplate={slideTemplate}
         editingItem={
           editingSlideItem

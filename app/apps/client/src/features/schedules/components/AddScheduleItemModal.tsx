@@ -6,6 +6,7 @@ import {
   FileText,
   FileUp,
   Film,
+  ListChecks,
   ListMusic,
   Loader2,
   Megaphone,
@@ -14,7 +15,7 @@ import {
   Presentation,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { SongSearchPicker } from '~/features/songs/components/SongSearchPicker'
@@ -45,6 +46,10 @@ interface AddScheduleItemModalProps {
   onAddDeck?: () => void
   /** A Slides item from a PowerPoint file the operator picks. */
   onImportPptx?: () => void
+  /** Another presentation's items, copied in. */
+  onAddPresentation?: () => void
+  /** Where the new item goes, shown above the kinds. */
+  placement?: ReactNode
   /**
    * `false` for a host that opens the modal from its own control — the
    * Programe panel, whose "+" can move into its header's "More" menu.
@@ -103,6 +108,8 @@ export function AddScheduleItemModal({
   onAddMedia,
   onAddDeck,
   onImportPptx,
+  onAddPresentation,
+  placement,
   showTrigger = true,
 }: AddScheduleItemModalProps) {
   const { t } = useTranslation('common')
@@ -114,6 +121,7 @@ export function AddScheduleItemModal({
   const [isAdding, setIsAdding] = useState(false)
   const { data: previewSong, isLoading: previewLoading } =
     useSong(previewSongId)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -150,6 +158,12 @@ export function AddScheduleItemModal({
     dialog.addEventListener('cancel', handleCancel)
     return () => dialog.removeEventListener('cancel', handleCancel)
   }, [handleClose, step])
+
+  // Enter adds the song once its preview is up.
+  const canConfirm = step === 'preview' && !!previewSong
+  useEffect(() => {
+    if (canConfirm) addButtonRef.current?.focus()
+  }, [canConfirm])
 
   /** Hands off to a dedicated editor: close this modal, then run the action. */
   const handHandoff = useCallback(
@@ -244,6 +258,17 @@ export function AddScheduleItemModal({
           } satisfies MenuOption,
         ]
       : []),
+    ...(onAddPresentation
+      ? [
+          {
+            key: 'presentation',
+            icon: ListChecks,
+            titleKey: 'addMenu.importSchedule.title',
+            descriptionKey: 'addMenu.importSchedule.description',
+            onSelect: () => handHandoff(onAddPresentation),
+          } satisfies MenuOption,
+        ]
+      : []),
   ]
 
   const isSongStep = step === 'song'
@@ -260,7 +285,7 @@ export function AddScheduleItemModal({
             onClick={() => onOpenChange(true)}
             data-testid="schedule-add-item"
             aria-label={t('addMenu.button')}
-            className="flex items-center p-2 text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
+            className="flex items-center p-2 text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
           >
             <Plus size={16} strokeWidth={1.5} />
           </button>
@@ -275,7 +300,7 @@ export function AddScheduleItemModal({
         }}
         // The menu stays compact; the song step expands to ~90% of the viewport
         // so searching the library doesn't happen through a keyhole.
-        className={`fixed inset-0 m-auto p-0 bg-panel rounded-xl border border-line shadow-popover backdrop:bg-black/50 ${
+        className={`fixed inset-0 m-auto p-0 bg-panel rounded-[10px] border border-line shadow-popover backdrop:bg-black/50 ${
           isLargeStep
             ? 'h-[90vh] w-[90vw] max-w-none'
             : 'w-full max-w-sm max-h-[90vh]'
@@ -409,8 +434,9 @@ export function AddScheduleItemModal({
                       type="button"
                       onClick={handleConfirmAdd}
                       disabled={isAdding || !previewSong}
+                      ref={addButtonRef}
                       data-testid="add-schedule-item-preview-add"
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary h-9 px-3.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
                     >
                       {isAdding ? (
                         <Loader2
@@ -429,6 +455,7 @@ export function AddScheduleItemModal({
             </>
           ) : (
             <div className="p-4 space-y-2 overflow-y-auto scrollbar-thin">
+              {placement}
               {options.map((option) => {
                 const Icon = option.icon
                 return (
