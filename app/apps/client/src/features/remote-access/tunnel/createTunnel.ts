@@ -25,16 +25,30 @@ export interface Tunnel {
     close: () => void
   }
   onClose: (listener: () => void) => void
+  /** Ends the tunnel: its onClose listeners are called. */
+  close: () => void
 }
 
 const toBytes = (base64: string) =>
   Uint8Array.from(atob(base64), (char) => char.charCodeAt(0))
 
 /**
- * Requests and WebSockets to the computer's server over an open data
- * channel (the computer replays them: server service/remote-access).
+ * The text channel a tunnel runs over: a WebRTC data channel to the
+ * computer, or the messages of the worker running the server in this
+ * browser (browser-server).
  */
-export function createTunnel(channel: RTCDataChannel): Tunnel {
+export interface TunnelChannel {
+  send(text: string): void
+  close(): void
+  onmessage: ((event: MessageEvent) => void) | null
+  onclose: ((event: Event) => void) | null
+}
+
+/**
+ * Requests and WebSockets to a server over an open channel (it replays
+ * them: server service/remote-access/tunnelSession.ts).
+ */
+export function createTunnel(channel: TunnelChannel): Tunnel {
   let nextId = 0
   const pending = new Map<number, (response: TunnelResponse) => void>()
   const sockets = new Map<number, TunnelSocketEvents>()
@@ -68,7 +82,14 @@ export function createTunnel(channel: RTCDataChannel): Tunnel {
     }
   })
 
-  channel.onclose = () => {
+  let closed = false
+  /**
+   * Once, whichever comes first: the channel's close event, or close() (a
+   * failed connection can end the channel without that event).
+   */
+  const shutdown = () => {
+    if (closed) return
+    closed = true
     for (const resolve of pending.values()) {
       resolve({ status: 503, headers: [], body: new Uint8Array() })
     }
@@ -77,6 +98,7 @@ export function createTunnel(channel: RTCDataChannel): Tunnel {
     sockets.clear()
     for (const listener of closeListeners) listener()
   }
+  channel.onclose = shutdown
 
   return {
     request: (message) =>
@@ -95,5 +117,9 @@ export function createTunnel(channel: RTCDataChannel): Tunnel {
       }
     },
     onClose: (listener) => closeListeners.push(listener),
+    close: () => {
+      channel.close()
+      shutdown()
+    },
   }
 }

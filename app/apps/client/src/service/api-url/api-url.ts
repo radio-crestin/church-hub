@@ -11,6 +11,13 @@ import { toSafeHttpUrl } from '~/utils/toSafeHttpUrl'
 const API_URL_STORAGE_KEY = 'church-hub-api-url'
 const USER_AUTH_STORAGE_KEY = 'church-hub-user-auth'
 
+/**
+ * The web app keeps its session in memory only: a phone stores no login,
+ * it signs in again on each start (T-175).
+ */
+const SESSION_IN_MEMORY = import.meta.env.VITE_PUBLIC_APP === '1'
+let sessionToken: string | null = null
+
 // Pattern to match auth URL: /api/auth/user/{token}
 // Token uses base64url encoding which includes A-Za-z0-9_- characters
 const AUTH_URL_PATTERN = /\/api\/auth\/user\/(usr_[A-Za-z0-9_-]+)$/
@@ -61,6 +68,7 @@ export function getStoredApiUrl(): string | null {
  * Gets the stored user auth token from localStorage
  */
 export function getStoredUserToken(): string | null {
+  if (SESSION_IN_MEMORY) return sessionToken
   if (typeof window === 'undefined') return null
 
   try {
@@ -76,6 +84,12 @@ export function getStoredUserToken(): string | null {
  * macOS WKWebView over http://localhost).
  */
 export function setStoredUserToken(token: string): void {
+  if (SESSION_IN_MEMORY) {
+    sessionToken = token
+    // Stored by a web app before T-175.
+    localStorage.removeItem(USER_AUTH_STORAGE_KEY)
+    return
+  }
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(USER_AUTH_STORAGE_KEY, token)
@@ -89,6 +103,7 @@ export function setStoredUserToken(token: string): void {
  * (mobile pairing) intact.
  */
 export function clearStoredUserToken(): void {
+  sessionToken = null
   if (typeof window === 'undefined') return
   try {
     localStorage.removeItem(USER_AUTH_STORAGE_KEY)

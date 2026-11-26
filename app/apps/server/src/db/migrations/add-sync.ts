@@ -1,6 +1,7 @@
 import { hostname } from 'node:os'
 
 import type { Database } from 'bun:sqlite'
+import { BUMP_PENDING_SEQ, PENDING_SEQ } from '../../service/sync/pendingSeqSql'
 import {
   SYNCED_TABLES,
   type SyncedTable,
@@ -55,10 +56,12 @@ const AUTHOR = '(SELECT acting_user FROM sync_state WHERE id = 1)'
  * failed on sync_pending's primary key.
  */
 const QUEUE_CHANGE = (entityType: string, uuid: string) => `
-      INSERT INTO sync_pending (entity_type, entity_uuid, queued_at, author)
-        VALUES ('${entityType}', ${uuid}, unixepoch(), ${AUTHOR})
+      ${BUMP_PENDING_SEQ};
+      INSERT INTO sync_pending (entity_type, entity_uuid, queued_at, author, seq)
+        VALUES ('${entityType}', ${uuid}, unixepoch(), ${AUTHOR}, ${PENDING_SEQ})
         ON CONFLICT (entity_type, entity_uuid) DO UPDATE SET
-          queued_at = excluded.queued_at, author = excluded.author;`
+          queued_at = excluded.queued_at, author = excluded.author,
+          seq = excluded.seq;`
 
 /**
  * Child tables whose edits count as an edit of their aggregate root: the
@@ -178,6 +181,13 @@ function createSyncTables(db: Database): void {
     db.run('ALTER TABLE sync_state ADD COLUMN acting_user TEXT')
   }
 
+  if (!columnExists(db, 'sync_state', 'pending_seq')) {
+    log('info', 'Adding "pending_seq" column to "sync_state"...')
+    db.run(
+      'ALTER TABLE sync_state ADD COLUMN pending_seq INTEGER NOT NULL DEFAULT 0',
+    )
+  }
+
   // Singleton state row; also resets a stale `applying` flag left behind by a
   // crash mid-apply, which would otherwise disable change tracking forever.
   db.run(`
@@ -205,6 +215,14 @@ function createSyncTables(db: Database): void {
   if (!columnExists(db, 'sync_pending', 'author')) {
     log('info', 'Adding "author" column to "sync_pending"...')
     db.run('ALTER TABLE sync_pending ADD COLUMN author TEXT')
+  }
+
+  // The order changes were queued in (sync_state.pending_seq counts them):
+  // a sync clears exactly the changes it read and sent, even when one is
+  // queued again within the same second (queued_at).
+  if (!columnExists(db, 'sync_pending', 'seq')) {
+    log('info', 'Adding "seq" column to "sync_pending"...')
+    db.run('ALTER TABLE sync_pending ADD COLUMN seq INTEGER NOT NULL DEFAULT 0')
   }
 
   if (!tableExists(db, 'sync_tombstones')) {

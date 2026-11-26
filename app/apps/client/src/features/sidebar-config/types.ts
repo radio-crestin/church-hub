@@ -156,6 +156,8 @@ export interface BuiltInItemDefinition {
   labelKey: string
   to: string
   permission: Permission
+  /** Served only by the church PC (its hardware or files): the web app leaves it out. */
+  pcOnly?: boolean
 }
 
 /**
