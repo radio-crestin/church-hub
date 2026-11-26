@@ -1,5 +1,6 @@
 import {
   type APIRequestContext,
+  type APIResponse,
   expect,
   type Page,
   test,
@@ -474,6 +475,77 @@ async function frameIntervalsDuring(
   return stamps.slice(1).map((stamp, i) => stamp - stamps[i])
 }
 
+/** The main projection's factory fade out when the presentation ends. */
+const EXIT_MS = 400
+
+/** Every way the slide leaves the screen, and the request that does it. */
+const EXITS: [string, (request: APIRequestContext) => Promise<APIResponse>][] =
+  [
+    ['after the last slide', nextSlide],
+    [
+      'when hidden (Esc)',
+      (request) => request.post('/api/presentation/clear-temporary'),
+    ],
+    [
+      'when the presentation stops',
+      (request) => request.post('/api/presentation/stop'),
+    ],
+  ]
+
+interface ExitFrame {
+  /** The frame's time (ms) */
+  t: number
+  /** How opaque the slide's text looks */
+  opacity: number
+  /** Whether the text is still on the page */
+  present: boolean
+}
+
+/**
+ * Samples every frame from just before `action` until the text containing
+ * `text` has been gone for 10 frames (or 3 s).
+ */
+async function sampleExit(
+  page: Page,
+  text: string,
+  action: () => Promise<unknown>,
+): Promise<ExitFrame[]> {
+  await page.evaluate(
+    (text) =>
+      new Promise<void>((started) => {
+        const frames: ExitFrame[] = []
+        let goneFrames = 0
+        ;(window as unknown as { __exit: Promise<ExitFrame[]> }).__exit =
+          new Promise((resolve) => {
+            const sample = (t: number) => {
+              const anchor = [
+                ...document.querySelectorAll<HTMLElement>(
+                  '[data-style-anchor]',
+                ),
+              ].find((element) => element.textContent?.includes(text))
+              let opacity = anchor ? 1 : 0
+              for (let el = anchor ?? null; el; el = el.parentElement) {
+                opacity *= Number(getComputedStyle(el).opacity)
+              }
+              frames.push({ t, opacity, present: !!anchor })
+              goneFrames = anchor ? 0 : goneFrames + 1
+              if (goneFrames >= 10 || t - frames[0].t > 3000) resolve(frames)
+              else requestAnimationFrame(sample)
+            }
+            requestAnimationFrame((t) => {
+              sample(t)
+              started()
+            })
+          })
+      }),
+    text,
+  )
+  await action()
+  return page.evaluate(
+    () => (window as unknown as { __exit: Promise<ExitFrame[]> }).__exit,
+  )
+}
+
 /** Median frame interval about 16.7 ms or less and no frame over 50 ms. */
 function expectSteadyFrames(label: string, intervals: number[]) {
   const sorted = [...intervals].sort((a, b) => a - b)
@@ -495,7 +567,7 @@ function expectSteadyFrames(label: string, intervals: number[]) {
   expect(sorted.at(-1), `${label}: longest frame (ms)`).toBeLessThan(50)
 }
 
-test.describe('A word change runs at a steady frame rate on a full HD projector', () => {
+test.describe('Slide changes and exits run at a steady frame rate on a full HD projector', () => {
   test.use({ viewport: { width: 1920, height: 1080 } })
   let screenId: number | undefined
   let songId: number | undefined
@@ -551,4 +623,42 @@ test.describe('A word change runs at a steady frame rate on a full HD projector'
     await expect(page.getByText(VERSES[1].text).last()).toBeVisible()
     expectSteadyFrames('Ioan 3:16 to Ioan 3:17', intervals)
   })
+
+  for (const [exit, leave] of EXITS) {
+    test(`the slide fades out smoothly ${exit}`, async ({ page, request }) => {
+      await request.post('/api/presentation/temporary-song', {
+        data: { songId, slideIndex: 1 },
+      })
+      await page.goto(`/screen/${screenId}`)
+      await expect(page.locator('[data-style-anchor]')).toContainText(
+        TAKEOVER[1],
+      )
+      await page.waitForTimeout(800)
+
+      const frames = await sampleExit(page, TAKEOVER[1], async () =>
+        expect((await leave(request)).ok()).toBeTruthy(),
+      )
+      const opacities = frames.map((frame) => frame.opacity)
+      expect(opacities.some(isFading), 'the text passes through a fade').toBe(
+        true,
+      )
+      // It eases down to nothing: never brighter again once it starts.
+      const start = opacities.findIndex((opacity) => opacity < 0.99)
+      for (let i = start + 1; i < opacities.length; i++) {
+        expect(opacities[i]).toBeLessThanOrEqual(opacities[i - 1] + 0.01)
+      }
+      const gone = opacities.findIndex(
+        (opacity, i) => i > start && opacity === 0,
+      )
+      const fadeMs = frames[gone].t - frames[start].t
+      expect(fadeMs, 'fade length (ms)').toBeGreaterThanOrEqual(EXIT_MS * 0.6)
+      expect(fadeMs, 'fade length (ms)').toBeLessThanOrEqual(EXIT_MS + 150)
+      expect(frames.at(-1)?.present, 'the text is removed').toBe(false)
+      await expect(page.getByText(TAKEOVER[1])).toHaveCount(0)
+      expectSteadyFrames(
+        `fade out ${exit}`,
+        frames.slice(1).map((frame, i) => frame.t - frames[i].t),
+      )
+    })
+  }
 })

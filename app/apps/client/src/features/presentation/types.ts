@@ -553,6 +553,7 @@ export type EasingType =
   | 'ease-in'
   | 'ease-out'
   | 'ease-in-out'
+  | `cubic-bezier(${number}, ${number}, ${number}, ${number})`
 
 /**
  * Animation configuration
