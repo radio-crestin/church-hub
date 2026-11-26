@@ -14,7 +14,16 @@ export interface Bindings {
   GITHUB_TOKEN: string
   SIGNALING_KV: KVNamespace
   // "Request a feature": screenshots, abuse limit and WhatsApp (WAHA) notice.
-  FEATURE_REQUEST_SCREENSHOTS: R2Bucket
+  /** Optional R2 bucket; without it screenshots go to the S3 bucket (S3_*). */
+  FEATURE_REQUEST_SCREENSHOTS?: R2Bucket
+  /** S3 bucket for screenshots (default S3_STATE_BUCKET, then S3_BUCKET). */
+  FEATURE_REQUEST_S3_BUCKET?: string
+  /**
+   * This service's public origin (e.g. https://backend.example.org), used for
+   * links it hands out (screenshot URLs, the listener page, the owner sign-in
+   * callback) instead of the request's Host. Default: the request URL.
+   */
+  PUBLIC_BASE_URL?: string
   FEATURE_REQUEST_RATE_LIMITER: RateLimit
   WAHA_URL?: string
   WAHA_API_KEY?: string

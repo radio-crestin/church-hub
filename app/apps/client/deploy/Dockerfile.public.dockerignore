@@ -1,0 +1,16 @@
+# Only what the public web app's build reads (context = repository root).
+*
+!app/package.json
+!app/bun.lock
+!app/bunfig.toml
+!app/tsconfig.json
+!app/tauri/tauri.conf.json
+!app/apps/server/package.json
+!app/packages
+!app/apps/client
+**/node_modules
+app/apps/client/dist
+app/apps/client/dist-public
+app/apps/client/e2e
+app/apps/client/test-results
+app/apps/client/playwright-report
