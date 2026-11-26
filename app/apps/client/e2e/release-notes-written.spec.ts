@@ -71,17 +71,27 @@ test('release.sh refuses to bump a version whose notes are not written', async (
   expect('code' in result && result.code).toBe(1)
   expect(result.stderr).toContain('no release notes for v99.0.0 yet')
   expect(result.stderr).toContain('written-notes.json')
-  const head = execFileSync(
-    'git',
-    ['log', '-1', '--no-merges', '--format=%s'],
-    {
-      cwd: REPO_DIR,
-      encoding: 'utf-8',
-      timeout: 10_000,
-    },
-  ).trim()
-  expect(result.stderr).toContain(`- ${head}`)
+  // The commits since the last tag: none when the suite runs on the tag itself.
+  const lastTag = git([
+    'describe',
+    '--tags',
+    '--abbrev=0',
+    '--match',
+    'v[0-9]*',
+  ])
+  expect(result.stderr).toContain(`The commits since ${lastTag}:`)
+  expect(result.stderr).toContain(
+    git(['log', '--no-merges', '--format=- %s', `${lastTag}..HEAD`]),
+  )
 })
+
+function git(args: string[]): string {
+  return execFileSync('git', args, {
+    cwd: REPO_DIR,
+    encoding: 'utf-8',
+    timeout: 10_000,
+  }).trim()
+}
 
 test('Settings > About shows the written notes in the app language, not the commits', async ({
   page,

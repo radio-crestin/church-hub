@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 
-import { BACKEND_DIR, installBackendDependencies } from './backend-dependencies'
+import { BACKEND_DIR } from './backend-dependencies'
 
 const BOOT_TIMEOUT_MS = 60_000
 
@@ -26,7 +26,6 @@ export async function startBackendProcess(
   env: Record<string, string>,
   { ready, failed }: ReadySignals,
 ): Promise<BackendProcess> {
-  installBackendDependencies()
   const child = spawn(
     process.platform === 'win32' ? 'bun.exe' : 'bun',
     [script],
