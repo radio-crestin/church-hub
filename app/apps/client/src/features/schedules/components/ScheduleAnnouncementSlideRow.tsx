@@ -38,22 +38,21 @@ export function ScheduleAnnouncementSlideRow({
       onClick={() => onAnnouncementClick(item)}
       className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
         isPresented
-          ? 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
-          : 'hover:bg-gray-100 dark:hover:bg-gray-700 bg-gray-50 dark:bg-gray-900/50'
+          ? 'bg-live-tint ring-1 ring-inset ring-live'
+          : 'hover:bg-hover'
       }`}
     >
       <div className="flex items-start gap-2">
         <FileText
           size={16}
           className={`flex-shrink-0 mt-0.5 ${
-            isPresented ? 'text-green-600 dark:text-green-400' : 'text-gray-400'
+            isPresented ? 'text-fg-label' : 'text-fg-hint'
           }`}
+          strokeWidth={1.5}
         />
         <span
-          className={`text-sm line-clamp-3 ${
-            isPresented
-              ? 'text-green-900 dark:text-green-100'
-              : 'text-gray-600 dark:text-gray-400'
+          className={`text-[13px] line-clamp-3 ${
+            isPresented ? 'text-fg' : 'text-fg-body'
           }`}
         >
           {plainText}

@@ -103,11 +103,11 @@ export function ScreenEditorSidebar({
         />
       ) : (
         <>
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+          <div className="px-4 py-3 border-b border-line">
+            <h2 className="text-base font-semibold text-fg">
               {t('screens.sections.screenSettings')}
             </h2>
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-0.5 text-xs text-fg-hint">
               {t('screens.editor.selectHint')}
             </p>
           </div>

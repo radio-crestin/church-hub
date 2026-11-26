@@ -82,7 +82,7 @@ export function WorkspacePanelFrame({
       data-editing={editing ? 'true' : undefined}
       className={`relative h-full min-h-0 min-w-0 ${
         editing && !isDragging
-          ? 'rounded-lg outline-2 outline-dashed outline-indigo-400/70 -outline-offset-2'
+          ? 'rounded-lg outline-2 outline-dashed outline-focus/70 -outline-offset-2'
           : ''
       }`}
     >
@@ -111,9 +111,9 @@ export function WorkspacePanelFrame({
           data-testid={`workspace-move-${panel.id}`}
           title={t('workspace.movePanel', { panel: panel.title })}
           aria-label={t('workspace.movePanel', { panel: panel.title })}
-          className="absolute top-1.5 left-1/2 z-20 hidden h-4 w-10 -translate-x-1/2 cursor-grab items-center justify-center rounded-full border border-indigo-400 bg-indigo-500 text-white transition-colors hover:bg-indigo-600 active:cursor-grabbing lg:flex dark:border-indigo-500"
+          className="absolute top-1.5 left-1/2 z-20 hidden h-4 w-10 -translate-x-1/2 cursor-grab items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-indigo-700 active:cursor-grabbing lg:flex"
         >
-          <GripHorizontal size={12} />
+          <GripHorizontal size={12} strokeWidth={2} />
         </button>
       ) : null}
 

@@ -19,18 +19,16 @@ export function PropertyGlossary() {
   const { t } = useTranslation('privacy')
   return (
     <div>
-      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+      <h4 className="text-[13px] font-medium text-fg">
         {t('policy.propertiesTitle')}
       </h4>
-      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+      <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 text-[13px] sm:grid-cols-[auto_1fr]">
         {ALL_PROPERTIES.map((name) => (
           <div key={name} className="contents">
             <dt>
-              <code className="rounded bg-gray-100 px-1 text-xs dark:bg-gray-800">
-                {name}
-              </code>
+              <code className="rounded bg-field px-1 text-xs">{name}</code>
             </dt>
-            <dd className="mb-1 text-gray-700 dark:text-gray-300 sm:mb-0">
+            <dd className="mb-1 text-fg-body sm:mb-0">
               {t(`properties.${name}`)}
             </dd>
           </div>

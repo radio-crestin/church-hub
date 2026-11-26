@@ -21,31 +21,31 @@ function describeItem(
 ): { icon: React.ReactNode; title: string } {
   if (item.itemType === 'song') {
     return {
-      icon: <Music size={14} className="text-indigo-500" />,
+      icon: <Music size={14} className="text-fg" strokeWidth={1.75} />,
       title: item.song?.title ?? '',
     }
   }
   if (item.itemType === 'bible_passage') {
     return {
-      icon: <Book size={14} className="text-teal-500" />,
+      icon: <Book size={14} className="text-fg-label" strokeWidth={1.75} />,
       title: item.biblePassageReference ?? '',
     }
   }
   if (item.slideType === 'versete_tineri') {
     return {
-      icon: <User size={14} className="text-green-500" />,
+      icon: <User size={14} className="text-fg-label" strokeWidth={1.75} />,
       title: t('presenter.verseteTineri'),
     }
   }
   if (item.slideType === 'scene') {
     return {
-      icon: <Camera size={14} className="text-violet-500" />,
+      icon: <Camera size={14} className="text-fg" strokeWidth={1.75} />,
       title:
         item.slideContent || item.obsSceneName || t('slideTemplates.scene'),
     }
   }
   return {
-    icon: <Megaphone size={14} className="text-orange-500" />,
+    icon: <Megaphone size={14} className="text-fg-label" strokeWidth={1.75} />,
     title: t('presenter.announcement'),
   }
 }
@@ -81,10 +81,10 @@ export function ScheduleLiveItemPanel({
       className={`flex h-full flex-col overflow-hidden ${className}`}
       data-testid="schedule-live-item-panel"
     >
-      <div className="flex shrink-0 items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line pb-2">
         {icon}
         <span
-          className="min-w-0 flex-1 truncate text-sm font-medium text-gray-900 dark:text-white"
+          className="min-w-0 flex-1 truncate text-[13px] font-medium text-fg"
           data-testid="schedule-live-item-title"
         >
           {title}
@@ -97,14 +97,14 @@ export function ScheduleLiveItemPanel({
           onClick={() => clearTemporary.mutate()}
           disabled={clearTemporary.isPending}
           data-testid="schedule-live-item-stop"
-          className="flex shrink-0 items-center justify-center rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+          className="flex shrink-0 items-center justify-center rounded-md p-1 text-fg-hint transition-colors hover:bg-hover hover:text-fg-body disabled:opacity-50"
           title={t('panel.stopLiveItem')}
           aria-label={t('panel.stopLiveItem')}
         >
           {clearTemporary.isPending ? (
-            <Loader2 size={14} className="animate-spin" />
+            <Loader2 size={14} className="animate-spin" strokeWidth={1.75} />
           ) : (
-            <X size={14} />
+            <X size={14} strokeWidth={1.75} />
           )}
         </button>
       </div>

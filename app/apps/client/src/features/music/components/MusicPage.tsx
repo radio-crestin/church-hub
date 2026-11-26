@@ -132,7 +132,7 @@ export function MusicPage() {
       render: () => (
         <PlayerCard>
           <PlayerDeck player={player} />
-          <div className="flex flex-col lg:flex-1 lg:min-h-0 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col lg:flex-1 lg:min-h-0 border-t border-line">
             <PlayerQueue player={player} />
           </div>
         </PlayerCard>

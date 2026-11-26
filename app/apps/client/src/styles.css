@@ -1,16 +1,152 @@
+@import "@fontsource-variable/inter";
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Design tokens. DESIGN.md (repo root) is the source of truth for every value
+   below; change it there first. Components use the semantic colours
+   (bg-panel, text-fg-hint, ring-live, text-key, …), never raw hex. */
+@theme {
+  --font-sans:
+    "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* The gray palette is retuned to the design's neutral graphite, so the
+     existing gray-* classes already land on design values in both themes. */
+  --color-gray-50: #f1f1f1;
+  --color-gray-100: #e8e8e8;
+  --color-gray-200: #e3e3e3;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #8f8f8f;
+  --color-gray-500: #737373;
+  --color-gray-600: #4d4d4d;
+  --color-gray-700: #2a2a2a;
+  --color-gray-800: #1a1a1a;
+  --color-gray-900: #161616;
+  --color-gray-950: #111111;
+
+  /* indigo, violet and purple were the old accent: all three now resolve to
+     the design blue (primary #0070dd at 600). */
+  --color-indigo-50: #eef6ff;
+  --color-indigo-100: #d9ebff;
+  --color-indigo-200: #b3d7ff;
+  --color-indigo-300: #7dbcff;
+  --color-indigo-400: #3d9bff;
+  --color-indigo-500: #0a84ff;
+  --color-indigo-600: #0070dd;
+  --color-indigo-700: #005cb8;
+  --color-indigo-800: #004a94;
+  --color-indigo-900: #003b75;
+  --color-indigo-950: #00264d;
+  --color-violet-50: var(--color-indigo-50);
+  --color-violet-100: var(--color-indigo-100);
+  --color-violet-200: var(--color-indigo-200);
+  --color-violet-300: var(--color-indigo-300);
+  --color-violet-400: var(--color-indigo-400);
+  --color-violet-500: var(--color-indigo-500);
+  --color-violet-600: var(--color-indigo-600);
+  --color-violet-700: var(--color-indigo-700);
+  --color-violet-800: var(--color-indigo-800);
+  --color-violet-900: var(--color-indigo-900);
+  --color-violet-950: var(--color-indigo-950);
+  --color-purple-50: var(--color-indigo-50);
+  --color-purple-100: var(--color-indigo-100);
+  --color-purple-200: var(--color-indigo-200);
+  --color-purple-300: var(--color-indigo-300);
+  --color-purple-400: var(--color-indigo-400);
+  --color-purple-500: var(--color-indigo-500);
+  --color-purple-600: var(--color-indigo-600);
+  --color-purple-700: var(--color-indigo-700);
+  --color-purple-800: var(--color-indigo-800);
+  --color-purple-900: var(--color-indigo-900);
+  --color-purple-950: var(--color-indigo-950);
+}
+
+:root {
+  --ch-app: #f1f1f1;
+  --ch-panel: #ffffff;
+  --ch-field: #f1f1f1;
+  --ch-raised: #ffffff;
+  --ch-selected: #e6e6e6;
+  --ch-hover: #ececec;
+  --ch-line: #e3e3e3;
+  --ch-line-strong: #cccccc;
+  --ch-fg: #111111;
+  --ch-fg-body: #222222;
+  --ch-fg-label: #444444;
+  --ch-fg-hint: #5e5e5e;
+  --ch-primary: #0070dd;
+  --ch-focus: #0070dd;
+  --ch-live: #ce2c31;
+  --ch-live-tint: rgba(206, 44, 49, 0.05);
+  --ch-key: #7d5c00;
+  --ch-bookmark: #a67c00;
+  --ch-ok: #1f9d55;
+  --ch-keycap: rgba(0, 0, 0, 0.05);
+  --ch-keycap-ring: rgba(0, 0, 0, 0.12);
+  --ch-scrollbar: #c4c4c4;
+  --ch-scrollbar-hover: #a8a8a8;
+  --ch-shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.dark {
+  --ch-app: #111111;
+  --ch-panel: #161616;
+  --ch-field: #232323;
+  --ch-raised: #242424;
+  --ch-selected: #2b2b2b;
+  --ch-hover: #262626;
+  --ch-line: #262626;
+  --ch-line-strong: #3d3d3d;
+  --ch-fg: #ffffff;
+  --ch-fg-body: #e6e6e6;
+  --ch-fg-label: #a6a6a6;
+  --ch-fg-hint: #999999;
+  --ch-primary: #0070dd;
+  --ch-focus: #0099ff;
+  --ch-live: #eb5757;
+  --ch-live-tint: rgba(235, 87, 87, 0.06);
+  --ch-key: #f0c040;
+  --ch-bookmark: #f5c041;
+  --ch-ok: #30d158;
+  --ch-keycap: rgba(255, 255, 255, 0.06);
+  --ch-keycap-ring: rgba(255, 255, 255, 0.08);
+  --ch-scrollbar: #333333;
+  --ch-scrollbar-hover: #4a4a4a;
+  --ch-shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+@theme inline {
+  --color-app: var(--ch-app);
+  --color-panel: var(--ch-panel);
+  --color-field: var(--ch-field);
+  --color-raised: var(--ch-raised);
+  --color-selected: var(--ch-selected);
+  --color-hover: var(--ch-hover);
+  --color-line: var(--ch-line);
+  --color-line-strong: var(--ch-line-strong);
+  --color-fg: var(--ch-fg);
+  --color-fg-body: var(--ch-fg-body);
+  --color-fg-label: var(--ch-fg-label);
+  --color-fg-hint: var(--ch-fg-hint);
+  --color-primary: var(--ch-primary);
+  --color-focus: var(--ch-focus);
+  --color-live: var(--ch-live);
+  --color-live-tint: var(--ch-live-tint);
+  --color-key: var(--ch-key);
+  --color-bookmark: var(--ch-bookmark);
+  --color-ok: var(--ch-ok);
+  --color-keycap: var(--ch-keycap);
+  --color-keycap-ring: var(--ch-keycap-ring);
+  --shadow-popover: var(--ch-shadow-popover);
+}
+
 html {
-  @apply h-full bg-white dark:bg-gray-950;
+  @apply h-full bg-app;
 }
 
 body {
-  @apply m-0 h-full bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-x-hidden;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  @apply m-0 h-full bg-app text-fg overflow-x-hidden;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Enable fullscreen mode on iOS - extend content behind status bar */
@@ -96,7 +232,7 @@ button {
 .scrollbar-stable {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgb(209 213 219) transparent;
+  scrollbar-color: var(--ch-scrollbar) transparent;
 }
 
 .scrollbar-stable::-webkit-scrollbar {
@@ -108,26 +244,26 @@ button {
 }
 
 .scrollbar-stable::-webkit-scrollbar-thumb {
-  background-color: rgb(209 213 219);
+  background-color: var(--ch-scrollbar);
   border-radius: 4px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 .scrollbar-stable::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(156 163 175);
+  background-color: var(--ch-scrollbar-hover);
 }
 
 .dark .scrollbar-stable {
-  scrollbar-color: rgb(75 85 99 / 0.6) transparent;
+  scrollbar-color: var(--ch-scrollbar) transparent;
 }
 
 .dark .scrollbar-stable::-webkit-scrollbar-thumb {
-  background-color: rgb(75 85 99 / 0.6);
+  background-color: var(--ch-scrollbar);
 }
 
 .dark .scrollbar-stable::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(107 114 128 / 0.7);
+  background-color: var(--ch-scrollbar-hover);
 }
 
 /* Custom thin scrollbar — sized to feel like part of the surface (not a
@@ -135,7 +271,7 @@ button {
    reads as in-design rather than a stray gray rectangle. */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgb(209 213 219 / 0.5) transparent;
+  scrollbar-color: var(--ch-scrollbar) transparent;
   transition: scrollbar-color 0.15s ease;
 }
 
@@ -149,33 +285,33 @@ button {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(209 213 219 / 0.5);
+  background-color: var(--ch-scrollbar);
   border-radius: 3px;
   transition: background-color 0.15s ease;
 }
 
 .scrollbar-thin:hover::-webkit-scrollbar-thumb,
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(99 102 241 / 0.55);
+  background-color: var(--ch-scrollbar-hover);
 }
 
 .dark .scrollbar-thin {
-  scrollbar-color: rgb(75 85 99 / 0.4) transparent;
+  scrollbar-color: var(--ch-scrollbar) transparent;
 }
 
 .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgb(75 85 99 / 0.4);
+  background-color: var(--ch-scrollbar);
 }
 
 .dark .scrollbar-thin:hover::-webkit-scrollbar-thumb,
 .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(129 140 248 / 0.55);
+  background-color: var(--ch-scrollbar-hover);
 }
 
 /* Global scrollbar theming - applies to all scrollable elements */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(209 213 219 / 0.5) transparent;
+  scrollbar-color: var(--ch-scrollbar) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -188,73 +324,27 @@ button {
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: rgb(209 213 219 / 0.5);
+  background-color: var(--ch-scrollbar);
   border-radius: 3px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(156 163 175 / 0.7);
+  background-color: var(--ch-scrollbar-hover);
 }
 
 .dark *,
 .dark {
-  scrollbar-color: rgb(75 85 99 / 0.4) transparent;
+  scrollbar-color: var(--ch-scrollbar) transparent;
 }
 
 .dark *::-webkit-scrollbar-thumb,
 .dark::-webkit-scrollbar-thumb {
-  background-color: rgb(75 85 99 / 0.4);
+  background-color: var(--ch-scrollbar);
 }
 
 .dark *::-webkit-scrollbar-thumb:hover,
 .dark::-webkit-scrollbar-thumb:hover {
-  background-color: rgb(107 114 128 / 0.5);
-}
-
-/* Animated login brand panel ------------------------------------------------ */
-@keyframes login-gradient-pan {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes login-blob {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(24px, -32px) scale(1.12);
-  }
-  66% {
-    transform: translate(-18px, 22px) scale(0.94);
-  }
-}
-
-/* Pans a (200%-sized) gradient back and forth for a slow living background. */
-.login-gradient {
-  background-size: 200% 200%;
-  animation: login-gradient-pan 16s ease-in-out infinite;
-}
-
-.login-blob {
-  animation: login-blob 20s ease-in-out infinite;
-}
-
-.login-blob-slow {
-  animation: login-blob 28s ease-in-out infinite reverse;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .login-gradient,
-  .login-blob,
-  .login-blob-slow {
-    animation: none;
-  }
+  background-color: var(--ch-scrollbar-hover);
 }
 
 /* Wrong-password feedback: a quick horizontal shake on the input. -------- */
@@ -283,40 +373,6 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-shake {
-    animation: none;
-  }
-}
-
-/* Discover button: one living gradient shared by the border + the star icon,
-   so the colours visibly drift across both in sync. --------------------- */
-@keyframes discover-gradient-pan {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.discover-gradient {
-  background-image: linear-gradient(
-    110deg,
-    #6366f1,
-    #8b5cf6,
-    #d946ef,
-    #ec4899,
-    #8b5cf6,
-    #6366f1
-  );
-  background-size: 300% 300%;
-  animation: discover-gradient-pan 5s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .discover-gradient {
     animation: none;
   }
 }

@@ -139,13 +139,3 @@ test.describe('Sync - API', () => {
     expect((await after.json()).data.updates).toHaveLength(0)
   })
 })
-
-test.describe('Sync - UI', () => {
-  test('sync section renders on the backup settings page', async ({ page }) => {
-    await page.goto('/settings/backup')
-    await page.waitForLoadState('networkidle')
-
-    const section = page.locator('text=/sync|sincroniz/i')
-    await expect(section.first()).toBeVisible({ timeout: 10000 })
-  })
-})

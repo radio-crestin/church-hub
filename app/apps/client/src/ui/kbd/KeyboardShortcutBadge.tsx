@@ -14,17 +14,17 @@ export function KeyboardShortcutBadge({
   className = '',
 }: KeyboardShortcutBadgeProps) {
   const sizeClasses =
-    size === 'sm' ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-1 text-sm'
+    size === 'sm'
+      ? 'h-[18px] min-w-5 px-[5px] text-[11px] leading-[18px]'
+      : 'h-[22px] min-w-6 px-1.5 text-xs leading-[22px]'
 
   const variantClasses =
-    variant === 'default'
-      ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-      : 'bg-gray-100/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-500'
+    variant === 'default' ? 'text-fg-label' : 'text-fg-hint'
 
   // A touch screen has no keys to press: the hint only takes room there.
   return (
     <kbd
-      className={`font-sans font-medium rounded [@media(hover:none)]:hidden ${sizeClasses} ${variantClasses} ${className}`}
+      className={`inline-flex items-center justify-center box-border font-sans font-medium rounded-[5px] bg-keycap shadow-[inset_0_0_0_1px_var(--color-keycap-ring)] [@media(hover:none)]:hidden ${sizeClasses} ${variantClasses} ${className}`}
     >
       {formatShortcutForDisplay(shortcut)}
     </kbd>

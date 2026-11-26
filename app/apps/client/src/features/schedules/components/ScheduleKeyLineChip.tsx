@@ -21,8 +21,8 @@ export function ScheduleKeyLineChip({
   // The "no key" hint is left out on a phone, where the title needs the
   // room; the row's menu still sets the key there.
   const colorClass = keyLine
-    ? 'text-amber-600 dark:text-amber-400'
-    : 'max-sm:hidden border border-dashed border-gray-300 text-gray-400 dark:border-gray-600 dark:text-gray-500'
+    ? 'font-medium text-key'
+    : 'max-sm:hidden border border-dashed border-line-strong text-fg-hint'
   const className = `max-w-[8rem] shrink-0 truncate rounded px-1 text-xs ${colorClass}`
   const label = keyLine || t('keyLine.missing')
 
@@ -46,7 +46,7 @@ export function ScheduleKeyLineChip({
       title={t('contextMenu.editKeyLine')}
       data-testid={testId}
       data-missing={keyLine ? undefined : 'true'}
-      className={`${className} hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-900/20 dark:hover:text-amber-300`}
+      className={`${className} hover:bg-hover`}
     >
       {label}
     </button>

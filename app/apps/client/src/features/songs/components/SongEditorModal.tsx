@@ -236,14 +236,14 @@ export function SongEditorModal({
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
       data-testid="song-editor-modal"
-      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-7xl h-[calc(100dvh-2rem)] max-h-none p-0 rounded-lg bg-white dark:bg-gray-800 backdrop:bg-black/50 z-50"
+      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-7xl h-[calc(100dvh-2rem)] max-h-none p-0 rounded-lg bg-panel backdrop:bg-black/50 z-50"
     >
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-4 border-b border-line">
+          <h2 className="text-base font-semibold text-fg">
             {showLoading ? (
-              <span className="inline-block w-48 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <span className="inline-block w-48 h-6 bg-field rounded animate-pulse" />
             ) : (
               title || t('songs:editor.titlePlaceholder')
             )}
@@ -252,9 +252,9 @@ export function SongEditorModal({
             type="button"
             onClick={handleClose}
             disabled={upsertMutation.isPending}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-1 rounded hover:bg-hover disabled:opacity-50"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-fg-hint" />
           </button>
         </div>
 
@@ -284,12 +284,12 @@ export function SongEditorModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-line">
           <button
             type="button"
             onClick={handleClose}
             disabled={upsertMutation.isPending}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
+            className="h-9 px-3.5 text-[13px] font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50"
           >
             {t('common:buttons.cancel')}
           </button>
@@ -298,7 +298,7 @@ export function SongEditorModal({
             onClick={handleSave}
             disabled={upsertMutation.isPending || showLoading || !title.trim()}
             data-testid="song-editor-modal-save"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {upsertMutation.isPending ? (
               <Loader2 size={18} className="animate-spin" />

@@ -43,7 +43,7 @@ const TOOLS = [
 ] as const
 
 const iconButton =
-  'flex items-center justify-center w-10 h-10 rounded-full transition-colors'
+  'flex items-center justify-center w-10 h-10 rounded-lg transition-colors'
 
 /**
  * The markup palette, styled after iPad Markup: one rounded bar with the
@@ -61,7 +61,7 @@ export function MarkupToolbar({
   return (
     <div
       data-testid="feature-request-toolbar"
-      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 w-full sm:w-auto sm:self-center rounded-2xl sm:rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-sm px-3 py-1.5"
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 w-full sm:w-auto sm:self-center rounded-xl bg-panel border border-line px-3 py-1.5"
     >
       <div className="flex items-center gap-0.5" role="group">
         {TOOLS.map(({ id, icon: Icon, labelKey }) => (
@@ -73,21 +73,15 @@ export function MarkupToolbar({
             title={t(labelKey)}
             aria-pressed={tool === id}
             onClick={() => onToolChange(id)}
-            className={`${iconButton} ${tool === id ? 'bg-indigo-600 text-white shadow' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            className={`${iconButton} ${tool === id ? 'bg-selected text-fg' : 'text-fg-label hover:bg-hover hover:text-fg'}`}
           >
-            <Icon size={20} />
+            <Icon size={18} strokeWidth={1.5} />
           </button>
         ))}
       </div>
-      <span
-        aria-hidden="true"
-        className="hidden sm:block w-px h-6 bg-gray-300 dark:bg-gray-600"
-      />
+      <span aria-hidden="true" className="hidden sm:block w-px h-6 bg-line" />
       <ColorSwatches color={color} onChange={onColorChange} />
-      <span
-        aria-hidden="true"
-        className="hidden sm:block w-px h-6 bg-gray-300 dark:bg-gray-600"
-      />
+      <span aria-hidden="true" className="hidden sm:block w-px h-6 bg-line" />
       <button
         type="button"
         data-testid="feature-request-undo"
@@ -95,9 +89,9 @@ export function MarkupToolbar({
         title={t('common:featureRequest.undo')}
         disabled={!canUndo}
         onClick={onUndo}
-        className={`${iconButton} text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-35 disabled:hover:bg-transparent`}
+        className={`${iconButton} text-fg-body hover:bg-hover disabled:opacity-35 disabled:hover:bg-transparent`}
       >
-        <Undo2 size={20} />
+        <Undo2 strokeWidth={1.5} size={16} />
       </button>
     </div>
   )

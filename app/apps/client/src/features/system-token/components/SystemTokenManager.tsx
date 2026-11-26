@@ -73,10 +73,10 @@ export function SystemTokenManager() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <h3 className="text-base font-semibold text-fg mb-2">
         {t('sections.systemToken.title')}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+      <p className="text-fg-label text-[13px] mb-4">
         {t('sections.systemToken.description')}
       </p>
 
@@ -85,25 +85,25 @@ export function SystemTokenManager() {
           type="button"
           onClick={fetchToken}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm"
+          className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
         >
-          <Key className="w-4 h-4" />
+          <Key strokeWidth={1.5} className="w-4 h-4" />
           {isLoading
             ? t('sections.systemToken.loading')
             : t('sections.systemToken.showToken')}
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+          <div className="bg-field rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-[13px] font-medium text-fg-body">
                 {t('sections.systemToken.token')}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowToken(!showToken)}
-                  className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
                   title={
                     showToken
                       ? t('sections.systemToken.hide')
@@ -111,22 +111,22 @@ export function SystemTokenManager() {
                   }
                 >
                   {showToken ? (
-                    <EyeOff className="w-4 h-4" />
+                    <EyeOff strokeWidth={1.5} className="w-4 h-4" />
                   ) : (
-                    <Eye className="w-4 h-4" />
+                    <Eye strokeWidth={1.5} className="w-4 h-4" />
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={copyToken}
-                  className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
                   title={t('sections.systemToken.copy')}
                 >
-                  <Copy className="w-4 h-4" />
+                  <Copy strokeWidth={1.5} className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            <code className="block text-sm font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded break-all">
+            <code className="block text-[13px] font-mono text-fg-body bg-panel p-2 rounded-lg break-all">
               {showToken
                 ? tokenInfo?.token
                 : tokenInfo?.token.replace(/./g, '*')}
@@ -134,7 +134,7 @@ export function SystemTokenManager() {
           </div>
 
           {tokenInfo && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            <div className="text-xs text-fg-hint space-y-1">
               <p>
                 {t('sections.systemToken.createdAt')}:{' '}
                 {formatDate(tokenInfo.createdAt)}
@@ -151,9 +151,10 @@ export function SystemTokenManager() {
               type="button"
               onClick={regenerateToken}
               disabled={isRegenerating}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 text-sm"
+              className="inline-flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-field text-fg rounded-lg hover:bg-hover disabled:opacity-50"
             >
               <RefreshCw
+                strokeWidth={1.5}
                 className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`}
               />
               {isRegenerating

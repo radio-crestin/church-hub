@@ -32,7 +32,7 @@ export function TextStyleControls({
       : option,
   )
   const autoScale = style.autoScale ?? true
-  const labelClass = 'text-xs text-gray-500 dark:text-gray-400'
+  const labelClass = 'text-xs text-fg-label'
 
   return (
     <div className="space-y-3">
@@ -56,7 +56,7 @@ export function TextStyleControls({
           onCheckedChange={(checked) => onChange({ autoScale: !!checked })}
           label={t('screens.textStyle.autoScale')}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+        <p className="text-xs text-fg-hint ml-6">
           {t('screens.textStyle.autoScaleDescription')}
         </p>
       </div>
@@ -100,7 +100,7 @@ export function TextStyleControls({
             type="color"
             value={style.color}
             onChange={(e) => onChange({ color: e.target.value })}
-            className="w-10 h-8 rounded cursor-pointer"
+            className="w-10 h-8 rounded-lg cursor-pointer"
           />
           <Input
             value={style.color}
@@ -170,14 +170,14 @@ export function TextStyleControls({
             step={0.1}
             className="flex-1"
           />
-          <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+          <span className="text-xs text-fg-hint w-8 text-right">
             {(style.lineHeight ?? 1.3).toFixed(1)}
           </span>
         </div>
       </div>
 
       {/* Line compression */}
-      <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="space-y-2 pt-2 border-t border-line">
         <Checkbox
           checked={style.compressLines ?? false}
           onCheckedChange={(checked) => onChange({ compressLines: !!checked })}
@@ -207,7 +207,7 @@ export function TextStyleControls({
           onCheckedChange={(checked) => onChange({ fitLineToWidth: !!checked })}
           label={t('screens.textStyle.fitLineToWidth')}
         />
-        <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+        <p className="text-xs text-fg-hint ml-6">
           {t('screens.textStyle.fitLineToWidthDescription')}
         </p>
       </div>

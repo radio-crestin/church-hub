@@ -40,22 +40,25 @@ export function ScheduleRunButton({
       title={description}
       data-testid="schedule-run-button"
       data-running={isRunning ? 'true' : 'false'}
-      className={`flex items-center gap-2 rounded-lg text-sm text-white transition-colors disabled:opacity-50 ${
-        compact ? 'p-1.5' : 'px-2 py-1.5 lg:px-3'
+      className={`flex items-center justify-center gap-2 rounded-lg text-[13px] font-medium transition-colors disabled:opacity-50 ${
+        compact ? 'h-[26px] min-w-[26px] px-1.5' : 'h-8 px-2 lg:px-3'
       } ${
         isRunning
-          ? 'bg-red-600 hover:bg-red-700'
-          : 'bg-green-600 hover:bg-green-700'
+          ? 'bg-live-tint text-live ring-1 ring-inset ring-live'
+          : compact
+            ? 'text-fg-label hover:bg-hover hover:text-fg'
+            : 'bg-field text-fg hover:bg-hover'
       }`}
     >
       <Icon
-        className={`w-4 h-4 ${isPending ? 'animate-spin' : ''}`}
+        className={`${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} ${isPending ? 'animate-spin' : ''}`}
+        strokeWidth={compact ? 1.75 : 1.5}
         fill={isRunning && !isPending ? 'currentColor' : 'none'}
       />
       {!compact && <span className="hidden sm:inline">{label}</span>}
       {progress && (
         <span
-          className="rounded bg-white/20 px-1.5 text-xs tabular-nums"
+          className="text-xs tabular-nums"
           data-testid="schedule-run-progress"
         >
           {progress}

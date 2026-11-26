@@ -38,12 +38,10 @@ export function SongSlidesTextEditor({
         onChange={(e) => handleChange(e.target.value)}
         placeholder={t('editAsText.placeholder')}
         spellCheck={false}
-        className="block h-[60vh] min-h-64 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
+        className="block h-[60vh] min-h-64 w-full resize-y rounded-lg border border-line bg-panel px-3 py-2 font-mono text-sm text-fg placeholder:text-fg-hint focus:border-focus focus:ring-2 focus:ring-focus"
       />
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t('editAsText.formatHelp')}
-      </p>
-      <p className="text-sm text-indigo-600 dark:text-indigo-400">
+      <p className="text-xs text-fg-hint">{t('editAsText.formatHelp')}</p>
+      <p className="text-sm text-fg-label">
         {t('editAsText.preview', { count: slides.length })}
       </p>
     </div>

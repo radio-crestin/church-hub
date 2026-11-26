@@ -69,7 +69,7 @@ export function S3StorageSection() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {FIELDS.map(([field, type, required]) => (
             <label key={field} className="block space-y-1">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-fg-body">
                 {t(`songSources.storage.${field}`)}
               </span>
               <Input

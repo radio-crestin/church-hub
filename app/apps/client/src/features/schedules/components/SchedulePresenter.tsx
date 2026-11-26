@@ -741,7 +741,10 @@ export function SchedulePresenter({
   if (isLoading || !schedule) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
+        <Loader2
+          className="w-8 h-8 animate-spin text-fg-hint"
+          strokeWidth={1}
+        />
       </div>
     )
   }
@@ -774,8 +777,8 @@ export function SchedulePresenter({
       id: 'items',
       title: t('panel.itemsTitle'),
       render: () => (
-        <div className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-          <div className="flex items-center justify-between border-b border-gray-200 p-3 pb-2 lg:p-4 dark:border-gray-700">
+        <div className="flex h-full flex-col overflow-hidden rounded-xl border border-line bg-panel">
+          <div className="flex items-center justify-between border-b border-line p-3 pb-2 lg:p-4">
             <button
               type="button"
               onClick={() => {
@@ -786,15 +789,15 @@ export function SchedulePresenter({
                 }
                 setAllExpanded((prev) => !prev)
               }}
-              className="rounded-lg bg-gray-100 p-2 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={
                 allExpanded ? t('actions.collapseAll') : t('actions.expandAll')
               }
             >
               {allExpanded ? (
-                <ChevronsDownUp size={16} />
+                <ChevronsDownUp size={16} strokeWidth={1.5} />
               ) : (
-                <ChevronsUpDown size={16} />
+                <ChevronsUpDown size={16} strokeWidth={1.5} />
               )}
             </button>
             <div className="flex items-center gap-1.5">
@@ -803,9 +806,9 @@ export function SchedulePresenter({
                 type="button"
                 onClick={() => setShowEditAsText(true)}
                 data-testid="schedule-edit-as-text"
-                className="flex items-center gap-2 rounded-lg bg-amber-400 p-2 text-sm text-gray-900 transition-colors hover:bg-amber-500 sm:px-3 sm:py-1.5 dark:bg-amber-400 dark:hover:bg-amber-500"
+                className="flex h-8 items-center gap-2 rounded-lg bg-field px-2 text-[13px] font-medium text-fg transition-colors hover:bg-hover sm:px-3"
               >
-                <FileText size={16} />
+                <FileText size={16} strokeWidth={1.5} />
                 <span className="hidden sm:inline">
                   {t('actions.editAsText')}
                 </span>
@@ -890,8 +893,6 @@ export function SchedulePresenter({
     },
   ]
 
-  // A phone has no room for the file and delete buttons beside the title:
-  // they join the menu there.
   // On a phone the header has room for the name and the menu only, so Run
   // and Delete move into the menu.
   const phoneRunAction: ActionMenuItem[] = runToggle.allowed
@@ -903,9 +904,6 @@ export function SchedulePresenter({
             : runToggle.label,
           description: runToggle.description,
           icon: runToggle.isRunning ? <Square size={18} /> : <Play size={18} />,
-          iconClassName: runToggle.isRunning
-            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-            : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
           onSelect: runToggle.toggle,
           disabled: runToggle.isPending,
           active: runToggle.isRunning,
@@ -917,8 +915,6 @@ export function SchedulePresenter({
     id: 'delete-schedule',
     label: t('actions.delete'),
     icon: <Trash2 size={18} />,
-    iconClassName:
-      'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
     onSelect: () => setShowDeleteConfirm(true),
     testId: 'schedule-delete-action',
   }
@@ -933,8 +929,6 @@ export function SchedulePresenter({
             label: t('automation.title'),
             description: t('automation.menuDescription'),
             icon: <Timer size={18} />,
-            iconClassName:
-              'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
             onSelect: () => setAutomationOpen(true),
             active: showAutomationSection,
             testId: 'schedule-automation-action',
@@ -944,8 +938,6 @@ export function SchedulePresenter({
             label: t('actions.rename'),
             description: t('actions.renameDescription'),
             icon: <Pencil size={18} />,
-            iconClassName:
-              'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
             onSelect: handleStartEditTitle,
             testId: 'schedule-rename-action',
           },
@@ -959,8 +951,6 @@ export function SchedulePresenter({
                     'presentation:templates.presentation.menuDescription',
                   ),
                   icon: <LayoutTemplate size={18} />,
-                  iconClassName:
-                    'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
                   onSelect: () => setTemplateDialogOpen(true),
                   testId: 'schedule-template-action',
                 },
@@ -974,8 +964,6 @@ export function SchedulePresenter({
                     'presentation:templates.presentation.editDescription',
                   ),
                   icon: <Paintbrush size={18} />,
-                  iconClassName:
-                    'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
                   onSelect: () => setThemeEditorOpen(true),
                   testId: 'schedule-edit-theme-action',
                 },
@@ -993,8 +981,6 @@ export function SchedulePresenter({
         ) : (
           <Upload size={18} />
         ),
-      iconClassName:
-        'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
       onSelect: handleLoadFromFile,
       disabled: isLoadingFile || isImporting,
       testId: 'schedule-load-from-file-action',
@@ -1008,8 +994,6 @@ export function SchedulePresenter({
       ) : (
         <Download size={18} />
       ),
-      iconClassName:
-        'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
       onSelect: handleOpenExportModal,
       disabled: isSaving,
       testId: 'schedule-save-to-file-action',
@@ -1025,9 +1009,9 @@ export function SchedulePresenter({
           <button
             type="button"
             onClick={handleBack}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
+            className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-hover shrink-0"
           >
-            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
+            <ArrowLeft size={18} className="text-fg-label" strokeWidth={1.5} />
           </button>
           <div className="flex-1 min-w-0 mr-4 overflow-hidden group">
             {isEditingTitle ? (
@@ -1040,7 +1024,7 @@ export function SchedulePresenter({
                   onKeyDown={handleTitleKeyDown}
                   aria-label={t('modal.scheduleName')}
                   data-testid="schedule-title-input"
-                  className="flex-1 px-2 py-1 text-xl font-bold bg-white dark:bg-gray-900 border border-indigo-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white"
+                  className="flex-1 px-2 py-1 text-base font-semibold bg-field border border-transparent rounded-[10px] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus text-fg"
                 />
                 <button
                   type="button"
@@ -1049,7 +1033,7 @@ export function SchedulePresenter({
                   aria-label={t('actions.save')}
                   title={t('actions.save')}
                   data-testid="schedule-title-save"
-                  className="p-1.5 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                  className="p-1.5 text-fg-label hover:bg-hover rounded-lg transition-colors"
                 >
                   {upsertSchedule.isPending ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -1062,13 +1046,13 @@ export function SchedulePresenter({
                   onClick={handleCancelEditTitle}
                   aria-label={t('actions.cancel')}
                   title={t('actions.cancel')}
-                  className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  className="p-1.5 text-fg-hint hover:bg-hover rounded-lg transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
             ) : (
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-base font-semibold text-fg">
                 {canEditProgram ? (
                   <button
                     type="button"
@@ -1078,10 +1062,14 @@ export function SchedulePresenter({
                     })}
                     title={t('actions.rename')}
                     data-testid="schedule-title-edit"
-                    className="flex max-w-full items-center gap-2 rounded-lg text-left hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="flex max-w-full items-center gap-2 rounded-lg text-left hover:text-fg transition-colors"
                   >
                     <span className="truncate">{schedule.title}</span>
-                    <Pencil size={16} className="text-gray-400 shrink-0" />
+                    <Pencil
+                      size={16}
+                      className="text-fg-hint shrink-0"
+                      strokeWidth={1.5}
+                    />
                   </button>
                 ) : (
                   <span className="block truncate">{schedule.title}</span>
@@ -1110,9 +1098,9 @@ export function SchedulePresenter({
               onClick={() => setThemeEditorOpen(true)}
               title={t('presentation:templates.presentation.editDescription')}
               data-testid="schedule-edit-theme"
-              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm text-gray-700 hover:border-indigo-400 dark:border-gray-600 dark:text-gray-200"
+              className="flex h-8 items-center gap-1.5 rounded-lg bg-raised px-3 text-[13px] font-medium text-fg shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:bg-hover"
             >
-              <Paintbrush className="h-4 w-4" />
+              <Paintbrush className="h-4 w-4" strokeWidth={1.5} />
               {t('presentation:templates.presentation.edit')}
             </button>
           )}
@@ -1120,10 +1108,10 @@ export function SchedulePresenter({
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg transition-colors"
               title={t('actions.delete')}
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" strokeWidth={1.5} />
             </button>
           )}
           <ActionMenu
@@ -1284,34 +1272,34 @@ export function SchedulePresenter({
         onClick={(e) => {
           if (e.target === deleteDialogRef.current) setShowDeleteConfirm(false)
         }}
-        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-sm p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
       >
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <h3 className="text-base font-semibold text-fg mb-2">
             {t('modal.deleteTitle')}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-[13px] text-fg-label mb-6">
             {t('modal.deleteMessage')}
           </p>
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg transition-colors"
             >
-              <X size={16} />
+              <X size={16} strokeWidth={1.5} />
               {tCommon('buttons.cancel')}
             </button>
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleteSchedule.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
             >
               {deleteSchedule.isPending ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
               ) : (
-                <Trash2 size={16} />
+                <Trash2 size={16} strokeWidth={1.5} />
               )}
               {t('actions.delete')}
             </button>
@@ -1332,23 +1320,23 @@ export function SchedulePresenter({
             setImportData(null)
           }
         }}
-        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl backdrop:bg-black/50"
+        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-xl backdrop:bg-black/50"
       >
         <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <h3 className="text-base font-semibold text-fg mb-2">
             {t('import.title')}
           </h3>
           {importData && (
             <div className="space-y-4">
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-[13px] text-fg-label">
                 {t('import.message', { title: importData.schedule.title })}
               </p>
               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
+                <p className="text-[13px] text-amber-800 dark:text-amber-200">
                   {t('import.warning')}
                 </p>
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-[13px] text-fg-label">
                 <p>
                   {t('import.itemCount', { count: importData.items.length })}
                 </p>
@@ -1362,21 +1350,21 @@ export function SchedulePresenter({
                 setShowImportConfirmModal(false)
                 setImportData(null)
               }}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-gray-600 hover:bg-gray-700 dark:bg-gray-500 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium text-fg bg-field hover:bg-hover rounded-lg transition-colors"
             >
-              <X size={16} />
+              <X size={16} strokeWidth={1.5} />
               {tCommon('buttons.cancel')}
             </button>
             <button
               type="button"
               onClick={handleImportConfirm}
               disabled={isImporting}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 h-9 px-3.5 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
               {isImporting ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" strokeWidth={1.5} />
               ) : (
-                <Upload size={16} />
+                <Upload size={16} strokeWidth={1.5} />
               )}
               {t('import.confirm')}
             </button>

@@ -76,7 +76,7 @@ export function TrackPanel({
       <RecentSearches searches={searches} onPick={onSearchChange} />
       <div className="flex items-center gap-2">
         <h2
-          className="min-w-0 flex-1 truncate font-semibold text-gray-900 dark:text-white"
+          className="min-w-0 flex-1 truncate font-semibold text-fg"
           data-testid="music-view-title"
         >
           {isSearching ? t('tracks.resultsFor', { query }) : viewName}
@@ -93,7 +93,7 @@ export function TrackPanel({
       </div>
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-fg-hint" />
         </div>
       ) : tracks.length === 0 ? (
         <EmptyState
@@ -124,9 +124,7 @@ export function TrackPanel({
                     })
             }
           />
-          <p className="px-3 text-xs text-gray-500 dark:text-gray-400">
-            {t('tracks.hint')}
-          </p>
+          <p className="px-3 text-xs text-fg-hint">{t('tracks.hint')}</p>
         </>
       )}
     </div>

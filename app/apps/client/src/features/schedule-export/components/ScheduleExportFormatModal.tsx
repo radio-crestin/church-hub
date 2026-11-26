@@ -58,7 +58,7 @@ export function ScheduleExportFormatModal({
   return (
     <dialog
       ref={dialogRef}
-      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-white dark:bg-gray-800"
+      className="fixed inset-0 m-auto p-0 rounded-lg shadow-xl backdrop:bg-black/50 bg-panel"
       onClose={onCancel}
       onMouseDown={handleBackdropMouseDown}
       onClick={handleBackdropClick}
@@ -66,30 +66,28 @@ export function ScheduleExportFormatModal({
       <div className="p-6 min-w-[400px] max-w-lg">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Download className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Download className="w-5 h-5 text-fg" strokeWidth={1.5} />
+            <h2 className="text-base font-semibold text-fg">
               {t('export.formatTitle')}
             </h2>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors"
+            className="p-1 text-fg-hint hover:text-fg-label rounded transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
         </div>
 
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {t('export.formatDescription')}
-        </p>
+        <p className="text-fg-label mb-6">{t('export.formatDescription')}</p>
 
         <div className="space-y-3 mb-6">
           <label
             className={`flex items-start gap-4 p-4 cursor-pointer rounded-lg border-2 transition-colors ${
               selectedFormat === 'churchprogram'
-                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                ? 'border-line-strong bg-selected'
+                : 'border-line'
             }`}
           >
             <input
@@ -97,16 +95,16 @@ export function ScheduleExportFormatModal({
               name="scheduleExportFormat"
               checked={selectedFormat === 'churchprogram'}
               onChange={() => setSelectedFormat('churchprogram')}
-              className="mt-1 w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              className="mt-1 w-4 h-4 text-fg bg-field border-line focus:ring-focus"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                <span className="font-medium text-gray-900 dark:text-white">
+                <FileText className="w-5 h-5 text-fg" strokeWidth={1.5} />
+                <span className="font-medium text-fg">
                   {t('export.formats.churchprogram.name')}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-[13px] text-fg-label">
                 {t('export.formats.churchprogram.description')}
               </p>
             </div>
@@ -115,8 +113,8 @@ export function ScheduleExportFormatModal({
           <label
             className={`flex items-start gap-4 p-4 cursor-pointer rounded-lg border-2 transition-colors ${
               selectedFormat === 'pptx'
-                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                ? 'border-line-strong bg-selected'
+                : 'border-line'
             }`}
           >
             <input
@@ -124,16 +122,16 @@ export function ScheduleExportFormatModal({
               name="scheduleExportFormat"
               checked={selectedFormat === 'pptx'}
               onChange={() => setSelectedFormat('pptx')}
-              className="mt-1 w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              className="mt-1 w-4 h-4 text-fg bg-field border-line focus:ring-focus"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <Archive className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                <span className="font-medium text-gray-900 dark:text-white">
+                <Archive className="w-5 h-5 text-fg-label" strokeWidth={1.5} />
+                <span className="font-medium text-fg">
                   {t('export.formats.pptx.name')}
                 </span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-[13px] text-fg-label">
                 {t('export.formats.pptx.description')}
               </p>
             </div>
@@ -144,14 +142,14 @@ export function ScheduleExportFormatModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="h-9 px-3.5 text-[13px] font-medium text-fg-body hover:bg-hover rounded-lg transition-colors"
           >
             {t('modal.cancel')}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
+            className="h-9 px-3.5 text-[13px] bg-primary hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors"
           >
             {t('export.confirmButton')}
           </button>

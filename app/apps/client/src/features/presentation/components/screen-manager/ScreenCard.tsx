@@ -71,12 +71,8 @@ function SettingsGroup({
 }) {
   return (
     <section data-testid={testId} className="min-w-0">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-        {title}
-      </h4>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700/60">
-        {children}
-      </div>
+      <h4 className="text-[13px] font-medium text-fg-label">{title}</h4>
+      <div className="divide-y divide-line/60">{children}</div>
     </section>
   )
 }
@@ -189,8 +185,6 @@ export function ScreenCard({
       id: 'delete',
       label: t('sections.screens.actions.delete'),
       icon: <Trash2 size={18} />,
-      iconClassName:
-        'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
       onSelect: onDelete,
       testId: 'screen-delete',
     },
@@ -200,7 +194,7 @@ export function ScreenCard({
     <div
       data-testid="screen-card"
       data-screen-id={screen.id}
-      className="p-3 md:p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+      className="p-3 md:p-4 bg-panel rounded-xl border border-line"
     >
       {/* What it is, its window, and the screen's other actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -266,7 +260,7 @@ export function ScreenCard({
             onClick={() => onEdit()}
             title={t('sections.screens.actions.editTooltip')}
           >
-            <Edit size={16} />
+            <Edit size={16} strokeWidth={1.5} />
             <span className="ml-1">{t('sections.screens.actions.edit')}</span>
           </Button>
         </div>

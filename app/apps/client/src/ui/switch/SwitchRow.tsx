@@ -33,15 +33,12 @@ export function SwitchRow({
         <label
           id={`${id}-label`}
           htmlFor={id}
-          className="block text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer"
+          className="block text-[13px] font-medium text-fg cursor-pointer"
         >
           {label}
         </label>
         {description && (
-          <p
-            id={`${id}-description`}
-            className="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
-          >
+          <p id={`${id}-description`} className="mt-0.5 text-xs text-fg-hint">
             {description}
           </p>
         )}

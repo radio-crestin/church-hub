@@ -73,11 +73,11 @@ export function ScheduleItemAdvance({
         data-custom={custom ? 'true' : undefined}
         className={`flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs tabular-nums ${
           custom
-            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300'
-            : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+            ? 'bg-selected text-fg hover:bg-hover'
+            : 'text-fg-hint hover:bg-hover'
         }`}
       >
-        <Timer size={12} />
+        <Timer size={12} strokeWidth={2} />
         {label}
       </button>
       {anchor &&
@@ -87,7 +87,7 @@ export function ScheduleItemAdvance({
             role="dialog"
             aria-label={t('automation.advance.title')}
             data-testid="schedule-item-advance-popover"
-            className="fixed z-50 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            className="fixed z-50 rounded-lg border border-line bg-panel p-3 shadow-lg"
             style={{ left: anchor.x, top: anchor.y, width: POPOVER_WIDTH }}
             // React events bubble out of a portal to the item row, which
             // would open or present the item.
@@ -102,7 +102,7 @@ export function ScheduleItemAdvance({
                 apply(value)
               }}
             >
-              <label className="flex items-center justify-between gap-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label className="flex items-center justify-between gap-2 text-[13px] font-medium text-fg">
                 {t('automation.advance.title')}
                 <span className="flex items-center gap-1">
                   <input
@@ -113,12 +113,12 @@ export function ScheduleItemAdvance({
                     onChange={(e) => setValue(e.target.valueAsNumber)}
                     autoFocus
                     data-testid="schedule-item-advance-input"
-                    className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    className="w-16 rounded-lg border border-line bg-panel px-2 py-1 text-right text-fg"
                   />
                   s
                 </span>
               </label>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-fg-hint">
                 {t('automation.advance.description')}
               </p>
               <div className="mt-3 flex justify-end gap-2">
@@ -127,7 +127,7 @@ export function ScheduleItemAdvance({
                     type="button"
                     onClick={() => apply(null)}
                     data-testid="schedule-item-advance-reset"
-                    className="rounded-lg px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="rounded-lg px-2 py-1 text-[13px] text-fg-body hover:bg-hover"
                   >
                     {t('automation.advance.reset')}
                   </button>
@@ -135,7 +135,7 @@ export function ScheduleItemAdvance({
                 <button
                   type="submit"
                   data-testid="schedule-item-advance-save"
-                  className="rounded-lg bg-indigo-600 px-3 py-1 text-sm text-white hover:bg-indigo-700"
+                  className="rounded-lg bg-primary px-3 py-1 text-[13px] text-white hover:bg-indigo-700"
                 >
                   {t('automation.advance.save')}
                 </button>

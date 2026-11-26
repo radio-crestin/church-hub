@@ -56,23 +56,20 @@ export function SongSlideRailList({
         const plainText = stripHtmlTags(item.content)
 
         const getButtonClass = () => {
-          if (isPresented)
-            return 'bg-green-100 dark:bg-green-900/50 ring-2 ring-inset ring-green-500'
-          if (isHighlighted)
-            return 'bg-indigo-100 dark:bg-indigo-900/50 ring-2 ring-inset ring-indigo-500'
-          return 'hover:bg-gray-100 dark:hover:bg-gray-700'
+          if (isPresented) return 'bg-live-tint ring-1 ring-inset ring-live'
+          if (isHighlighted) return 'bg-selected'
+          return 'hover:bg-hover'
         }
 
         const getNumberClass = () => {
-          if (isPresented) return 'text-green-700 dark:text-green-300'
-          if (isHighlighted) return 'text-indigo-700 dark:text-indigo-300'
-          return 'text-gray-500 dark:text-gray-400'
+          if (isPresented) return 'text-live'
+          if (isHighlighted) return 'text-fg'
+          return 'text-fg-hint'
         }
 
         const getTextClass = () => {
-          if (isPresented) return 'text-green-900 dark:text-green-100'
-          if (isHighlighted) return 'text-indigo-900 dark:text-indigo-100'
-          return 'text-gray-700 dark:text-gray-200'
+          if (isPresented || isHighlighted) return 'text-fg'
+          return 'text-fg-body'
         }
 
         const getRef = () => {
@@ -97,7 +94,7 @@ export function SongSlideRailList({
             <div className="flex items-start gap-2">
               <span
                 style={textStyle}
-                className={`font-semibold min-w-[24px] ${getNumberClass()}`}
+                className={`font-medium tabular-nums min-w-[24px] ${getNumberClass()}`}
               >
                 {index + 1}
               </span>
@@ -108,13 +105,13 @@ export function SongSlideRailList({
                 {plainText}
               </span>
               {item.isDuplicate && (
-                <span className="text-xs text-gray-400 dark:text-gray-500 italic shrink-0">
+                <span className="text-xs text-fg-hint italic shrink-0">
                   {t('preview.chorusRepeat')}
                 </span>
               )}
             </div>
             {item.label && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 ml-8 mt-1 block">
+              <span className="text-xs text-fg-hint ml-8 mt-1 block">
                 {item.label}
               </span>
             )}

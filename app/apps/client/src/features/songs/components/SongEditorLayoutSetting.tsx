@@ -36,10 +36,10 @@ export function SongEditorLayoutSetting() {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <h3 className="text-base font-semibold text-fg">
         {t('editorLayout.title')}
       </h3>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      <p className="mt-1 text-sm text-fg-hint">
         {t('editorLayout.description')}
       </p>
 
@@ -55,23 +55,21 @@ export function SongEditorLayoutSetting() {
               aria-pressed={active}
               className={`flex items-start gap-3 p-4 rounded-lg border-2 text-left transition-colors ${
                 active
-                  ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-line-strong bg-selected'
+                  : 'border-line hover:border-line-strong'
               }`}
             >
               <Icon
                 size={20}
                 className={
-                  active
-                    ? 'text-indigo-600 dark:text-indigo-400 shrink-0'
-                    : 'text-gray-400 shrink-0'
+                  active ? 'text-fg-label shrink-0' : 'text-fg-hint shrink-0'
                 }
               />
               <span>
-                <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                <span className="block text-sm font-medium text-fg">
                   {t(option.labelKey)}
                 </span>
-                <span className="block mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <span className="block mt-0.5 text-xs text-fg-hint">
                   {t(option.descKey)}
                 </span>
               </span>

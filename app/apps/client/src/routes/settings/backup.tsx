@@ -23,7 +23,7 @@ function BackupSettings() {
           {isLocalhost() ? (
             <BackupManager />
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-[13px] text-fg-hint">
               {t('sections.backup.localhostOnly')}
             </p>
           )}

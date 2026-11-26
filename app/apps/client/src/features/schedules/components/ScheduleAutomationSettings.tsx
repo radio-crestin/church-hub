@@ -83,7 +83,7 @@ export function ScheduleAutomationSettings({
   }, [volumeOn, volume, automation.musicVolume])
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+    <div className="divide-y divide-line">
       <div>
         <SwitchRow
           label={t('automation.autoplay')}
@@ -95,7 +95,7 @@ export function ScheduleAutomationSettings({
           testId="automation-autoplay"
         />
         {autoplayOn && (
-          <label className="flex items-center justify-between gap-3 pb-2 text-sm text-gray-700 dark:text-gray-300">
+          <label className="flex items-center justify-between gap-3 pb-2 text-[13px] text-fg-body">
             {t('automation.seconds')}
             <input
               type="number"
@@ -104,7 +104,7 @@ export function ScheduleAutomationSettings({
               value={Number.isFinite(seconds) ? seconds : ''}
               onChange={(e) => setSeconds(e.target.valueAsNumber)}
               data-testid="automation-seconds"
-              className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="w-20 rounded-lg border border-line bg-panel px-2 py-1 text-right text-fg"
             />
           </label>
         )}

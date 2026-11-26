@@ -1,15 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import type { LucideIcon } from 'lucide-react'
 
-import { ICON_COLOR_CLASSES } from '~/features/sidebar-config/constants'
 import {
   openInBrowserTab,
   openPageInNativeWindow,
 } from '~/features/sidebar-config/service'
-import type {
-  IconColor,
-  NativeWindowSettings,
-} from '~/features/sidebar-config/types'
+import type { NativeWindowSettings } from '~/features/sidebar-config/types'
 import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { isTauri } from '~/utils/isTauri'
 import { createLogger } from '~/utils/logger'
@@ -34,12 +30,8 @@ interface SidebarItemProps {
   iconName?: string
   /** External URL for custom pages (loaded directly in native window) */
   externalUrl?: string
-  /** Icon color for the sidebar item */
-  iconColor?: IconColor
   /** Custom icon URL (base64 data URL) for favicon */
   customIconUrl?: string
-  /** Favicon background color (hex) */
-  faviconBgColor?: string
 }
 
 export function SidebarItem({
@@ -56,9 +48,7 @@ export function SidebarItem({
   nativeWindowSettings,
   iconName,
   externalUrl,
-  iconColor,
   customIconUrl,
-  faviconBgColor,
 }: SidebarItemProps) {
   /**
    * Handle middle-click to open page in native window or new tab
@@ -154,65 +144,44 @@ export function SidebarItem({
     onClick?.(e)
   }
   const baseClasses = `
-    flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+    flex items-center gap-2.5 px-3 py-2.5 md:h-8 md:py-0 md:px-2.5 rounded-lg transition-colors duration-150
     ${isCollapsed ? 'md:justify-center' : ''}
     ${className}
   `
 
   const enabledClasses = isActive
-    ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'
-    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+    ? 'bg-selected text-fg'
+    : 'text-fg-label hover:bg-hover hover:text-fg'
 
-  const disabledClasses =
-    'opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600'
+  const disabledClasses = 'opacity-50 cursor-not-allowed text-fg-hint'
 
-  // Get icon color classes if specified
-  const iconColorClasses = iconColor ? ICON_COLOR_CLASSES[iconColor] : null
-
-  // Render icon based on available data: customIconUrl (favicon) > iconColorClasses > regular icon
-  const renderIcon = () => {
-    // If custom icon URL is provided (favicon), show with colored background
-    if (customIconUrl) {
-      return (
-        <div
-          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: faviconBgColor ?? '#6366f1' }}
-        >
-          <img src={customIconUrl} alt="" className="w-4 h-4 object-contain" />
-        </div>
-      )
-    }
-
-    // If icon color is specified, show colored circle with icon
-    if (iconColorClasses) {
-      return (
-        <div
-          className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${iconColorClasses.bg}`}
-        >
-          <Icon size={16} className={iconColorClasses.text} />
-        </div>
-      )
-    }
-
-    // Default: regular icon
-    return <Icon size={20} className="flex-shrink-0" />
-  }
+  // A custom page shows its site favicon; every other item a plain line icon
+  // in the row's colour (DESIGN.md: no coloured icon tiles).
+  const renderIcon = () =>
+    customIconUrl ? (
+      <img
+        src={customIconUrl}
+        alt=""
+        className="w-4 h-4 flex-shrink-0 object-contain"
+      />
+    ) : (
+      <Icon size={16} strokeWidth={1.5} className="flex-shrink-0" />
+    )
 
   const content = (
     <>
       {renderIcon()}
       {/* Mobile: always show label, Desktop: respect isCollapsed */}
-      <span className="text-sm font-medium md:hidden">{label}</span>
+      <span className="text-[13px] font-medium md:hidden">{label}</span>
       {!isCollapsed && (
-        <span className="text-sm font-medium hidden md:inline flex-1">
+        <span className="text-[13px] font-medium hidden md:inline flex-1">
           {label}
         </span>
       )}
       {shortcut && !isCollapsed && (
         <KeyboardShortcutBadge
           shortcut={shortcut}
-          variant="muted"
-          className="hidden md:inline-block ml-auto"
+          className="hidden md:inline-flex ml-auto"
         />
       )}
     </>

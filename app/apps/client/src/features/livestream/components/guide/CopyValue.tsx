@@ -21,10 +21,8 @@ export function CopyValue({ label, value }: CopyValueProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="w-full text-xs font-medium uppercase tracking-wide text-gray-500 sm:w-20 dark:text-gray-400">
-        {label}
-      </span>
-      <code className="min-w-0 flex-1 break-all rounded bg-gray-100 px-3 py-1.5 font-mono text-sm text-gray-900 dark:bg-gray-700 dark:text-gray-100">
+      <span className="w-full text-xs text-fg-hint sm:w-20">{label}</span>
+      <code className="min-w-0 flex-1 break-all rounded-lg bg-field px-3 py-1.5 font-mono text-xs text-fg">
         {value}
       </code>
       <Button variant="secondary" size="sm" onClick={copy}>

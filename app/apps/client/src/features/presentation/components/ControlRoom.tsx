@@ -9,11 +9,9 @@ import {
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  formatShortcutForDisplay,
-  useAppShortcuts,
-} from '~/features/keyboard-shortcuts'
+import { useAppShortcuts } from '~/features/keyboard-shortcuts'
 import { useMediaQuery } from '~/hooks/useMediaQuery'
+import { KeyboardShortcutBadge } from '~/ui/kbd'
 import { PageHeader } from '~/ui/page'
 import { ContentTypeButton } from './ContentTypeButton'
 import { LivePreview } from './LivePreview'
@@ -40,6 +38,13 @@ const CONTROL_ROOM_CLOCK: ClockOverride = {
   fontFamily: 'Times New Roman',
   fontSize: 140,
 }
+
+const HEADER_BUTTON_CLASS =
+  'flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium text-fg bg-raised shadow-[inset_0_0_0_1px_var(--color-line)] rounded-lg hover:bg-hover disabled:opacity-50 transition-colors'
+const NEXT_BUTTON_CLASS =
+  'flex items-center gap-1.5 h-8 px-3 text-[13px] font-medium text-white bg-primary rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors'
+const ICON_BUTTON_CLASS =
+  'flex items-center justify-center h-8 w-8 rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-50 transition-colors'
 
 interface ControlRoomProps {
   /** The program whose step is on the screens: the phone's arrows walk it. */
@@ -132,10 +137,10 @@ export function ControlRoom({
         actions={<ScreenShareButton />}
       />
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:flex-1 lg:min-h-0">
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-1 lg:min-h-0">
         {/* Preview Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4 lg:flex-1 flex flex-col min-h-0">
-          <div className="flex items-center justify-between mb-4 shrink-0 gap-4">
+        <div className="bg-panel rounded-xl border border-line p-3 lg:p-4 lg:flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-3 shrink-0 gap-4">
             {/* LEFT: Content Button */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
               {renderContentButton()}
@@ -147,24 +152,16 @@ export function ControlRoom({
               <div
                 data-testid="control-room-live"
                 data-live={isLive ? 'true' : 'false'}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
-                  isLive
-                    ? 'bg-red-100 dark:bg-red-900/30'
-                    : 'bg-gray-100 dark:bg-gray-700'
-                }`}
+                className="flex items-center gap-1.5 h-8 px-2"
               >
                 <span
-                  className={`w-2 h-2 rounded-full ${
-                    isLive
-                      ? 'bg-red-500 animate-pulse'
-                      : 'bg-gray-400 dark:bg-gray-500'
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isLive ? 'bg-live' : 'bg-fg-hint'
                   }`}
                 />
                 <span
-                  className={`text-xs font-semibold ${
-                    isLive
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-gray-400 dark:text-gray-500'
+                  className={`text-xs font-medium ${
+                    isLive ? 'text-live' : 'text-fg-hint'
                   }`}
                 >
                   LIVE
@@ -176,13 +173,17 @@ export function ControlRoom({
                   type="button"
                   onClick={() => clearHighlights.mutate()}
                   disabled={clearHighlights.isPending}
-                  className="flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-600 dark:text-gray-400 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                  className={ICON_BUTTON_CLASS}
                   title={t('presentation:controls.clearHighlights')}
                 >
                   {clearHighlights.isPending ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2
+                      size={16}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                    />
                   ) : (
-                    <Eraser size={16} />
+                    <Eraser size={16} strokeWidth={1.5} />
                   )}
                 </button>
               )}
@@ -196,19 +197,19 @@ export function ControlRoom({
                     data-testid="control-room-prev"
                     aria-label={t('presentation:controls.prev')}
                     title={t('presentation:controls.prev')}
-                    className="flex items-center px-2 py-1.5 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    className={HEADER_BUTTON_CLASS}
                   >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={16} strokeWidth={1.5} />
                   </button>
                   <button
                     type="button"
                     onClick={goNext}
                     disabled={!canMove || isMoving}
                     data-testid="control-room-next"
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                    className={NEXT_BUTTON_CLASS}
                   >
                     <span>{t('presentation:controls.next')}</span>
-                    <ChevronRight size={18} />
+                    <ChevronRight size={16} strokeWidth={1.5} />
                   </button>
                 </>
               )}
@@ -218,35 +219,41 @@ export function ControlRoom({
                   type="button"
                   onClick={handleHide}
                   disabled={clearSlide.isPending || clearTemporary.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                  className={HEADER_BUTTON_CLASS}
                   title={`${t('presentation:controls.hide')} (Esc)`}
                 >
                   {clearSlide.isPending || clearTemporary.isPending ? (
-                    <Loader2 size={18} className="animate-spin" />
+                    <Loader2
+                      size={16}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                    />
                   ) : (
-                    <EyeOff size={18} />
+                    <EyeOff size={16} strokeWidth={1.5} />
                   )}
                   <span>{t('presentation:controls.hide')}</span>
-                  <span className="text-xs opacity-75">(Esc)</span>
+                  <KeyboardShortcutBadge shortcut="Escape" />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={handleShow}
                   disabled={!hasContent || showSlideCommand.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                  className={HEADER_BUTTON_CLASS}
                   title={t('presentation:controls.show')}
                 >
                   {showSlideCommand.isPending ? (
-                    <Loader2 size={18} className="animate-spin" />
+                    <Loader2
+                      size={16}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                    />
                   ) : (
-                    <Eye size={18} />
+                    <Eye size={16} strokeWidth={1.5} />
                   )}
                   <span>{t('presentation:controls.show')}</span>
                   {showSlideShortcut && (
-                    <span className="text-xs opacity-75">
-                      ({formatShortcutForDisplay(showSlideShortcut)})
-                    </span>
+                    <KeyboardShortcutBadge shortcut={showSlideShortcut} />
                   )}
                 </button>
               )}
@@ -264,7 +271,7 @@ export function ControlRoom({
           <aside
             aria-label={playlistTitle}
             data-testid="control-room-playlist"
-            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 lg:p-4 lg:order-first lg:w-[30rem] lg:shrink-0 lg:min-h-0 lg:overflow-y-auto"
+            className="bg-panel rounded-xl border border-line p-3 lg:p-4 lg:order-first lg:w-[30rem] lg:shrink-0 lg:min-h-0 lg:overflow-y-auto"
           >
             {playlist}
           </aside>

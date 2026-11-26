@@ -65,17 +65,14 @@ export function UncategorizedSongsCard() {
 
   return (
     <>
-      <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+      <div className="bg-panel rounded-xl border border-line">
         <div className="flex items-center gap-3 p-3">
-          <FileQuestion
-            size={20}
-            className="text-amber-600 dark:text-amber-400 shrink-0"
-          />
+          <FileQuestion size={20} className="text-fg-label shrink-0" />
           <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-gray-900 dark:text-white block">
+            <span className="text-sm font-medium text-fg block">
               {t('sections.categories.uncategorized.title')}
             </span>
-            <span className="text-xs text-amber-600 dark:text-amber-400">
+            <span className="text-xs text-fg-hint">
               {t('sections.categories.uncategorized.count', {
                 count: uncategorizedCount,
               })}
@@ -93,24 +90,24 @@ export function UncategorizedSongsCard() {
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded transition-colors shrink-0"
+            className="flex h-7 w-7 items-center justify-center text-fg-label hover:bg-hover hover:text-fg rounded-lg transition-colors shrink-0"
           >
             {isExpanded ? (
-              <ChevronUp size={20} className="text-gray-400" />
+              <ChevronUp size={20} className="text-fg-hint" />
             ) : (
-              <ChevronDown size={20} className="text-gray-400" />
+              <ChevronDown size={20} className="text-fg-hint" />
             )}
           </button>
         </div>
 
         {isExpanded && (
-          <div className="border-t border-amber-200 dark:border-amber-800 p-3 max-h-48 overflow-y-auto space-y-2">
+          <div className="border-t border-line p-2 max-h-48 overflow-y-auto space-y-0.5">
             {uncategorizedSongs.map((song) => (
               <div
                 key={song.id}
-                className="flex items-center gap-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700"
+                className="flex items-center gap-2 p-2 bg-panel rounded border border-line"
               >
-                <span className="flex-1 text-sm text-gray-900 dark:text-white truncate">
+                <span className="flex-1 text-sm text-fg truncate">
                   {song.title}
                 </span>
                 <button
@@ -118,7 +115,7 @@ export function UncategorizedSongsCard() {
                   onClick={() =>
                     setSongToDelete({ id: song.id, title: song.title })
                   }
-                  className="p-1.5 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors shrink-0"
+                  className="p-1.5 text-fg-hint hover:text-red-600 dark:hover:text-red-400 transition-colors shrink-0"
                   title={t('sections.categories.uncategorized.deleteSong')}
                 >
                   <Trash2 size={14} />

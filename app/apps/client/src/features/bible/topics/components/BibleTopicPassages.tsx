@@ -63,20 +63,20 @@ export function BibleTopicPassages({
 
   return (
     <>
-      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-line flex-shrink-0">
         <button
           type="button"
           onClick={onBack}
           data-testid="bible-topic-back"
           aria-label={t('topics.back')}
           title={t('topics.back')}
-          className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
         <span
           data-testid="bible-topic-title"
-          className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100"
+          className="min-w-0 flex-1 truncate text-[13px] font-semibold text-fg"
         >
           {title}
         </span>
@@ -87,11 +87,11 @@ export function BibleTopicPassages({
           data-testid="bible-topic-previous"
           aria-label={t('topics.previous')}
           title={t('topics.previous')}
-          className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
         </button>
-        <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400">
+        <span className="text-xs tabular-nums text-fg-hint">
           {activeIndex >= 0 ? activeIndex + 1 : '–'}/{passages.length}
         </span>
         <button
@@ -101,9 +101,9 @@ export function BibleTopicPassages({
           data-testid="bible-topic-next"
           aria-label={t('topics.next')}
           title={t('topics.next')}
-          className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-700"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-fg-label hover:bg-hover hover:text-fg disabled:opacity-40"
         >
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
         </button>
       </div>
 
@@ -117,11 +117,11 @@ export function BibleTopicPassages({
 
       <div className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
         {isLoading ? (
-          <div className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="px-4 py-6 text-center text-[13px] text-fg-hint">
             ...
           </div>
         ) : (
-          <ul className="p-2 flex flex-col gap-1.5">
+          <ul className="p-1.5 flex flex-col gap-0.5">
             {passages.map((passage, index) => {
               const first = passage.verses[0]
               if (!first) return null
@@ -131,26 +131,24 @@ export function BibleTopicPassages({
                   key={`${passage.book}-${passage.chapter}-${passage.startVerse}`}
                   data-testid="bible-topic-passage"
                   data-active={isActive || undefined}
-                  className={`flex items-start gap-1 rounded-md border ${
-                    isActive
-                      ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
-                      : 'border-gray-200 dark:border-gray-700'
+                  className={`flex items-start gap-1 rounded-lg ${
+                    isActive ? 'bg-live-tint ring-1 ring-inset ring-live' : ''
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => onPresentVerse(first)}
                     title={t('topics.present')}
-                    className="min-w-0 flex-1 px-2.5 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-l-md"
+                    className="min-w-0 flex-1 px-2.5 py-2 text-left hover:bg-hover rounded-l-lg"
                   >
-                    <span className="block text-xs font-semibold text-teal-700 dark:text-teal-400">
+                    <span className="block text-xs font-semibold text-fg-label">
                       {passage.reference}
                     </span>
-                    <span className="block text-sm text-gray-800 dark:text-gray-200">
+                    <span className="block text-[13px] text-fg-body">
                       {passage.verses.map((verse) => (
                         <span key={verse.id}>
                           {passage.verses.length > 1 && (
-                            <sup className="mr-0.5 text-gray-400">
+                            <sup className="mr-0.5 text-fg-hint">
                               {verse.verse}
                             </sup>
                           )}
@@ -165,9 +163,9 @@ export function BibleTopicPassages({
                     data-testid="bible-topic-open"
                     aria-label={t('topics.openInBible')}
                     title={t('topics.openInBible')}
-                    className="m-1 p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                    className="m-1 p-1.5 rounded-md text-fg-hint hover:bg-hover hover:text-fg"
                   >
-                    <BookOpen className="w-4 h-4" />
+                    <BookOpen className="w-4 h-4" strokeWidth={1.5} />
                   </button>
                 </li>
               )

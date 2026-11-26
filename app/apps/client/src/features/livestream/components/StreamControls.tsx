@@ -58,21 +58,21 @@ export function StreamControls() {
     <button
       onClick={handleButtonClick}
       disabled={isButtonDisabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg px-3 sm:px-4 py-3 text-sm sm:text-base text-white transition-colors ${
+      className={`inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-medium text-white transition-colors ${
         hasConnection
-          ? 'bg-[#FF0000] hover:bg-[#CC0000] disabled:cursor-not-allowed'
-          : 'bg-red-900 cursor-not-allowed'
+          ? 'bg-primary hover:bg-indigo-700 disabled:cursor-not-allowed'
+          : 'bg-primary opacity-50 cursor-not-allowed'
       }`}
     >
       <span className="flex items-center gap-2">
-        <Radio className="w-4 h-4" />
+        <Radio size={16} strokeWidth={1.5} />
         {isStarting || isStartingStream
           ? t('stream.starting')
           : t('stream.startStream')}
         {startLiveShortcut && !isStarting && !isStartingStream && (
           <KeyboardShortcutBadge
             shortcut={startLiveShortcut}
-            className="bg-red-800/50 text-red-100"
+            className="text-white/80"
           />
         )}
       </span>
@@ -94,21 +94,18 @@ export function StreamControls() {
           <button
             onClick={() => stop()}
             disabled={isStopping}
-            className="inline-flex items-center justify-center font-medium rounded-lg px-3 sm:px-4 py-3 text-sm sm:text-base text-white bg-[#FF0000] hover:bg-[#CC0000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex h-8 items-center justify-center rounded-lg px-3 text-[13px] font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span className="flex items-center gap-2">
-              <Square className="w-4 h-4 fill-current" />
+              <Square size={14} strokeWidth={1.75} className="fill-current" />
               {isStopping ? t('stream.stopping') : t('stream.stopStream')}
               {stopLiveShortcut && !isStopping && (
                 <KeyboardShortcutBadge
                   shortcut={stopLiveShortcut}
-                  className="bg-red-800/50 text-red-100"
+                  className="text-white/80"
                 />
               )}
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
-              </span>
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-white" />
             </span>
           </button>
         )}

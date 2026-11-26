@@ -6,7 +6,7 @@ import { useBookmarkSlideshow } from '../hooks/useBookmarkSlideshow'
 import type { BibleBookmark } from '../service'
 
 const buttonClass =
-  'flex items-center gap-1 rounded-md p-1.5 text-xs font-medium transition-colors disabled:opacity-50'
+  'flex h-8 min-w-8 items-center justify-center gap-1 rounded-lg px-2 text-xs font-medium tabular-nums transition-colors disabled:opacity-50'
 
 /**
  * The Marcaje header's slideshow controls: ▶ shows the bookmarks one after
@@ -48,14 +48,14 @@ export function useBookmarkSlideshowActions(
           title={isPlaying ? playLabel : t('bookmarks.slideshow.playHint')}
           className={`${buttonClass} ${
             isPlaying
-              ? 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50'
-              : 'bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+              ? 'bg-live-tint text-live ring-1 ring-inset ring-live'
+              : 'text-fg-label hover:bg-hover hover:text-fg'
           }`}
         >
           {isPlaying ? (
-            <Square className="h-3.5 w-3.5" />
+            <Square className="h-4 w-4" strokeWidth={1.5} />
           ) : (
-            <Play className="h-3.5 w-3.5" />
+            <Play className="h-4 w-4" strokeWidth={1.5} />
           )}
           {position && (
             <span data-testid="bible-bookmarks-play-position">
@@ -84,11 +84,11 @@ export function useBookmarkSlideshowActions(
           title={isLooping ? loopLabel : t('bookmarks.slideshow.loopHint')}
           className={`${buttonClass} ${
             isLooping
-              ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-              : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'
+              ? 'bg-selected text-fg'
+              : 'text-fg-label hover:bg-hover hover:text-fg'
           }`}
         >
-          <Repeat className="h-3.5 w-3.5" />
+          <Repeat className="h-4 w-4" strokeWidth={1.5} />
         </button>
       ),
     },

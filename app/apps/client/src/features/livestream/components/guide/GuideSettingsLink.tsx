@@ -23,10 +23,10 @@ export function GuideSettingsLink({
     <Link
       to={to}
       onClick={onNavigate}
-      className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+      className="inline-flex items-center gap-1 font-medium text-focus hover:underline"
     >
       {label}
-      <ArrowRight className="h-4 w-4" aria-hidden />
+      <ArrowRight size={14} strokeWidth={1.75} aria-hidden />
     </Link>
   )
 }

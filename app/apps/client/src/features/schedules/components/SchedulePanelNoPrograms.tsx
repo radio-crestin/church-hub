@@ -17,12 +17,10 @@ export function SchedulePanelNoPrograms({
       data-testid="schedule-panel-no-programs"
       className="px-4 py-6 text-center"
     >
-      <CalendarDays className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        {t('panel.noSchedules')}
-      </p>
+      <CalendarDays className="w-8 h-8 mx-auto mb-2 text-fg-hint" />
+      <p className="text-[13px] text-fg-hint">{t('panel.noSchedules')}</p>
       {canCreate && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+        <p className="text-xs text-fg-hint mt-1">
           {t('panel.noSchedulesDescription')}
         </p>
       )}

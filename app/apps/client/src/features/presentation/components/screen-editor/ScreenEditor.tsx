@@ -225,25 +225,23 @@ export function ScreenEditor({
   if (!state.screen) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-fg-hint">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-950">
+    <div className="flex flex-col h-full bg-app">
       {/* Toolbar: name and save on the first row of a phone, the slide
           type picker under them; one row from sm up */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 sm:px-4 py-2 sm:py-3 border-b border-line bg-panel">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-            {title}
-          </h2>
+          <h2 className="text-base font-semibold text-fg truncate">{title}</h2>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 order-last sm:order-none w-full sm:w-auto sm:ml-auto">
           {/* Zoom controls: pinch zoom does it on a phone */}
-          <div className="hidden sm:flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-4">
+          <div className="hidden sm:flex items-center gap-1 border-l border-line pl-4">
             <Button
               variant="ghost"
               size="icon"
@@ -252,9 +250,9 @@ export function ScreenEditor({
               title={t('screens.editor.zoomOut')}
               aria-label={t('screens.editor.zoomOut')}
             >
-              <ZoomOut className="w-4 h-4" />
+              <ZoomOut size={16} strokeWidth={1.5} />
             </Button>
-            <span className="text-sm text-gray-500 dark:text-gray-400 w-12 text-center">
+            <span className="text-xs text-fg-hint w-12 text-center tabular-nums">
               {Math.round(state.zoom * 100)}%
             </span>
             <Button
@@ -265,7 +263,7 @@ export function ScreenEditor({
               title={t('screens.editor.zoomIn')}
               aria-label={t('screens.editor.zoomIn')}
             >
-              <ZoomIn className="w-4 h-4" />
+              <ZoomIn size={16} strokeWidth={1.5} />
             </Button>
             <Button
               variant="ghost"
@@ -274,13 +272,13 @@ export function ScreenEditor({
               title={t('screens.editor.resetZoom')}
               aria-label={t('screens.editor.resetZoom')}
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw size={16} strokeWidth={1.5} />
             </Button>
           </div>
         </div>
 
         {/* Save and close */}
-        <div className="flex items-center gap-2 sm:border-l border-gray-200 dark:border-gray-700 sm:pl-4">
+        <div className="flex items-center gap-2 sm:border-l border-line sm:pl-4">
           {state.isDirty && (
             <span
               data-testid="screen-editor-unsaved"
@@ -291,20 +289,22 @@ export function ScreenEditor({
           )}
           <Button
             variant="primary"
+            size="sm"
             onClick={handleSave}
             disabled={!state.isDirty}
             data-testid="screen-editor-save"
           >
-            <Save className="w-4 h-4 mr-2" />
+            <Save size={16} strokeWidth={1.5} className="mr-2" />
             {t('screens.editor.save')}
           </Button>
           <Button
             variant="ghost"
+            size="icon"
             onClick={handleClose}
             title={t('screens.editor.close')}
             aria-label={t('screens.editor.close')}
           >
-            <X className="w-4 h-4" />
+            <X size={16} strokeWidth={1.5} />
           </Button>
         </div>
       </div>

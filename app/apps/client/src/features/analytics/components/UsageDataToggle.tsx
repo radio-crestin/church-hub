@@ -33,9 +33,7 @@ export function UsageDataToggle() {
         testId="usage-data-toggle"
       />
       {!canEdit && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {t('toggle.needsPermission')}
-        </p>
+        <p className="text-xs text-fg-hint">{t('toggle.needsPermission')}</p>
       )}
     </div>
   )
