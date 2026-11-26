@@ -53,6 +53,7 @@ import {
   reviewPortFor,
   run,
   step,
+  stepAsync,
 } from './worktree-common'
 
 const USAGE =
@@ -248,8 +249,8 @@ mkdirSync(dataDir, { recursive: true })
 writeFileSync(join(out, '.gitignore'), '*\n')
 step('sidecar', () => buildSidecar(app))
 let shell = ''
-step('shell', () => {
-  const result = ensureShell(root)
+await stepAsync('shell', async () => {
+  const result = await ensureShell(root)
   shell = result.shell
   return `${result.built ? 'built' : 'reused'} ${result.key}`
 })

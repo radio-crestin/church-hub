@@ -73,7 +73,19 @@ export function run(
 
 export function step(name: string, action: () => string | undefined) {
   const started = performance.now()
-  const detail = action()
+  report(name, started, action())
+}
+
+/** step() for an action that has to wait without blocking (a lock's heartbeat). */
+export async function stepAsync(
+  name: string,
+  action: () => Promise<string | undefined>,
+) {
+  const started = performance.now()
+  report(name, started, await action())
+}
+
+function report(name: string, started: number, detail: string | undefined) {
   const seconds = ((performance.now() - started) / 1000).toFixed(1)
   console.log(`✓ ${name} (${seconds}s)${detail ? ` — ${detail}` : ''}`)
 }

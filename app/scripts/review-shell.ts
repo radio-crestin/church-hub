@@ -10,7 +10,7 @@
  * task that touches the shell gets its own, built from its own code.
  */
 
-import { spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
   cpSync,
@@ -33,6 +33,9 @@ const SHELL_SOURCES = ['app/tauri', 'app/tauri-plugins']
 const PER_TASK = ['app/tauri/bin/', 'app/tauri/resources/']
 const SHELLS_KEPT = 3
 const LOCK_WAIT_MS = 30 * 60 * 1000
+// The holder touches the lock this often; one untouched for LOCK_STALE_MS is abandoned.
+const LOCK_HEARTBEAT_MS = 20_000
+const LOCK_STALE_MS = 2 * 60 * 1000
 const SHELLS_DIR = join(userCacheDir(), 'review-shells')
 
 export const SHELL_BINARY =
@@ -70,39 +73,23 @@ export function shellKey(root: string) {
   return hash.digest('hex').slice(0, 16)
 }
 
-function isAlive(pid: number) {
+/** A lock its holder stopped touching: it died, whatever pid it had. */
+function isStale(lock: string) {
   try {
-    process.kill(pid, 0)
-    return true
+    return Date.now() - statSync(lock).mtimeMs > LOCK_STALE_MS
   } catch {
-    return false
-  }
-}
-
-/** Who holds the lock: its pid, or null while the holder is still writing it. */
-function lockHolder(lock: string): number | null {
-  try {
-    return Number(readFileSync(join(lock, 'pid'), 'utf8')) || null
-  } catch {
-    return null
-  }
-}
-
-/** A pid-less lock older than a minute: its holder died before writing the pid. */
-function isAbandoned(lock: string) {
-  try {
-    return Date.now() - statSync(lock).mtimeMs > 60_000
-  } catch {
-    return false
+    return false // gone meanwhile: the next mkdir takes it
   }
 }
 
 /**
  * A lock folder in the Cargo target dir, held only while a shell compiles
- * (worktrees share that target dir). A lock whose holder died (dead pid, or
- * no pid written for a minute) is taken over; any other is waited for.
+ * (worktrees share that target dir). The holder touches it every
+ * LOCK_HEARTBEAT_MS; one untouched for LOCK_STALE_MS is taken over. No pid:
+ * task sessions run in their own pid namespaces, and a dead holder can
+ * linger as a zombie, so a pid proves nothing about the holder.
  */
-function withLock(targetDir: string, action: () => void) {
+async function withLock(targetDir: string, action: () => Promise<void>) {
   const lock = join(targetDir, '.review-build.lock')
   const started = Date.now()
   mkdirSync(targetDir, { recursive: true })
@@ -111,23 +98,26 @@ function withLock(targetDir: string, action: () => void) {
       mkdirSync(lock)
       break
     } catch {
-      const holder = lockHolder(lock)
-      if (holder ? !isAlive(holder) : isAbandoned(lock)) {
+      if (isStale(lock)) {
         rmSync(lock, { recursive: true, force: true })
         continue
       }
       if (Date.now() - started > LOCK_WAIT_MS) {
         throw new Error(`another review shell build holds ${lock}`)
       }
-      Bun.sleepSync(5000)
+      await Bun.sleep(5000)
     }
   }
+  const heartbeat = setInterval(() => {
+    const now = new Date()
+    utimesSync(lock, now, now)
+  }, LOCK_HEARTBEAT_MS)
   const release = () => rmSync(lock, { recursive: true, force: true })
   process.on('exit', release)
   try {
-    writeFileSync(join(lock, 'pid'), String(process.pid))
-    action()
+    await action()
   } finally {
+    clearInterval(heartbeat)
     release()
   }
 }
@@ -167,7 +157,16 @@ function ensureFrontendDist(app: string) {
   writeFileSync(join(dist, 'index.html'), '<!doctype html>\n')
 }
 
-function compileShell(app: string, targetDir: string, staging: string) {
+/** Runs a command to its end without blocking the lock's heartbeat. */
+function spawnAndWait(command: string, args: string[], cwd: string) {
+  return new Promise<number | null>((done, fail) => {
+    spawn(command, args, { cwd, stdio: 'inherit' })
+      .on('error', fail)
+      .on('exit', (code) => done(code))
+  })
+}
+
+async function compileShell(app: string, targetDir: string, staging: string) {
   ensureFrontendDist(app)
   const config = join(staging, 'tauri.shell.conf.json')
   // The task's web build and sidecar are built by review-build.ts itself.
@@ -189,18 +188,18 @@ function compileShell(app: string, targetDir: string, staging: string) {
     '--features',
     'review-shell',
   ]
-  const result = spawnSync(
+  const status = await spawnAndWait(
     process.execPath,
     [...args, '--config', config, '--', '--profile', 'review'],
-    { cwd: app, stdio: 'inherit' },
+    app,
   )
-  if (result.status !== 0) {
+  if (status !== 0) {
     // A missing system library fails in a -sys crate's build script (e.g. alsa-sys: no alsa.pc).
     const hint =
       process.platform === 'linux'
         ? ': see the Rust error above; on Linux, scripts/setup/linux.sh installs the build libraries'
         : ': see the Rust error above'
-    throw new Error(`review shell build failed (exit ${result.status})${hint}`)
+    throw new Error(`review shell build failed (exit ${status})${hint}`)
   }
   const built =
     process.platform === 'darwin'
@@ -226,7 +225,7 @@ function pruneShells(shellsDir: string, keep: string) {
  * The shell for this checkout's code: the cached one, or built now (under
  * the lock, then cached). Returns its folder and whether it was built.
  */
-export function ensureShell(root: string) {
+export async function ensureShell(root: string) {
   const shellsDir = SHELLS_DIR
   const app = join(root, 'app')
   const key = shellKey(root)
@@ -234,13 +233,13 @@ export function ensureShell(root: string) {
   let built = false
   if (!existsSync(shell)) {
     const targetDir = cargoTargetDir(app)
-    withLock(targetDir, () => {
+    await withLock(targetDir, async () => {
       if (existsSync(shell)) return // another task built it while we waited
       const staging = join(shellsDir, `.building-${key}-${process.pid}`)
       rmSync(staging, { recursive: true, force: true })
       mkdirSync(staging, { recursive: true })
       try {
-        compileShell(app, targetDir, staging)
+        await compileShell(app, targetDir, staging)
         renameSync(staging, shell) // appears whole or not at all
       } finally {
         rmSync(staging, { recursive: true, force: true })
