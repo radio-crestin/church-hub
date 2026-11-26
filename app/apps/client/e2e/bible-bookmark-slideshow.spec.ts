@@ -77,6 +77,9 @@ test.describe('Bible bookmark slideshow', () => {
     await page.keyboard.press('ArrowRight')
     await expect.poll(() => onScreen(request)).toMatch(/^Romani 5:8/)
     await expect(position).toHaveText('2/3')
+    await expect(
+      page.getByTestId('bible-bookmark-item').nth(1),
+    ).toHaveAttribute('data-live', 'true')
 
     await page.keyboard.press('ArrowLeft')
     await expect.poll(() => onScreen(request)).toMatch(/^Ioan 3:16/)
@@ -174,14 +177,20 @@ test.describe('Bible bookmark slideshow', () => {
     await expect(
       rows.first().getByTestId('bible-bookmark-progress'),
     ).toBeVisible()
+    // The bookmark on screen is the live row, as in the other lists.
+    await expect(rows.first()).toHaveAttribute('data-live', 'true')
+    await expect(rows.nth(1)).not.toHaveAttribute('data-live', 'true')
     await expect(
       rows.nth(1).getByTestId('bible-bookmark-progress'),
     ).toBeVisible({ timeout: 8000 })
     await expect(ring).toHaveCount(1)
+    await expect(rows.nth(1)).toHaveAttribute('data-live', 'true')
+    await expect(rows.nth(1)).toHaveClass(/ring-live/)
 
     await loop.click()
     await expect.poll(() => onScreen(request)).toBeNull()
     await expect(ring).toHaveCount(0)
+    await expect(rows.nth(1)).not.toHaveAttribute('data-live', 'true')
     await request.delete(`/api/settings/app_settings/${READING_SPEED}`)
   })
 

@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 
+import { usePresentationState } from '~/features/presentation'
 import type { VerseteTineriEntry } from '~/features/presentation/types'
 import { useVerseSlideshow } from './useVerseSlideshow'
 import type { BibleBookmark } from '../service/bookmarks'
+import { getVerseSlideshow } from '../utils/getVerseSlideshow'
 
 function toEntry(bookmark: BibleBookmark, index: number): VerseteTineriEntry {
   return {
@@ -43,4 +45,11 @@ export function useBookmarkSlideshow(bookmarks: BibleBookmark[]) {
     start: (loop: boolean, fromIndex?: number) =>
       slideshow.start(loop ? 'loop' : 'manual', fromIndex),
   }
+}
+
+/** The bookmark the bookmarks slideshow has on screen, or null. */
+export function useLiveBookmarkId(): number | null {
+  const { data: state } = usePresentationState()
+  const playing = getVerseSlideshow(state, 'bookmarks')
+  return playing?.entries[playing.currentEntryIndex]?.id ?? null
 }
