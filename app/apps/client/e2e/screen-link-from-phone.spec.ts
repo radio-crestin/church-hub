@@ -174,9 +174,18 @@ test.describe
 
     test('revoking the link cuts the TV off', async () => {
       await phonePage.getByRole('button', { name: 'Revoke link' }).click()
+      // Revoked (the phone's server may still be busy with the new song)…
+      await expect(phonePage.getByTestId('screen-link-modal')).toHaveCount(0, {
+        timeout: 30_000,
+      })
+      // …the TV is cut off at once: the phone closes its channel, not only
+      // its connection (which would end only when its ICE times out).
+      await expect(tvPage.getByText(lyrics, { exact: true })).toHaveCount(0, {
+        timeout: 5_000,
+      })
+      // It comes back to the phone once more, to hear the link was revoked.
       await expect(
         tvPage.getByText('This screen link no longer works.'),
       ).toBeVisible({ timeout: 60_000 })
-      await expect(tvPage.getByText(lyrics, { exact: true })).toHaveCount(0)
     })
   })

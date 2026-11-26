@@ -1,7 +1,7 @@
 import type { BrowserServer } from '~/features/browser-server'
 import { relayFetch, tunnelFetch } from '~/features/remote-access'
 import { createLogger } from '~/utils/logger'
-import { answerScreenOffer } from './answerScreenOffer'
+import { answerScreenOffer, type ScreenPeers } from './answerScreenOffer'
 import { hostedRoomId, newHostKey } from './hostedRoomId'
 
 const logger = createLogger('screen-links')
@@ -15,13 +15,15 @@ const REGISTER_MS = 30 * 60 * 1000
  * reaches the room once more, to hear it was revoked.
  */
 const LINKS_CHECK_MS = 5 * 60 * 1000
+/** Lets the channels' close reach the devices before the connections go. */
+const CLOSE_GRACE_MS = 1000
 
 interface Host {
   server: BrowserServer
   relay: string
   churchId: string
   pcRoom: string | null
-  peers: Set<RTCPeerConnection>
+  peers: ScreenPeers
   /** Set while the room is open. */
   stop: (() => Promise<void>) | null
 }
@@ -121,7 +123,7 @@ export async function startScreenHost(
   server: BrowserServer,
   church: { relay: string; churchId: string; pcRoom: string | null },
 ): Promise<void> {
-  host = { server, ...church, peers: new Set(), stop: null }
+  host = { server, ...church, peers: new Map(), stop: null }
   if (await hasScreenLinks(host)) await hostScreens()
 }
 
@@ -156,7 +158,12 @@ export async function hostScreens(): Promise<{
  * revoked): those whose link still stands connect again.
  */
 export function disconnectScreens(): void {
-  for (const pc of host?.peers ?? []) pc.close()
+  // Closing the channels first tells the device at once; the connection
+  // alone ends only when its ICE times out, the slide still showing.
+  for (const [pc, channels] of host?.peers ?? []) {
+    for (const channel of channels) channel.close()
+    setTimeout(() => pc.close(), CLOSE_GRACE_MS)
+  }
   host?.peers.clear()
 }
 
