@@ -43,7 +43,6 @@
     }
   },
   "stageEditor": {
-    "editHint": "Apasă pe versuri pentru a le edita direct pe slide",
     "emptySlidePlaceholder": "Apasă pentru a adăuga versuri",
     "dragToReorder": "Trage pentru a reordona",
     "cloneSlide": "Duplică slide-ul",

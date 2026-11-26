@@ -48,6 +48,9 @@ interface StageCanvasProps {
   onEditingChange?: (editing: boolean) => void
 }
 
+/** Room under the stage for the nav row and the frame's padding and border. */
+const FIT_RESERVE_PX = 76
+
 /** Stable identity of the slide currently shown, so we can detect a switch. */
 function slideIdentity(content: TemporaryContent): string {
   if (content.type === 'song') {
@@ -164,14 +167,12 @@ export function StageCanvas({
   }, [framed, onEditingChange])
 
   // Vertical space to reserve inside the stage zone below the black box: the
-  // nav row + this frame's padding/border, plus the edit-hint line while
-  // editing. Reserving it keeps the nav (and the notes footer below it) from
-  // being overlapped — the stage just shrinks a little instead.
-  const fitReserve = framed ? 112 : 76
+  // nav row + this frame's padding/border. It is the same whether or not the
+  // slide is being edited, so opening the editor never resizes the stage.
   const boxStyle: React.CSSProperties | undefined = fitHeight
     ? {
-        maxHeight: `calc(100cqh - ${fitReserve}px)`,
-        width: `min(calc(100cqw - 24px), calc((100cqh - ${fitReserve}px) * 16 / 9))`,
+        maxHeight: `calc(100cqh - ${FIT_RESERVE_PX}px)`,
+        width: `min(calc(100cqw - 24px), calc((100cqh - ${FIT_RESERVE_PX}px) * 16 / 9))`,
       }
     : undefined
 
@@ -179,10 +180,22 @@ export function StageCanvas({
     <div
       ref={rootRef}
       className={
-        fitHeight ? 'flex w-full shrink-0 flex-col items-center' : 'w-full'
+        fitHeight
+          ? 'relative flex w-full shrink-0 flex-col items-center'
+          : 'relative w-full'
       }
     >
-      {showEditor && editingToolbar}
+      {/* The formatting bar floats inside the stage's top edge, PowerPoint-style:
+          an overlay, so selecting the slide never moves or resizes the stage or
+          anything around it, and it covers none of the page's own buttons. */}
+      {showEditor && editingToolbar && (
+        <div
+          data-testid="slide-style-toolbar-overlay"
+          className="absolute left-1/2 top-3 z-30 w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-lg shadow-lg"
+        >
+          {editingToolbar}
+        </div>
+      )}
       {/* Outer frame: reserves the padding + border ring at all times (so
           toggling edit never reflows the slide) and only colours the frame
           while editing. In fit-height mode it hugs the black box (content
@@ -221,11 +234,6 @@ export function StageCanvas({
           />
         </div>
       </div>
-      {framed && (
-        <p className="mt-2 shrink-0 text-center text-xs text-indigo-500 dark:text-indigo-400">
-          {t('stageEditor.editHint')}
-        </p>
-      )}
     </div>
   )
 }

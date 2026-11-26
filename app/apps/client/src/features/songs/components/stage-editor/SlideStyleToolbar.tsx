@@ -344,7 +344,7 @@ export function SlideStyleToolbar({
   return (
     <div
       data-testid="slide-style-toolbar"
-      className="mb-2 flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800"
+      className="flex flex-wrap items-center gap-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 dark:border-gray-700 dark:bg-gray-800"
     >
       <button
         type="button"
