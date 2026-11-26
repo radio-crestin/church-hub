@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { getApiUrl } from '~/config'
+import { createLogger } from '~/utils/logger'
+import { ListenerLinkChangedNotice } from './ListenerLinkChangedNotice'
 import { LANGUAGES, type TranslationTarget } from '../hooks/useLiveTranslation'
+
+const logger = createLogger('app:live-translation')
 
 interface PersistedSettingsSubset {
   targets?: TranslationTarget[]
@@ -13,6 +17,7 @@ interface PersistedSettingsSubset {
 export function LiveTranslationStreamsCard() {
   const { t } = useTranslation('liveTranslation')
   const [streamUrl, setStreamUrl] = useState<string>('')
+  const [linkChanged, setLinkChanged] = useState(false)
   const [targets, setTargets] = useState<TranslationTarget[]>([])
   const [copied, setCopied] = useState(false)
   const baseUrl = getApiUrl() || ''
@@ -20,7 +25,10 @@ export function LiveTranslationStreamsCard() {
   useEffect(() => {
     fetch(`${baseUrl}/api/live-translation/stream-secret`)
       .then((r) => r.json())
-      .then((d: { link: string }) => setStreamUrl(d.link))
+      .then((d: { link: string; linkChanged?: boolean }) => {
+        setStreamUrl(d.link)
+        setLinkChanged(d.linkChanged === true)
+      })
       .catch(() => {})
   }, [baseUrl])
 
@@ -35,6 +43,15 @@ export function LiveTranslationStreamsCard() {
 
   const langName = (code: string) =>
     LANGUAGES.find((l) => l.code === code)?.name || code.toUpperCase()
+
+  const dismissLinkChanged = () => {
+    setLinkChanged(false)
+    fetch(`${baseUrl}/api/live-translation/link-changed`, {
+      method: 'DELETE',
+    }).catch((error) =>
+      logger.error('Link notice not dismissed', String(error)),
+    )
+  }
 
   const copy = () => {
     if (!streamUrl) return
@@ -65,6 +82,10 @@ export function LiveTranslationStreamsCard() {
         {t('dashboard.cardDescription')}
       </p>
 
+      {streamUrl && linkChanged && (
+        <ListenerLinkChangedNotice onDismiss={dismissLinkChanged} />
+      )}
+
       {streamUrl && (
         <div className="flex flex-col sm:flex-row gap-2 mb-4">
           <input
@@ -77,7 +98,7 @@ export function LiveTranslationStreamsCard() {
           <button
             type="button"
             onClick={copy}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary hover:bg-indigo-700 text-white rounded-lg transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
           >
             {copied ? (
               <Check className="w-3.5 h-3.5" strokeWidth={1.75} />

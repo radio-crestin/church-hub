@@ -11,8 +11,10 @@ const logger = {
 const REGISTER_EVERY_MS = 30 * 60 * 1000
 
 interface SignalingRelayOptions {
-  /** The room's secret, shared with the devices that may connect. */
+  /** The room's id, shared with the devices that may connect. */
   secret: string
+  /** The host key the room id comes from (hostedRoom.ts). */
+  hostKey: string
   /** How often to look for new offers. */
   pollMs: number
   /** Answers a device's SDP offer with this computer's SDP answer. */
@@ -38,13 +40,15 @@ export function startSignalingRelay(
 /** The room on one relay; returns the function that closes it there. */
 function openRoomOn(
   base: string,
-  { secret, pollMs, answer }: SignalingRelayOptions,
+  { secret, hostKey, pollMs, answer }: SignalingRelayOptions,
 ): () => Promise<void> {
   const relay = new URL(base).host
+  // Host calls carry the host key; listeners only ever hold the room id.
+  const authorization = { authorization: `Bearer ${hostKey}` }
   const post = (path: string, body: unknown) =>
     fetch(`${base}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authorization },
       body: JSON.stringify(body),
     })
 
@@ -69,7 +73,9 @@ function openRoomOn(
     if (polling) return
     polling = true
     try {
-      const res = await fetch(`${base}/signal/${secret}/offers`)
+      const res = await fetch(`${base}/signal/${secret}/offers`, {
+        headers: authorization,
+      })
       if (!res.ok) return
       const { offers } = (await res.json()) as {
         offers: Array<{ sessionId: string; offer: string }>

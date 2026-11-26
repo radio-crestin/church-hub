@@ -47,6 +47,6 @@ Every phone app with remote access (v0.1.102 on) reads the relay from the pairin
 | updated, after the switch | paired or linked before the switch | legacy relay (the computer announces there too) | yes |
 | updated, after the switch | paired or linked after the switch, released or updated | new relay (from the code or link) | yes |
 
-Live translation joins the two relays once it opens its room through `startSignalingRelay` (PR #283); until then it opens it on the computer's own relay only.
+Remote access and live translation both open their rooms through `startSignalingRelay`, so both are announced on the two relays. The rooms are hosted rooms (`h1` ids, #283): the computer proves itself with its host key on each relay, and the Worker accepts them as well as released versions' rooms. Phone pairings and listener links made by a version before #283 already stopped when the computer updated to it (it serves only its hosted rooms), whichever relay they name.
 
 Delete the legacy announcing (`getSignalingRelayUrls`) once no paired phone or shared link names the legacy relay any more.

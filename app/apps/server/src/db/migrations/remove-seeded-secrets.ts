@@ -33,8 +33,6 @@ const AI_CONFIG_KEYS = [
   'songs_ai_search_config',
 ]
 
-const STREAM_SECRET_KEY = 'live_translation_stream_secret'
-
 function isSeeded(secret: unknown, seeded: Set<string>): boolean {
   if (typeof secret !== 'string' || secret === '') return false
   return seeded.has(fingerprintSecret(secret))
@@ -78,14 +76,6 @@ function clearSeededApiKey(
   log('info', `Cleared a seeded API key from ${key}`)
 }
 
-function removeSeededStreamSecret(db: Database, seeded: Set<string>): void {
-  if (!isSeeded(readSetting(db, STREAM_SECRET_KEY), seeded)) return
-
-  // The stream service makes a fresh random secret the next time it is read.
-  db.run('DELETE FROM app_settings WHERE key = ?', [STREAM_SECRET_KEY])
-  log('info', 'Removed a seeded live-translation stream secret')
-}
-
 /**
  * Removes secrets that older default settings seeded into installs. Runs on
  * each start; it only touches a setting whose value matches a fingerprint, so
@@ -96,6 +86,5 @@ export function removeSeededSecrets(
   seeded: Set<string> = SEEDED_SECRET_FINGERPRINTS,
 ): void {
   for (const key of AI_CONFIG_KEYS) clearSeededApiKey(db, key, seeded)
-  removeSeededStreamSecret(db, seeded)
   log('debug', 'Seeded secrets check done')
 }

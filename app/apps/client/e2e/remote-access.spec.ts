@@ -7,8 +7,8 @@ import {
 } from '@playwright/test'
 
 import { ExtraServer } from './helpers/extra-server'
-import { startFakeSignalingRelay } from './helpers/fake-signaling-relay'
-import { FAKE_RELAY_URL, SERVER_PORT } from '../playwright.config'
+import { startSignalingRelay } from './helpers/signaling-relay'
+import { SERVER_PORT, SIGNALING_RELAY_URL } from '../playwright.config'
 
 /**
  * Remote access (CH-050): with "Reach this computer from anywhere" on in
@@ -32,9 +32,9 @@ const IPHONE_UA =
 /** The computer's address on the church Wi-Fi, out of reach from here. */
 const UNREACHABLE_COMPUTER = 'http://127.0.0.1:9'
 
-let stopRelay: () => void
+let stopRelay: () => Promise<void>
 test.beforeAll(async () => {
-  stopRelay = await startFakeSignalingRelay()
+  stopRelay = await startSignalingRelay()
 })
 test.afterAll(() => stopRelay())
 
@@ -172,7 +172,7 @@ test.describe('Remote access', () => {
     await expect(qr).toHaveAttribute(
       'data-url',
       new RegExp(
-        `#remote=[\\w-]+&relay=${encodeURIComponent(FAKE_RELAY_URL).replace(/\./g, '\\.')}`,
+        `#remote=[\\w-]+&relay=${encodeURIComponent(SIGNALING_RELAY_URL).replace(/\./g, '\\.')}`,
       ),
     )
   })
@@ -221,7 +221,7 @@ test.describe('Remote access', () => {
 test.describe('Remote access after a move to a new backend', () => {
   const newRelay = `http://127.0.0.1:${SERVER_PORT + 601}`
   const legacyRelay = `http://127.0.0.1:${SERVER_PORT + 602}`
-  let stopRelays: Array<() => void> = []
+  let stopRelays: Array<() => Promise<void>> = []
   let server: ExtraServer
   let api: APIRequestContext
   let room: { secret: string; relay: string }
@@ -230,11 +230,12 @@ test.describe('Remote access after a move to a new backend', () => {
 
   test.beforeAll(async () => {
     test.setTimeout(300_000)
-    stopRelays = await Promise.all([
-      startFakeSignalingRelay(newRelay),
-      startFakeSignalingRelay(legacyRelay),
-    ])
     server = new ExtraServer()
+    // The phone app's pages come from the computer that moved.
+    stopRelays = await Promise.all([
+      startSignalingRelay(newRelay, server.baseURL),
+      startSignalingRelay(legacyRelay, server.baseURL),
+    ])
     await server.start({
       // As a release build with BACKEND_PUBLIC_URL set; the legacy backend
       // is a stand-in, and nothing on this machine overrides either.
@@ -252,7 +253,7 @@ test.describe('Remote access after a move to a new backend', () => {
   test.afterAll(async () => {
     await api?.dispose()
     await server?.dispose()
-    for (const stop of stopRelays) stop()
+    await Promise.all(stopRelays.map((stop) => stop()))
   })
 
   const isOpenOn = async (relay: string) =>
