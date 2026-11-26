@@ -198,10 +198,10 @@ jobs:
         run: bun run smoke:sidecar
 
   # The few unit tests kept on purpose: data-safety and security logic no
-  # e2e spec can reach (sync merge needs Google Drive; the feature-request
-  # worker's limits and escaping run on Cloudflare, not in the e2e server).
+  # e2e spec can reach (sync merge needs Google Drive; the backend's limits
+  # and escaping run on its own service, not in the e2e server).
   kept-unit-tests:
-    name: Kept unit tests (sync merge, request worker)
+    name: Kept unit tests (sync merge, backend)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -229,7 +229,7 @@ jobs:
         working-directory: app/apps/server
         run: bun run test
 
-      - name: Request-a-feature worker
+      - name: Backend
         working-directory: churchhub-backend
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
