@@ -1,55 +1,81 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+import type { TextLayerContent } from './TextLayer'
+import { useTypewriterEnabled } from './TypewriterContext'
+import { changedSpans } from './utils/changedSpans'
+import type { LayerTypewriter } from './utils/layerTypewriter'
 import { msPerCharacter } from './utils/msPerCharacter'
 import { revealAfter, type TypewriterReveal } from './utils/revealAfter'
-import { typedSpans } from './utils/typedSpans'
+import type { SlideLine } from './utils/splitSlideLines'
+import { type TextSpan, typedSpans } from './utils/typedSpans'
 
 interface UseTypewriterOptions {
   text: string
-  /** The slide this one replaced: lines it showed too are not typed again. */
-  previousText?: string
-  /** The longest the whole text may take to type. */
-  maxDurationMs: number
-  /** Types while true; false shows the whole text at once. */
-  active: boolean
+  lines: SlideLine[]
+  /** useLineMorph's matches: which lines and words a morph kept */
+  lineMatch: (number | null)[]
+  tokenMatch: (number | null)[][]
+  /** SlideLayer.morph */
+  morph: number | null
+  /** SlideLayer.typewriter: null shows the whole text */
+  typewriter: LayerTypewriter<TextLayerContent> | null
+}
+
+/** One typing: from a layer's first draw, or from a slide change that morphed it. */
+interface Run {
+  key: number | 'mount'
+  spans: TextSpan[]
+  length: number
 }
 
 /**
- * Types a slide's text in, left to right, from the moment it mounts, at a
- * pace that fits the text into `maxDurationMs`. Returns what is still hidden,
- * or null once everything shows.
+ * Types a text in, left to right, at a pace that fits it into the layer's
+ * longest typing time. A layer types its words from its first draw, but for
+ * the lines the slide it replaced showed too; a slide change that morphs it
+ * types only the words it brought in, the kept ones stay still. Returns what
+ * is still hidden, or null once everything shows.
  */
 export function useTypewriter({
   text,
-  previousText,
-  maxDurationMs,
-  active,
+  lines,
+  lineMatch,
+  tokenMatch,
+  morph,
+  typewriter,
 }: UseTypewriterOptions): TypewriterReveal | null {
-  const spans = useMemo(
-    () => typedSpans(text, previousText),
-    [text, previousText],
-  )
-  const length = spans.reduce((sum, [start, end]) => sum + end - start, 0)
-  const [typed, setTyped] = useState(0)
-  // The clock starts once and keeps running if the text is edited mid-way.
-  const startedAtRef = useRef<number | null>(null)
+  const active = useTypewriterEnabled() && typewriter !== null
+  const key = morph ?? 'mount'
+  const run = useRef<Run | null>(null)
+  if (run.current?.key !== key) {
+    const spans =
+      morph === null
+        ? typedSpans(text, typewriter?.replaces?.text)
+        : changedSpans(lines, lineMatch, tokenMatch)
+    const length = spans.reduce((sum, [start, end]) => sum + end - start, 0)
+    run.current = { key, spans, length }
+  }
+  const { spans, length } = run.current
+  const [typed, setTyped] = useState({ key, count: 0 })
+  const maxDurationMs = typewriter?.maxDurationMs ?? 0
 
   useEffect(() => {
     if (!active || length === 0) return
     const perCharacter = msPerCharacter(length, maxDurationMs)
+    let startedAt: number | null = null
     let frame = 0
     const tick = (now: number) => {
-      startedAtRef.current ??= now
+      startedAt ??= now
       const count = Math.min(
         length,
-        Math.floor((now - startedAtRef.current) / perCharacter),
+        Math.floor((now - startedAt) / perCharacter),
       )
-      setTyped(count)
+      setTyped({ key, count })
       if (count < length) frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [active, length, maxDurationMs])
+  }, [active, key, length, maxDurationMs])
 
-  return active ? revealAfter(spans, typed) : null
+  if (!active) return null
+  return revealAfter(spans, typed.key === key ? typed.count : 0)
 }

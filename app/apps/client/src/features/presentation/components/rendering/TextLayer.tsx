@@ -1,15 +1,19 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 
-import { useTypewriterEnabled } from './TypewriterContext'
-import type { LayerTypewriter } from './useSlideAnimation'
+import { LeavingLines } from './LeavingLines'
+import { SlideLines } from './SlideLines'
+import { useLineMorph } from './useLineMorph'
+import type { SlideAnimationConfig } from './useSlideAnimation'
 import { useTypewriter } from './useTypewriter'
 import { calculateFontSize } from './utils/calculateFontSize'
 import { fitFontSizeToBounds } from './utils/fitFontSizeToBounds'
 import { getTextStyles } from './utils/getTextStyles'
-import { revealMarkup } from './utils/revealMarkup'
+import type { LayerTypewriter } from './utils/layerTypewriter'
+import { splitSlideLines } from './utils/splitSlideLines'
 import { useFontsLoadedVersion } from '../../hooks/useFontsLoadedVersion'
 import type { TextStyle, TextStyleRange } from '../../types'
 import { applyStylesToText } from '../../utils/applyStylesToText'
+import type { TokenMode } from '../../utils/tokenizeLine'
 
 /** One slide's text and everything that decides how it looks. */
 export interface TextLayerContent {
@@ -31,20 +35,33 @@ interface TextLayerProps {
   styleAnchorOffset?: number
   /** A slide fading out under the new one: hidden from assistive tech */
   leaving?: boolean
-  /** Set while the text types itself in (see useSlideAnimation) */
+  /** SlideLayer.morph: animate only the lines this slide change touched */
+  morph?: number | null
+  /** SlideLayer.rejectMorph */
+  onMorphRejected?: () => void
+  /** How to cut the text into parts, for a text whose slide changes can morph */
+  split?: TokenMode | null
+  /** The slide change transitions a morph plays on single lines */
+  lineTransitions: { enter: SlideAnimationConfig; exit: SlideAnimationConfig }
+  /** SlideLayer.typewriter: set while the text types itself in */
   typewriter?: LayerTypewriter<TextLayerContent> | null
 }
 
 /**
  * One copy of an animated text element: the text fitted to its box, with the
  * layer's animation styles. A slide change shows two of them at once, the old
- * slide leaving and the new one entering, each with its own size and box.
+ * slide leaving and the new one entering, each with its own size and box —
+ * unless the change morphs the layer, animating only its changed lines.
  */
 export function TextLayer({
   content,
   animationStyle,
   styleAnchorOffset,
   leaving = false,
+  morph = null,
+  onMorphRejected,
+  split = null,
+  lineTransitions,
   typewriter = null,
 }: TextLayerProps) {
   const { text, style, width, height, left, top, contentScale, styleRanges } =
@@ -58,16 +75,25 @@ export function TextLayer({
     return applyStylesToText(text, styleRanges)
   }, [text, styleRanges])
 
+  const lines = useMemo(
+    () => splitSlideLines(text, styleRanges, split),
+    [text, styleRanges, split],
+  )
+  const lineMorph = useLineMorph({
+    lines,
+    morph,
+    enter: lineTransitions.enter,
+    exit: lineTransitions.exit,
+    onReject: onMorphRejected,
+  })
   const reveal = useTypewriter({
     text,
-    previousText: typewriter?.replaces?.text,
-    maxDurationMs: typewriter?.maxDurationMs ?? 0,
-    active: useTypewriterEnabled() && typewriter !== null,
+    lines,
+    lineMatch: lineMorph.lineMatch,
+    tokenMatch: lineMorph.tokenMatch,
+    morph,
+    typewriter,
   })
-  // While it types, the text is drawn whole with its untyped part invisible.
-  const html = reveal
-    ? revealMarkup(text, styledHtml, reveal.hidden, reveal.caret)
-    : styledHtml
 
   // Calculate font size synchronously before paint
   useLayoutEffect(() => {
@@ -88,7 +114,7 @@ export function TextLayer({
     // the top and bottom of the box, where they are cut off. Holding the scaled
     // size to what the rendered markup still fits into is what keeps the text on
     // the screen.
-    textRef.current.style.fontSize = `${fitFontSizeToBounds(
+    const fitted = fitFontSizeToBounds(
       measureRef.current,
       text,
       styledHtml,
@@ -96,8 +122,15 @@ export function TextLayer({
       width,
       height,
       minFontSize,
-    )}px`
+    )
+    if (lineMorph.rejects(fitted)) return
+    textRef.current.style.fontSize = `${fitted}px`
+    lineMorph.play(fitted)
+    // lineMorph is new each render; `morph` and `lines` say when it matters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    morph,
+    lines,
     text,
     styledHtml,
     width,
@@ -176,13 +209,24 @@ export function TextLayer({
         style={textStyles}
         data-style-anchor={styleAnchorOffset}
       >
-        {html ? (
-          // Wrap in span to prevent flexbox from treating inline elements as flex items
-          <span dangerouslySetInnerHTML={{ __html: html }} />
-        ) : (
-          text
-        )}
+        <SlideLines
+          lines={lines}
+          lineKeys={lineMorph.lineKeys}
+          tokenKeys={lineMorph.tokenKeys}
+          underline={style.underline}
+          unitRef={lineMorph.unitRef}
+          reveal={reveal}
+        />
       </div>
+      {lineMorph.leaving.map((data) => (
+        <LeavingLines
+          key={data.id}
+          data={data}
+          textStyle={textStyles}
+          underline={style.underline}
+          exit={lineTransitions.exit}
+        />
+      ))}
     </div>
   )
 }

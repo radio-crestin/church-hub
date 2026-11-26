@@ -1,5 +1,12 @@
 import type { TextSpan } from './typedSpans'
 
+/** What a typewriter still hides of a piece of text, in its own offsets. */
+export interface RevealOf {
+  hidden: TextSpan[]
+  /** Where the caret sits; null when it is in another piece */
+  caret: number | null
+}
+
 const HIDDEN_ATTRIBUTE = 'data-typewriter-hidden'
 
 /**
@@ -40,22 +47,24 @@ function hide(node: Text): void {
 }
 
 /**
- * The slide's markup (its styled HTML, or its plain text) with the `hidden`
- * spans kept in place but invisible, and the caret at `caret`. The text keeps
- * every character, so it lays out exactly as the whole text does and a
- * selection's offsets stay right while it types.
+ * A piece of the slide's text (its styled HTML, or its plain text) with the
+ * `hidden` spans kept in place but invisible, and the caret at `caret`. The
+ * text keeps every character, so it lays out exactly as the whole text does
+ * and a selection's offsets stay right while it types.
  */
 export function revealMarkup(
   text: string,
   html: string | null,
-  hidden: TextSpan[],
-  caret: number,
+  { hidden, caret }: RevealOf,
 ): string {
   const template = document.createElement('template')
   if (html) template.innerHTML = html
   else template.content.append(text)
 
-  cutAt(template.content, [...hidden.flat(), caret])
+  cutAt(template.content, [
+    ...hidden.flat(),
+    ...(caret === null ? [] : [caret]),
+  ])
   let offset = 0
   for (const node of textNodes(template.content)) {
     const start = offset
