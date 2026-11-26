@@ -8,7 +8,8 @@ import { findSongSource } from '../listSongSources'
 
 /**
  * The user's choice for some of the library songs a source changed:
- * `update` gives them the source's lyrics (never to a song edited by hand),
+ * `update` gives them the source's lyrics (a song changed here too: the
+ * user chose this version over theirs),
  * `keep` keeps the library's and does not offer this version again. Either
  * way they stop waiting. Returns how many songs were updated.
  */
@@ -23,7 +24,7 @@ export function resolveChangedSongs(
   const picked = changed.filter((c) => ids.has(c.songId))
   let updated = 0
   if (action === 'update') {
-    const songs = updateLibrarySongs(picked)
+    const songs = updateLibrarySongs(sourceId, picked, { chosen: true })
     updated = songs.length
     recordSyncedNotification(`songs-synced:${Date.now()}`, [
       {

@@ -26,14 +26,4 @@ export interface SongSource {
   homepage?: string
   license?: string
   origin: SongSourceOrigin
-  /** Set when Church Hub computes and hosts the source itself. */
-  managed?: string
-}
-
-/** Mirrors the server's `ManagedRelease`: our hosted copy's version. */
-export interface ManagedRelease {
-  version: string
-  checksum: string
-  songCount: number
-  builtAt: string
 }

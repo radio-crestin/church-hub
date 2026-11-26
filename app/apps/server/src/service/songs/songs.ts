@@ -787,9 +787,9 @@ export function batchImportSongs(
         title, alternate_titles, category_id, source_filename,
         author, copyright, ccli, tempo, time_signature,
         theme, alt_theme, hymn_number, key_line, presentation_order,
-        created_at, updated_at
+        source_id, source_song_id, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING id
     `)
 
@@ -890,6 +890,8 @@ export function batchImportSongs(
           input.hymnNumber ?? null,
           input.keyLine ?? null,
           input.presentationOrder ?? null,
+          input.sourceId ?? null,
+          input.sourceSongId ?? null,
           now,
           now,
         ) as { id: number } | null

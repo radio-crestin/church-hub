@@ -57,7 +57,9 @@ export function ChangedSongPanel({
             {item.library.title}
           </h2>
           <p className="text-sm text-fg-hint">
-            {t('changed.subtitle', { source: sourceName })}
+            {item.edited
+              ? t('changed.editedSubtitle', { source: sourceName })
+              : t('changed.subtitle', { source: sourceName })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -85,7 +87,9 @@ export function ChangedSongPanel({
         libraryLines={libraryLines}
         candidateLines={sourceLines}
       />
-      <p className="text-xs text-fg-hint">{t('changed.editedNeverHere')}</p>
+      <p className="text-xs text-fg-hint">
+        {item.edited ? t('changed.editedUpdate') : t('changed.followsSource')}
+      </p>
     </div>
   )
 }

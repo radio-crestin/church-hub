@@ -127,7 +127,6 @@ test.describe
       })
       await publishResurseCrestine()
       await server.start({
-        CHURCH_HUB_SONG_SOURCES_URL: `${s3.endpoint}/songs-bucket`,
         CHURCH_HUB_SONG_SOURCES_RELEASE_URL: `${s3.endpoint}/song-sources`,
         CHURCH_HUB_ALLOW_LOOPBACK_LINKS: 'true',
         CHURCH_HUB_SONG_UPDATES_AT_START: 'false',

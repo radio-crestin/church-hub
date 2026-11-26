@@ -3,8 +3,9 @@
  * OpenSong ZIP (see UPSTREAM_URLS): one OpenSong file per song, named after
  * the song, with the title an untitled song gets from its first lyric line
  * and the file it came from (source_filename). Run daily by
- * .github/workflows/resurse-crestine-archive.yml, which publishes it where
- * the checksum changed (docs/managed-song-sources.md).
+ * .github/workflows/resurse-crestine-archive.yml, which publishes it to the
+ * `song-sources` release when the checksum changed
+ * (docs/managed-song-sources.md).
  *
  * Usage: bun scripts/build-resurse-crestine-archive.ts <out-dir>
  * Writes resurse-crestine.chsongs, resurse-crestine-opensong.zip (the same

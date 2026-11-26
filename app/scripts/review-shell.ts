@@ -3,13 +3,14 @@
  * feature (tauri/src/review.rs) and reused by every task's review build, so a
  * review build compiles no Rust unless the task changed the shell itself.
  *
- * Shells live in the main checkout's `.review-build/.shells/<key>/`. The key
+ * Shells live in the user's cache, `<userCacheDir>/review-shells/<key>/`,
+ * shared by every checkout and writable from task sessions. The key
  * hashes every file the binary is built from (app/tauri without its
  * per-task resources and sidecar, app/tauri-plugins), committed or not, so a
  * task that touches the shell gets its own, built from its own code.
  */
 
-import { spawnSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
   cpSync,
@@ -25,13 +26,14 @@ import {
 } from 'node:fs'
 import { join } from 'node:path'
 
-import { run } from './worktree-common'
+import { withLock } from './review-shell-lock'
+import { run, userCacheDir } from './worktree-common'
 
 const SHELL_SOURCES = ['app/tauri', 'app/tauri-plugins']
 // Copied per task, so they never make a new shell.
 const PER_TASK = ['app/tauri/bin/', 'app/tauri/resources/']
 const SHELLS_KEPT = 3
-const LOCK_WAIT_MS = 30 * 60 * 1000
+const SHELLS_DIR = join(userCacheDir(), 'review-shells')
 
 export const SHELL_BINARY =
   process.platform === 'win32' ? 'church-hub.exe' : 'church-hub'
@@ -66,68 +68,6 @@ export function shellKey(root: string) {
     hash.update(`${file}\n`).update(readFileSync(path))
   }
   return hash.digest('hex').slice(0, 16)
-}
-
-function isAlive(pid: number) {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch {
-    return false
-  }
-}
-
-/** Who holds the lock: its pid, or null while the holder is still writing it. */
-function lockHolder(lock: string): number | null {
-  try {
-    return Number(readFileSync(join(lock, 'pid'), 'utf8')) || null
-  } catch {
-    return null
-  }
-}
-
-/** A pid-less lock older than a minute: its holder died before writing the pid. */
-function isAbandoned(lock: string) {
-  try {
-    return Date.now() - statSync(lock).mtimeMs > 60_000
-  } catch {
-    return false
-  }
-}
-
-/**
- * A lock folder in the Cargo target dir, held only while a shell compiles
- * (worktrees share that target dir). A lock whose holder died (dead pid, or
- * no pid written for a minute) is taken over; any other is waited for.
- */
-function withLock(targetDir: string, action: () => void) {
-  const lock = join(targetDir, '.review-build.lock')
-  const started = Date.now()
-  mkdirSync(targetDir, { recursive: true })
-  while (true) {
-    try {
-      mkdirSync(lock)
-      break
-    } catch {
-      const holder = lockHolder(lock)
-      if (holder ? !isAlive(holder) : isAbandoned(lock)) {
-        rmSync(lock, { recursive: true, force: true })
-        continue
-      }
-      if (Date.now() - started > LOCK_WAIT_MS) {
-        throw new Error(`another review shell build holds ${lock}`)
-      }
-      Bun.sleepSync(5000)
-    }
-  }
-  const release = () => rmSync(lock, { recursive: true, force: true })
-  process.on('exit', release)
-  try {
-    writeFileSync(join(lock, 'pid'), String(process.pid))
-    action()
-  } finally {
-    release()
-  }
 }
 
 export function cargoTargetDir(app: string) {
@@ -165,7 +105,16 @@ function ensureFrontendDist(app: string) {
   writeFileSync(join(dist, 'index.html'), '<!doctype html>\n')
 }
 
-function compileShell(app: string, targetDir: string, staging: string) {
+/** Runs a command to its end without blocking the lock's heartbeat. */
+function spawnAndWait(command: string, args: string[], cwd: string) {
+  return new Promise<number | null>((done, fail) => {
+    spawn(command, args, { cwd, stdio: 'inherit' })
+      .on('error', fail)
+      .on('exit', (code) => done(code))
+  })
+}
+
+async function compileShell(app: string, targetDir: string, staging: string) {
   ensureFrontendDist(app)
   const config = join(staging, 'tauri.shell.conf.json')
   // The task's web build and sidecar are built by review-build.ts itself.
@@ -187,18 +136,18 @@ function compileShell(app: string, targetDir: string, staging: string) {
     '--features',
     'review-shell',
   ]
-  const result = spawnSync(
+  const status = await spawnAndWait(
     process.execPath,
     [...args, '--config', config, '--', '--profile', 'review'],
-    { cwd: app, stdio: 'inherit' },
+    app,
   )
-  if (result.status !== 0) {
+  if (status !== 0) {
     // A missing system library fails in a -sys crate's build script (e.g. alsa-sys: no alsa.pc).
     const hint =
       process.platform === 'linux'
         ? ': see the Rust error above; on Linux, scripts/setup/linux.sh installs the build libraries'
         : ': see the Rust error above'
-    throw new Error(`review shell build failed (exit ${result.status})${hint}`)
+    throw new Error(`review shell build failed (exit ${status})${hint}`)
   }
   const built =
     process.platform === 'darwin'
@@ -224,20 +173,21 @@ function pruneShells(shellsDir: string, keep: string) {
  * The shell for this checkout's code: the cached one, or built now (under
  * the lock, then cached). Returns its folder and whether it was built.
  */
-export function ensureShell(root: string, shellsDir: string) {
+export async function ensureShell(root: string) {
+  const shellsDir = SHELLS_DIR
   const app = join(root, 'app')
   const key = shellKey(root)
   const shell = join(shellsDir, key)
   let built = false
   if (!existsSync(shell)) {
     const targetDir = cargoTargetDir(app)
-    withLock(targetDir, () => {
+    await withLock(targetDir, async () => {
       if (existsSync(shell)) return // another task built it while we waited
       const staging = join(shellsDir, `.building-${key}-${process.pid}`)
       rmSync(staging, { recursive: true, force: true })
       mkdirSync(staging, { recursive: true })
       try {
-        compileShell(app, targetDir, staging)
+        await compileShell(app, targetDir, staging)
         renameSync(staging, shell) // appears whole or not at all
       } finally {
         rmSync(staging, { recursive: true, force: true })

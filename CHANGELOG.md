@@ -2,53 +2,61 @@
 
 > Auto-generated from git history by `app/scripts/generate-changelog.ts`. Do not edit by hand.
 
-## v0.1.106 — 2026-11-23
+## v0.1.107 — 2026-11-26
 
 ### What's new
 
 **New**
 
-- Share a screen or window on the projector and on browser screens, straight from the app.
-- Present Bible bookmarks one after another, or let them loop on a timer.
-- A bookmark button in the Bible page header, and the bookmark list scrolls to the verse you just added.
-- Make Bible verses bigger or smaller on screen with the new font-size buttons.
-- When a song source changes a song, review each change and choose to update it or keep yours.
-- The YouTube stream description now lists a chapter and the full text of every song and verse shown.
-- Go back and forward between pages with the mouse side buttons or Alt+Left/Right (Cmd+[ / Cmd+] on Mac).
-- Search in Settings to find an option quickly.
-- Settings > Shortcuts now lists the shortcuts of every page in the sidebar.
-- On a phone: a bottom tab bar, a live strip with previous / next / hide on every page, and phone layouts for songs, the Bible and programs.
+- Programs can run as automated presentations, and the Down arrow walks through each item's slides, then into the next item.
+- The Control Room has a queue: add a song, Bible verses, music, a gallery video or a whole program, and Next walks through them, programs inside programs included.
+- Join a church from a phone by QR code or link and use the whole app in the browser: it connects to the church computer when it's on, and keeps working on its own copy of the library when it's off.
+- Cloud sync keeps every part of the church's library in step across devices: sign in with Google as the owner, or start as a guest and claim it later.
+- Bible verses by topic: browse topics, present their verses, and each topic keeps its own template, live on screen.
+- Bible slideshows have clear icon buttons, an adjustable reading speed and a progress ring for each verse.
+- On the Bible page, double-click a verse to show it, use "Show on screen", or turn on showing a verse as soon as you pick it.
+- Present an image or video straight from the gallery.
+- A typewriter text animation and two typewriter templates for slides.
+- Slide changes are calmer: only the lines, words and verse numbers that change move, a slide fades out when it leaves, and a new kind of slide comes in with its own theme and background.
+- Music: seeking is seamless, the page is split into clear sections, and "Add to playlist" opens a searchable list.
+- A fresh, quieter design across the app, with a grouped sidebar, easier-to-read text and new app icons.
 
 **Fixed**
 
-- Closing the app (even a force quit) now also stops its background server, so it starts again cleanly next time.
-- Songs with dots in their names (like "Isaia 38.9-20") are now imported from Resurse Creștine.
-- Resurse Creștine downloads use a working link, and a failed download says why.
-- Song search updates much faster after importing many songs.
+- Passwords and keys saved in the app are now stored encrypted on the computer, and each user can only do what their permissions allow.
+- Phone remote control and live-translation links are better protected: after updating, pair your phones again and share the listener link again.
+- When a user is removed or turned off, their phones are signed out right away.
+- Seeking in a song no longer makes a strange sound.
+- Sending a feature request works even when screenshots can't be stored.
+- The Linux AppImage starts correctly again.
 
 ### Ce e nou
 
 **Noutăți**
 
-- Poți proiecta un ecran sau o fereastră pe proiector și pe ecranele din browser, direct din aplicație.
-- Versetele marcate din Biblie se pot prezenta pe rând sau în buclă, cu temporizator.
-- Buton de marcaj în antetul paginii Biblia, iar lista de marcaje derulează la versetul tocmai adăugat.
-- Butoane noi pentru a mări sau micșora textul versetelor pe ecran.
-- Când o sursă de cântări modifică o cântare, vezi fiecare schimbare și alegi dacă o actualizezi sau o păstrezi pe a ta.
-- Descrierea transmisiunii pe YouTube conține acum un capitol și textul complet pentru fiecare cântare și verset afișat.
-- Te întorci înapoi sau mergi înainte între pagini cu butoanele laterale ale mouse-ului sau cu Alt+Stânga/Dreapta (Cmd+[ / Cmd+] pe Mac).
-- Căutare în Setări, ca să găsești repede o opțiune.
-- Setări > Scurtături arată acum scurtăturile tuturor paginilor din meniu.
-- Pe telefon: bară de file jos, bandă cu ce e pe ecran (înapoi / înainte / ascunde) pe fiecare pagină, și pagini adaptate pentru cântări, Biblie și programe.
+- Programele pot rula ca prezentări automate, iar săgeata în jos trece prin diapozitivele fiecărui element, apoi la următorul.
+- Camera de control are o coadă: adaugi o cântare, versete, muzică, un video din galerie sau un program întreg, iar „Următorul” le parcurge pe rând, inclusiv programele din alte programe.
+- Te poți alătura bisericii de pe telefon, cu un cod QR sau un link, și poți folosi toată aplicația în browser: se conectează la calculatorul bisericii când e pornit și merge mai departe pe propria copie a bibliotecii când e oprit.
+- Sincronizarea în cloud ține toată biblioteca bisericii la zi pe toate dispozitivele: intri cu Google ca proprietar sau începi ca invitat și o revendici mai târziu.
+- Versete biblice pe teme: răsfoiești temele, prezinți versetele lor, iar fiecare temă își păstrează șablonul, direct pe ecran.
+- Prezentările automate din Biblie au butoane cu iconițe clare, viteză de citire reglabilă și un cerc care arată cât mai rămâne din fiecare verset.
+- Pe pagina Biblie, dublu clic pe un verset îl afișează; poți folosi și „Afișează pe ecran” sau poți alege ca versetul să apară pe ecran imediat ce îl selectezi.
+- Poți prezenta o imagine sau un video direct din galerie.
+- O animație de text ca la mașina de scris și două șabloane „Mașină de scris” pentru diapozitive.
+- Trecerea între diapozitive e mai liniștită: se mișcă doar rândurile, cuvintele și numerele de verset care se schimbă, diapozitivul dispare treptat când iese, iar un alt tip de conținut intră cu tema și fundalul lui.
+- Muzică: derularea în piesă e fără întreruperi, pagina e împărțită în secțiuni clare, iar „Adaugă în playlist” deschide o listă în care poți căuta.
+- Un aspect nou, mai aerisit, în toată aplicația: meniul lateral pe grupuri, text mai ușor de citit și iconițe noi.
 
 **Corectări**
 
-- La închiderea aplicației (chiar și forțată) se oprește și serverul din fundal, așa că pornește curat data viitoare.
-- Cântările cu puncte în nume (de exemplu „Isaia 38.9-20”) se importă acum de pe Resurse Creștine.
-- Descărcarea de pe Resurse Creștine folosește un link care merge, iar o descărcare eșuată spune de ce.
-- Căutarea cântărilor se actualizează mult mai repede după importul multor cântări.
+- Parolele și cheile salvate în aplicație sunt acum păstrate criptat pe calculator, iar fiecare utilizator poate face doar ce îi permit drepturile lui.
+- Controlul de pe telefon și linkurile pentru traducerea live sunt mai bine protejate: după actualizare, asociază din nou telefoanele și trimite din nou linkul pentru ascultători.
+- Când un utilizator e șters sau dezactivat, telefoanele lui sunt deconectate imediat.
+- Derularea într-o piesă nu mai produce un sunet ciudat.
+- Trimiterea unei sugestii merge și când capturile de ecran nu pot fi salvate.
+- Varianta AppImage pentru Linux pornește din nou corect.
 
-<!-- church-hub-notes {"en":{"features":["Share a screen or window on the projector and on browser screens, straight from the app.","Present Bible bookmarks one after another, or let them loop on a timer.","A bookmark button in the Bible page header, and the bookmark list scrolls to the verse you just added.","Make Bible verses bigger or smaller on screen with the new font-size buttons.","When a song source changes a song, review each change and choose to update it or keep yours.","The YouTube stream description now lists a chapter and the full text of every song and verse shown.","Go back and forward between pages with the mouse side buttons or Alt+Left/Right (Cmd+[ / Cmd+] on Mac).","Search in Settings to find an option quickly.","Settings > Shortcuts now lists the shortcuts of every page in the sidebar.","On a phone: a bottom tab bar, a live strip with previous / next / hide on every page, and phone layouts for songs, the Bible and programs."],"bugFixes":["Closing the app (even a force quit) now also stops its background server, so it starts again cleanly next time.","Songs with dots in their names (like \"Isaia 38.9-20\") are now imported from Resurse Creștine.","Resurse Creștine downloads use a working link, and a failed download says why.","Song search updates much faster after importing many songs."]},"ro":{"features":["Poți proiecta un ecran sau o fereastră pe proiector și pe ecranele din browser, direct din aplicație.","Versetele marcate din Biblie se pot prezenta pe rând sau în buclă, cu temporizator.","Buton de marcaj în antetul paginii Biblia, iar lista de marcaje derulează la versetul tocmai adăugat.","Butoane noi pentru a mări sau micșora textul versetelor pe ecran.","Când o sursă de cântări modifică o cântare, vezi fiecare schimbare și alegi dacă o actualizezi sau o păstrezi pe a ta.","Descrierea transmisiunii pe YouTube conține acum un capitol și textul complet pentru fiecare cântare și verset afișat.","Te întorci înapoi sau mergi înainte între pagini cu butoanele laterale ale mouse-ului sau cu Alt+Stânga/Dreapta (Cmd+[ / Cmd+] pe Mac).","Căutare în Setări, ca să găsești repede o opțiune.","Setări > Scurtături arată acum scurtăturile tuturor paginilor din meniu.","Pe telefon: bară de file jos, bandă cu ce e pe ecran (înapoi / înainte / ascunde) pe fiecare pagină, și pagini adaptate pentru cântări, Biblie și programe."],"bugFixes":["La închiderea aplicației (chiar și forțată) se oprește și serverul din fundal, așa că pornește curat data viitoare.","Cântările cu puncte în nume (de exemplu „Isaia 38.9-20”) se importă acum de pe Resurse Creștine.","Descărcarea de pe Resurse Creștine folosește un link care merge, iar o descărcare eșuată spune de ce.","Căutarea cântărilor se actualizează mult mai repede după importul multor cântări."]}} -->
+<!-- church-hub-notes {"en":{"features":["Programs can run as automated presentations, and the Down arrow walks through each item's slides, then into the next item.","The Control Room has a queue: add a song, Bible verses, music, a gallery video or a whole program, and Next walks through them, programs inside programs included.","Join a church from a phone by QR code or link and use the whole app in the browser: it connects to the church computer when it's on, and keeps working on its own copy of the library when it's off.","Cloud sync keeps every part of the church's library in step across devices: sign in with Google as the owner, or start as a guest and claim it later.","Bible verses by topic: browse topics, present their verses, and each topic keeps its own template, live on screen.","Bible slideshows have clear icon buttons, an adjustable reading speed and a progress ring for each verse.","On the Bible page, double-click a verse to show it, use \"Show on screen\", or turn on showing a verse as soon as you pick it.","Present an image or video straight from the gallery.","A typewriter text animation and two typewriter templates for slides.","Slide changes are calmer: only the lines, words and verse numbers that change move, a slide fades out when it leaves, and a new kind of slide comes in with its own theme and background.","Music: seeking is seamless, the page is split into clear sections, and \"Add to playlist\" opens a searchable list.","A fresh, quieter design across the app, with a grouped sidebar, easier-to-read text and new app icons."],"bugFixes":["Passwords and keys saved in the app are now stored encrypted on the computer, and each user can only do what their permissions allow.","Phone remote control and live-translation links are better protected: after updating, pair your phones again and share the listener link again.","When a user is removed or turned off, their phones are signed out right away.","Seeking in a song no longer makes a strange sound.","Sending a feature request works even when screenshots can't be stored.","The Linux AppImage starts correctly again."]},"ro":{"features":["Programele pot rula ca prezentări automate, iar săgeata în jos trece prin diapozitivele fiecărui element, apoi la următorul.","Camera de control are o coadă: adaugi o cântare, versete, muzică, un video din galerie sau un program întreg, iar „Următorul” le parcurge pe rând, inclusiv programele din alte programe.","Te poți alătura bisericii de pe telefon, cu un cod QR sau un link, și poți folosi toată aplicația în browser: se conectează la calculatorul bisericii când e pornit și merge mai departe pe propria copie a bibliotecii când e oprit.","Sincronizarea în cloud ține toată biblioteca bisericii la zi pe toate dispozitivele: intri cu Google ca proprietar sau începi ca invitat și o revendici mai târziu.","Versete biblice pe teme: răsfoiești temele, prezinți versetele lor, iar fiecare temă își păstrează șablonul, direct pe ecran.","Prezentările automate din Biblie au butoane cu iconițe clare, viteză de citire reglabilă și un cerc care arată cât mai rămâne din fiecare verset.","Pe pagina Biblie, dublu clic pe un verset îl afișează; poți folosi și „Afișează pe ecran” sau poți alege ca versetul să apară pe ecran imediat ce îl selectezi.","Poți prezenta o imagine sau un video direct din galerie.","O animație de text ca la mașina de scris și două șabloane „Mașină de scris” pentru diapozitive.","Trecerea între diapozitive e mai liniștită: se mișcă doar rândurile, cuvintele și numerele de verset care se schimbă, diapozitivul dispare treptat când iese, iar un alt tip de conținut intră cu tema și fundalul lui.","Muzică: derularea în piesă e fără întreruperi, pagina e împărțită în secțiuni clare, iar „Adaugă în playlist” deschide o listă în care poți căuta.","Un aspect nou, mai aerisit, în toată aplicația: meniul lateral pe grupuri, text mai ușor de citit și iconițe noi."],"bugFixes":["Parolele și cheile salvate în aplicație sunt acum păstrate criptat pe calculator, iar fiecare utilizator poate face doar ce îi permit drepturile lui.","Controlul de pe telefon și linkurile pentru traducerea live sunt mai bine protejate: după actualizare, asociază din nou telefoanele și trimite din nou linkul pentru ascultători.","Când un utilizator e șters sau dezactivat, telefoanele lui sunt deconectate imediat.","Derularea într-o piesă nu mai produce un sunet ciudat.","Trimiterea unei sugestii merge și când capturile de ecran nu pot fi salvate.","Varianta AppImage pentru Linux pornește din nou corect."]}} -->
 
 ## v0.1.105 — 2026-11-22
 

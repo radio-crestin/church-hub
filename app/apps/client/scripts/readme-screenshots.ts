@@ -220,18 +220,6 @@ const SHOTS: Shot[] = [
   { name: 'control-room-settings', take: (p) => open(p, '/settings/screens') },
   { name: 'backup', take: (p) => open(p, '/settings/backup') },
   { name: 'settings', take: (p) => open(p, '/settings/users') },
-  {
-    name: 'feedback',
-    take: async (p) => {
-      await open(p, '/songs')
-      await p.getByTestId('sidebar-request-feature').click()
-      await p
-        .getByTestId('feature-request-dialog')
-        .getByTestId('feature-request-canvas')
-        .waitFor()
-      await p.waitForTimeout(1000)
-    },
-  },
   // Last: presenting a verse takes the song off the screens.
   {
     name: 'bible',

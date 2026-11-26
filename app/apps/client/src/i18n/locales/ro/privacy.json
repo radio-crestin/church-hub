@@ -32,8 +32,6 @@
     "anonymous": "Fiecare dispozitiv primește un id aleatoriu, iar fiecare instalare altul; niciunul nu este legat de numele, e-mailul, numele calculatorului sau contul tău. Nu se creează profiluri de persoane. Adresa ta IP nu este păstrată și nu este folosită ca să afle unde te afli. Adresele web și adresele IP (și cele din rețeaua locală) sunt scoase din tot ce se trimite.",
     "neverTitle": "Ce nu colectăm niciodată",
     "never": "Textul butoanelor și al paginilor, versurile cântărilor, versetele biblice, prezentările și elementele lor, nimic din ce scrii, nume de fișiere și foldere, nume, adrese de e-mail și parole, adresa ta IP sau adresele din rețeaua ta.",
-    "feedbackTitle": "Când trimiți feedback",
-    "feedback": "Doar când apeși Trimite în Feedback: jurnalele recente ale aplicației (ale serverului și ale aplicației desktop) ajung în mod privat la dezvoltator, sub id-ul aleatoriu al dispozitivului tău, împreună cu versiunea sistemului și a aplicației, ca problema să poată fi găsită. Jurnalele pot conține căi de fișiere și adrese de rețea. Se întâmplă chiar și cu datele de utilizare oprite, pentru că tu ai ales să le trimiți.",
     "offTitle": "Cum oprești trimiterea",
     "off": "Dezactivează mai sus „Trimite date anonime de utilizare”. De atunci nu se mai trimite niciun eveniment, nicio eroare și nicio înregistrare a ecranului, nici din ferestrele aplicației, nici din server, pe toate dispozitivele conectate la această aplicație."
   },
@@ -51,8 +49,7 @@
   "serverEvents": {
     "app_started": "Serverul a pornit.",
     "server_message": "O problemă observată de server.",
-    "$exception": "O eroare în server: mesajul, tipul ei și locul din cod unde a apărut.",
-    "$feedback_report": "Doar când trimiți feedback: jurnalele recente (vezi mai jos)."
+    "$exception": "O eroare în server: mesajul, tipul ei și locul din cod unde a apărut."
   },
   "properties": {
     "element": "Numele din cod al butonului (test id), niciodată textul lui",
@@ -75,11 +72,6 @@
     "source": "Ce parte din cod l-a raportat",
     "component": "client sau server",
     "level": "Cât de gravă este problema",
-    "report_id": "Id-ul aleatoriu al dispozitivului tău, trimis odată cu feedbackul",
-    "os_version": "Versiunea sistemului de operare",
-    "app_version": "Versiunea aplicației",
-    "server_log_tail": "Sfârșitul jurnalului serverului",
-    "tauri_log_tail": "Sfârșitul jurnalului aplicației desktop",
     "distinct_id": "Id-ul aleatoriu al acestui dispozitiv",
     "install_id": "Id-ul aleatoriu al acestei instalări",
     "runtime": "Aplicația desktop sau browserul",

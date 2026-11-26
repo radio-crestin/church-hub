@@ -1,8 +1,7 @@
 /**
  * churchhub-backend on Node (or Bun): the same Hono app as the Worker, with
  * Redis (or memory, outside production) in place of Cloudflare's KV and rate
- * limiters, and the S3 bucket for screenshots. Settings come from the
- * environment (README, "Self-hosted (Node)").
+ * limiters. Settings come from the environment (README, "Self-hosted (Node)").
  *
  *   node dist/server.mjs        (the container; built by the Dockerfile)
  *   bun src/node/server.ts      (development, the e2e specs)
@@ -25,7 +24,7 @@ const settings = process.env
 assertProductionSettings(settings)
 const redis = settings.REDIS_URL ? connectRedis(settings.REDIS_URL) : null
 if (!redis) {
-  console.warn('[server] REDIS_URL is not set: signaling and rate limits live in memory (one process only)')
+  console.warn('[server] REDIS_URL is not set: signaling and rate limits live in memory (one replica only)')
 }
 const bindingsFor = createSyncGuard(buildNodeBindings(settings, redis))
 const isTrustedProxy = createCidrMatcher(settings.TRUSTED_PROXY_CIDRS ?? '')

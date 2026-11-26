@@ -96,9 +96,6 @@ env:
   VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN || 'phc_x4iC8SNTkLtxooGYmbz6v3nFjYE2v6wXaNgZVHNaxatK' }}
   VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com' }}
   VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN: ${{ secrets.VITE_PUBLIC_POSTHOG_CONVERSATIONS_TOKEN || '4GDD07pVU98dgX9qHiFHNswimJuq7gD1hE6nvTHXMBY' }}
-  # The public URL of Church Hub's managed song sources, baked into the
-  # sidecar (docs/managed-song-sources.md). Unset: the app reads the release.
-  CHURCH_HUB_BUILD_SONG_SOURCES_URL: ${{ vars.SONG_SOURCES_PUBLIC_URL }}
   # Church Hub's backend, baked into the sidecar (docs/backend-endpoint.md).
   # Unset: the legacy backend every released version uses.
   CHURCH_HUB_BUILD_BACKEND_URL: ${{ vars.BACKEND_PUBLIC_URL }}

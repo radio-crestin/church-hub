@@ -64,7 +64,9 @@ test.describe('Song updates', () => {
     const library = await request.post('/api/songs', {
       data: {
         title: `Harul Tau ${tag}`,
-        slides: [{ content: `<p>${knownLyrics}</p>`, sortOrder: 0 }],
+        // A version of the source's song (one word more): similar, not the
+        // same lyrics, which would make it the same song (T-176).
+        slides: [{ content: `<p>${knownLyrics} mereu</p>`, sortOrder: 0 }],
       },
     })
     libraryIds.push((await library.json()).data.id)
