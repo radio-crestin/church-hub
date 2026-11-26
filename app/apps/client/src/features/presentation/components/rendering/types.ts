@@ -29,6 +29,8 @@ export interface ContentData {
   videoUrl?: string
   /** The video item plays again from the start until the step changes. */
   videoLoop?: boolean
+  /** A gallery image, shown full screen (ScreenImage). */
+  imageUrl?: string
   /** A presentation's looping background video (see `resolveScreenBackground`). */
   presentationBackground?: PresentationBackground | null
   /** A Slides item's slide (DeckSlideRenderer). */

@@ -7,6 +7,7 @@ import { AnimatedText } from './AnimatedText'
 import { ChordsOverlay } from './ChordsOverlay'
 import { ClockText } from './ClockText'
 import { EditableMainText } from './EditableMainText'
+import { ScreenImage } from './ScreenImage'
 import { ScreenVideo } from './ScreenVideo'
 import { TextContent } from './TextContent'
 import type { ContentData, NextSlideData } from './types'
@@ -830,6 +831,10 @@ export function ScreenContent({
           withSound={videoSound}
         />
       )}
+      <ScreenImage
+        url={contentData?.imageUrl}
+        isVisible={isVisible && !!contentData?.imageUrl}
+      />
       {renderClockOverride()}
       {renderMainText()}
       {renderContentText()}
