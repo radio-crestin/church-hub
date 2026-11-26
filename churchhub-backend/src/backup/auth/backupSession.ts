@@ -6,7 +6,7 @@ import type { AccountRecord } from '../account/AccountRecord'
 import { updateAccountIndex } from '../account/accountIndex'
 import { accountIdFor } from '../account/accountKeys'
 import { readAccount, updateAccount } from '../account/accountStore'
-import { applyTombstone, readTombstone, tombstoneKey } from '../account/tombstone'
+import { applyTombstone, readTombstone } from '../account/tombstone'
 import type { BackupSettings } from '../backupSettings'
 import type { BackupBucket } from '../storage/createBackupBucket'
 import {
@@ -78,7 +78,12 @@ export async function openBackupSession(
   const now = Date.now()
   const tombstone = await readTombstone(bucket, accountId)
   const record = await updateAccount(bucket, accountId, (record) => {
-    // A deleted account signing in again takes its limits back.
+    if (record.deletingSince !== null) {
+      throw new SyncError(409, 'account_deleting', 'The account is being deleted; try again in a moment')
+    }
+    // A new record of an account deleted before takes its limits back. The
+    // tombstone stays until purged, so two sign-ins at once can't lose it:
+    // the second one finds the record the first created.
     if (tombstone && record.createdAt === null) applyTombstone(record, tombstone, now)
     record.sessions[fid] = { generation: 0, createdAt: now, lastUsedAt: now }
     dropOldestSessions(record)
@@ -87,7 +92,6 @@ export async function openBackupSession(
     record.lastSignInAt = now
     return record
   })
-  if (tombstone) await bucket.delete(tombstoneKey(accountId))
   await updateAccountIndex(bucket, (index) => {
     index[accountId] = {
       email: data.email,

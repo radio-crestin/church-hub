@@ -5,7 +5,10 @@ import { updateAccountIndex } from './accountIndex'
 import { accountRecordKey } from './accountKeys'
 import { updateAccount } from './accountStore'
 import { listAccountObjects } from './sweepUnlistedObjects'
-import { tombstoneKey, tombstoneOf } from './tombstone'
+import { tombstoneOf, writeTombstone } from './tombstone'
+
+/** A deletion still unfinished after this long is finished by the upkeep. */
+export const STUCK_DELETION_MS = 15 * 60 * 1000
 
 const PREFIXES = (accountId: string) => [
   `accounts/${accountId}/`,
@@ -14,25 +17,27 @@ const PREFIXES = (accountId: string) => [
 ]
 
 /**
- * Erases an account. First its sessions end (compare-and-swap, so no
- * request in flight can add anything); then every multipart upload under
- * its prefixes is aborted, every object under accounts/<id>/,
- * backups/<id>/ and blobs/<id>/ is deleted (an older layout included), its
- * entry leaves the admin index, and its record goes last. What stays is a
- * tombstone (tombstones/<id>.json): the pause, an admin's quota and the
- * day's uploads, nothing personal, purged after 90 days; a later sign-in
- * with the same account takes those limits back.
+ * Erases an account, in an order no sign-in can slip into:
+ * 1. the record is marked deleting and its sessions end (compare-and-swap;
+ *    from here a sign-in is refused, 409);
+ * 2. the tombstone is written (the pause, an admin's quota, the last 24
+ *    hours' uploads; nothing personal), before anything is removed;
+ * 3. every multipart upload under the account's prefixes is aborted and
+ *    every object under accounts/<id>/, backups/<id>/ and blobs/<id>/ is
+ *    deleted (an older layout included), and its admin index entry goes;
+ * 4. the record goes last.
+ * Running it again resumes an unfinished deletion. A later sign-in with the
+ * same account starts a new record and takes the tombstone's limits back.
  */
 export async function deleteAccount(bucket: BackupBucket, accountId: string) {
+  const now = Date.now()
   const before = await updateAccount<AccountRecord>(bucket, accountId, (record) => {
     const snapshot = structuredClone(record)
-    revokeAllSessions(record)
-    record.backups = []
-    record.uploads = []
-    record.blobs = {}
-    record.usedBytes = 0
+    record.deletingSince ??= now
+    revokeAllSessions(record, now)
     return snapshot
   })
+  await writeTombstone(bucket, accountId, tombstoneOf(before, now))
   for (const prefix of PREFIXES(accountId)) {
     for (const upload of await bucket.listMultipartUploads(prefix)) {
       await bucket.abortMultipartUpload(upload.key, upload.uploadId)
@@ -46,10 +51,5 @@ export async function deleteAccount(bucket: BackupBucket, accountId: string) {
     delete index[accountId]
   })
   await bucket.delete(record)
-  // A tombstone left by an earlier deletion gives way to this one.
-  await bucket.delete(tombstoneKey(accountId))
-  await bucket.put(tombstoneKey(accountId), JSON.stringify(tombstoneOf(before, Date.now())), {
-    ifNoneMatch: '*',
-  })
   return { deletedBackups: before.backups.length, before }
 }

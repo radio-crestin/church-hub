@@ -80,6 +80,8 @@ export interface AccountRecord {
   quotaBytes: number | null
   /** An admin paused new uploads (downloads still work). */
   suspended: boolean
+  /** Unix ms an account deletion began; until it ends, sign-ins are refused. */
+  deletingSince: number | null
   email: string | null
   createdAt: number | null
   lastSignInAt: number | null
@@ -104,6 +106,7 @@ export const emptyAccount = (): AccountRecord => ({
   usedBytes: 0,
   quotaBytes: null,
   suspended: false,
+  deletingSince: null,
   email: null,
   createdAt: null,
   lastSignInAt: null,

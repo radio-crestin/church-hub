@@ -1,5 +1,7 @@
 import type { Bindings } from '../types'
 import { readAccountIndex } from './account/accountIndex'
+import { readAccount } from './account/accountStore'
+import { deleteAccount, STUCK_DELETION_MS } from './account/deleteAccount'
 import { expireAccountBackups } from './account/expireAccountBackups'
 import { reconcileAccount } from './account/reconcileAccount'
 import { sweepUnlistedObjects } from './account/sweepUnlistedObjects'
@@ -74,8 +76,9 @@ async function eachAccount(
  * The backup service's scheduled upkeep, the same on Cloudflare (cron
  * triggers) and Node (timers). Every hour: multipart uploads left
  * unfinished are aborted, backups past the retention (30 days) expire,
- * objects no record lists (older than any presigned URL) are swept and
- * tombstones of deleted accounts older than 90 days are purged. Once a
+ * objects no record lists (older than any presigned URL) are swept,
+ * account deletions left unfinished are finished, and tombstones of
+ * deleted accounts older than 90 days are purged. Once a
  * day (`reconcile`): every account is recomputed from the bucket. Each
  * account is handled on its own; skipped quietly while cloud backup is not
  * configured.
@@ -96,6 +99,11 @@ export async function runBackupMaintenance(
     const aborted = await abortStaleUploads(bucket, Date.now())
     const accounts = await accountsWithObjects(bucket)
     const tidied = await eachAccount(accounts, 'upkeep', async (accountId, objects) => {
+      const { record } = await readAccount(bucket, accountId)
+      if (record.deletingSince !== null && Date.now() - record.deletingSince > STUCK_DELETION_MS) {
+        await deleteAccount(bucket, accountId)
+        return
+      }
       await expireAccountBackups(bucket, accountId, retentionDays)
       await sweepUnlistedObjects(bucket, accountId, objects)
     })

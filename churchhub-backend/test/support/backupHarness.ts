@@ -117,7 +117,13 @@ export class BackupHarness {
       refreshToken: string
       email: string
     }
-    return { ...session, grant, verifier, nonce: back.searchParams.get('nonce') }
+    return {
+      ...session,
+      grant,
+      verifier,
+      nonce: back.searchParams.get('nonce'),
+      sessionStatus: response.status,
+    }
   }
 
   /** The cookie value set by a response, by name. */
