@@ -19,14 +19,15 @@ const VERSES = [
 
 // v0.1.104 took ~800 ms for a slide change and ~1150 ms for a change of
 // content type: a ~500 ms fade in, after waiting for the old slide's fade
-// out. Now the fade is 250-300 ms and starts at once (T-158).
+// out. Now the fade starts at once (T-158) and lasts 400-450 ms on a strong
+// ease-out, so the text reads almost at once and settles softly (#271).
 //
 // Request-to-screen latency (server, websocket, React) depends on the
 // machine: a busy runner adds 100-500 ms to every slide alike, which broke
 // absolute bounds on the whole time (T-188). So the fade and the start are
 // bounded on their own, the start relative to this machine's latency.
-/** Fully visible this long after it first shows: the fade itself. */
-const FADE_MAX_MS = 400
+/** Fully visible this long after it first shows: the 450 ms fade itself. */
+const FADE_MAX_MS = 600
 /**
  * A change may start this much later than a slide on a blank screen: the
  * latency jitters by up to ~200 ms on a loaded machine, while waiting for the

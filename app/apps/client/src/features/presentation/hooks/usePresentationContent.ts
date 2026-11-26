@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useTemplatedScreen } from '~/features/slide-templates/hooks/useTemplatedScreen'
 import type { DeckShownSlide } from '~/features/slides-deck/types'
@@ -8,13 +8,13 @@ import {
 } from '~/features/slides-deck/utils/deckShownSlide'
 import type { SlideStyleOverride } from '~/features/songs/types'
 import { createLogger } from '~/utils/logger'
+import { useContentExit } from './useContentExit'
 import {
   type ShownContent,
   useContentTypeHandoff,
 } from './useContentTypeHandoff'
 import { usePresentationState } from './usePresentationState'
 import type { NextSlideData } from '../components/rendering/types'
-import { calculateMaxExitAnimationDuration } from '../components/rendering/utils/calculateMaxExitAnimationDuration'
 import { useSongUpdateTimestamp } from '../context/WebSocketContext'
 import type {
   ContentType,
@@ -35,9 +35,6 @@ import {
 } from '../utils/songElements'
 
 const logger = createLogger('app:presentation:content')
-
-// Extra buffer time after animation completes before transitioning to empty state (ms)
-const EXIT_ANIMATION_BUFFER = 200
 
 interface ChordMapping {
   wordIndex: number
@@ -257,20 +254,12 @@ export function usePresentationContent({
   const [nextSlideData, setNextSlideData] = useState<
     NextSlideData | undefined
   >()
-  const [isExitAnimating, setIsExitAnimating] = useState(false)
   const [morphLines, setMorphLines] = useState(false)
   // The slide shown last, which the next one is compared with for morphLines
   const shownSlideRef = useRef<ShownSlide>({ type: 'empty', data: {} })
 
-  const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const prevHiddenRef = useRef(presentationState?.isHidden)
   const currentContentTypeRef = useRef<ContentType>(contentType)
-  // Track if exit animation should complete - prevents race condition where
-  // timeout fires after user has started a new presentation
-  const shouldCompleteExitRef = useRef(false)
-  // Synchronous flag to prevent visibility flicker during the render cycle
-  // where isHidden becomes true but isExitAnimating hasn't been set yet
-  const exitAnimatingSyncRef = useRef(false)
   // Tracks whether the previous render was showing a local preview override, so
   // we can clear the stage when preview is dismissed while the real projection
   // is hidden (no visible -> hidden transition to drive the exit animation).
@@ -284,106 +273,47 @@ export function usePresentationContent({
     currentContentTypeRef.current = contentType
   }
 
-  // Detect transition synchronously during render to prevent visibility flicker.
-  // useEffect runs after render, so without this, there's one frame where
-  // isHidden=true and isExitAnimating=false, causing content to disappear then reappear.
-  const wasHiddenSync = prevHiddenRef.current
-  const isHiddenSync = presentationState?.isHidden
-  if (
-    wasHiddenSync === false &&
-    isHiddenSync &&
-    !exitAnimatingSyncRef.current
-  ) {
-    exitAnimatingSyncRef.current = true
-  }
-  if (wasHiddenSync && !isHiddenSync && exitAnimatingSyncRef.current) {
-    exitAnimatingSyncRef.current = false
-  }
+  const clearContent = useCallback(() => {
+    logger.debug('Exit animation complete, clearing content')
+    shownSlideRef.current = { type: 'empty', data: {} }
+    setContentData({})
+    setContentKey('')
+    setContentType('empty')
+    setNextSlideData(undefined)
+  }, [])
+  const {
+    isExiting: isExitAnimating,
+    beginExit,
+    cancelExit,
+  } = useContentExit(screen?.contentConfigs, clearContent)
 
-  // Handle exit animation timing - delay empty state transition
+  // Fade the slide out when the presentation is hidden, and back in when it
+  // is shown again before the fade is over
   useEffect(() => {
     const wasHidden = prevHiddenRef.current
     const isHidden = presentationState?.isHidden
+    prevHiddenRef.current = isHidden
 
     // While a local preview override drives the stage, the real isHidden state
     // is irrelevant — skip the exit-animation machinery so toggling the real
-    // projection (or it being hidden) never clears the staged content. Keep the
-    // ref in sync so resuming normal mode doesn't see a phantom transition.
-    if (previewContent) {
-      prevHiddenRef.current = isHidden
-      return
-    }
+    // projection (or it being hidden) never clears the staged content.
+    if (previewContent) return
 
     logger.debug(
-      `Exit animation effect: wasHidden=${wasHidden}, isHidden=${isHidden}, isExitAnimating=${isExitAnimating}, updatedAt=${presentationState?.updatedAt}`,
+      `Exit animation effect: wasHidden=${wasHidden}, isHidden=${isHidden}, updatedAt=${presentationState?.updatedAt}`,
     )
 
-    // Detect transition from visible to hidden
     // wasHidden must be explicitly false (not undefined) to count as "was visible"
     // This prevents false triggering on initial load when prevHiddenRef is undefined
     if (wasHidden === false && isHidden) {
       logger.debug('Transition: visible -> hidden, starting exit animation')
-      // Clear any existing timeout
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-      }
-
-      // Mark that exit animation should complete
-      shouldCompleteExitRef.current = true
-
-      // Start exit animation
-      setIsExitAnimating(true)
-
-      // Calculate the max exit animation duration from the current content type's config
-      const currentConfig =
-        screen?.contentConfigs[currentContentTypeRef.current]
-      const animationDuration = calculateMaxExitAnimationDuration(currentConfig)
-      const totalDelay = animationDuration + EXIT_ANIMATION_BUFFER
-
-      logger.debug(
-        `Exit animation scheduled for ${totalDelay}ms (animation: ${animationDuration}ms)`,
-      )
-
-      // After animation duration + buffer, transition to empty state
-      exitTimeoutRef.current = setTimeout(() => {
-        // Only execute if exit wasn't cancelled (e.g., by starting new presentation)
-        if (!shouldCompleteExitRef.current) {
-          logger.debug('Exit animation cancelled, skipping content clear')
-          return
-        }
-        logger.debug('Exit animation complete, clearing content')
-        exitAnimatingSyncRef.current = false
-        shownSlideRef.current = { type: 'empty', data: {} }
-        setContentData({})
-        setContentKey('')
-        setContentType('empty')
-        setNextSlideData(undefined)
-        setIsExitAnimating(false)
-      }, totalDelay)
+      beginExit(currentContentTypeRef.current)
     }
-
-    // If becoming visible, cancel any pending exit transition
     if (wasHidden && !isHidden) {
       logger.debug('Transition: hidden -> visible, cancelling exit animation')
-      // Cancel exit animation - this prevents the timeout from clearing content
-      shouldCompleteExitRef.current = false
-      exitAnimatingSyncRef.current = false
-
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-        exitTimeoutRef.current = null
-      }
-      setIsExitAnimating(false)
+      cancelExit()
     }
-
-    prevHiddenRef.current = isHidden
-
-    return () => {
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current)
-      }
-    }
-  }, [presentationState?.isHidden, screen, previewContent])
+  }, [presentationState?.isHidden, previewContent, beginExit, cancelExit])
 
   // Fetch content based on presentation state
   useEffect(() => {
@@ -399,6 +329,17 @@ export function usePresentationContent({
       data: ContentData,
       key = '',
     ): void => {
+      // The content ended while on screen (stopped, or an empty item): fade
+      // the slide out, then clear it, instead of cutting to the empty screen
+      if (
+        type === 'empty' &&
+        shownSlideRef.current.type !== 'empty' &&
+        !previewContent
+      ) {
+        beginExit(currentContentTypeRef.current)
+        return
+      }
+      cancelExit()
       // A presentation's background video stays behind every step it covers.
       const presentationBackground =
         previewContent || presentationState?.isHidden
@@ -706,20 +647,21 @@ export function usePresentationContent({
     getNextVerse,
     getBookName,
     previewContent,
+    beginExit,
+    cancelExit,
   ])
 
   // Calculate visibility
-  // isVisible stays true during exit animation so CSS transitions can complete smoothly.
-  // Content becomes invisible only after the exit animation finishes and state is cleared.
+  // Hidden the moment the presentation is, so every text element starts its
+  // exit fade at once (AnimatedText keeps drawing the slide while it fades).
+  // The content itself stays until the fade is over (the exit effect above),
+  // so the slide's layout stays mounted under its fade.
   const hasContent = Object.keys(contentData).length > 0
   const isVisible = previewContent
     ? // Staged preview is always shown locally regardless of the real
       // projection's hidden state.
       hasContent
-    : (!presentationState?.isHidden ||
-        isExitAnimating ||
-        exitAnimatingSyncRef.current) &&
-      hasContent
+    : !presentationState?.isHidden && !isExitAnimating && hasContent
 
   logger.debug(
     `Render state: isVisible=${isVisible}, hasContent=${hasContent}, isHidden=${presentationState?.isHidden}, isExitAnimating=${isExitAnimating}, contentType=${contentType}, updatedAt=${presentationState?.updatedAt}`,
