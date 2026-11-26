@@ -121,6 +121,14 @@ async function share(request: APIRequestContext) {
   } | null
 }
 
+/** The listed libraries' names, as the bucket's public catalog has them. */
+function bucketCatalog(): string[] {
+  const text = s3.text(`/${SYNC_BUCKET}/libraries/catalog.json`)
+  return text
+    ? (JSON.parse(text).libraries as { name: string }[]).map((l) => l.name)
+    : []
+}
+
 async function catalog(request: APIRequestContext) {
   const res = await request.get('/api/song-sources/catalog')
   expect(res.ok()).toBeTruthy()
@@ -252,12 +260,17 @@ test.describe
           .getByText('in the catalog', { exact: true }),
       ).toBeVisible()
       const shared = await share(request)
-      expect((await catalog(request)).map((l) => l.name)).toContain(shareName)
-
+      expect(bucketCatalog()).toContain(shareName)
+      // Other churches see it; this one does not offer itself its own songs.
+      expect((await catalog(request)).map((l) => l.name)).not.toContain(
+        shareName,
+      )
       await page.goto('/songs/discover')
       await page.getByRole('button', { name: 'Shared libraries' }).click()
       await expect(
-        page.getByTestId('library-catalog').getByText(shareName),
+        page
+          .getByTestId('library-catalog')
+          .getByText('No church has listed a library yet.'),
       ).toBeVisible()
 
       // Without the church's token, the service refuses to write it.
@@ -409,9 +422,7 @@ test.describe
       const stopped = await request.delete('/api/song-sources/share')
       expect(stopped.ok()).toBeTruthy()
       expect(await share(request)).toBeNull()
-      expect((await catalog(request)).map((l) => l.name)).not.toContain(
-        shareName,
-      )
+      expect(bucketCatalog()).not.toContain(shareName)
       const left = [...s3.objects.keys()].filter((key) =>
         key.includes(`/libraries/${shared?.sourceId}/`),
       )

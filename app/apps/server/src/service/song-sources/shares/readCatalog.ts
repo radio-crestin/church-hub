@@ -1,3 +1,4 @@
+import { getShare } from './shareStore'
 import { getSyncServiceUrl } from '../../sync/cloud/getSyncServiceUrl'
 import {
   serviceError,
@@ -18,9 +19,9 @@ export interface CatalogLibrary {
 }
 
 /**
- * The libraries churches listed in the public catalog
- * (`libraries/catalog.json`, read straight from the bucket). Empty before
- * anyone lists one.
+ * The libraries other churches listed in the public catalog
+ * (`libraries/catalog.json`, read straight from the bucket); this church's
+ * own share is left out. Empty before anyone lists one.
  */
 export async function readCatalog(): Promise<CatalogLibrary[]> {
   const located = await syncServiceRequest<{ catalogUrl: string }>(
@@ -44,11 +45,14 @@ export async function readCatalog(): Promise<CatalogLibrary[]> {
     libraries?: Omit<CatalogLibrary, 'manifestUrl'>[]
   }
   if (catalog.format !== 'church-hub-library-catalog') return []
-  return (catalog.libraries ?? []).map((library) => ({
-    ...library,
-    manifestUrl: new URL(
-      `${encodeURIComponent(library.sourceId)}/manifest.json`,
-      catalogUrl,
-    ).toString(),
-  }))
+  const own = getShare()?.sourceId
+  return (catalog.libraries ?? [])
+    .filter((library) => library.sourceId !== own)
+    .map((library) => ({
+      ...library,
+      manifestUrl: new URL(
+        `${encodeURIComponent(library.sourceId)}/manifest.json`,
+        catalogUrl,
+      ).toString(),
+    }))
 }
