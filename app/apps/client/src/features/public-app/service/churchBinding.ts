@@ -1,3 +1,5 @@
+import { clearStoredUserToken } from '~/service/api-url'
+
 /**
  * What binds this browser or phone to one church server (T-168): saved when
  * it joins with the link, kept in local storage only.
@@ -12,19 +14,26 @@ export interface ChurchBinding {
   readUrl: string
   /** The church computer's remote access room, when it had that on. */
   pcSignalId: string | null
+  /** The signaling relay of that room, where WebRTC is set up (T-174). */
+  relayUrl: string
 }
 
 const STORAGE_KEY = 'church-hub-church-binding'
 
 export function getChurchBinding(): ChurchBinding | null {
   const stored = localStorage.getItem(STORAGE_KEY)
-  return stored ? (JSON.parse(stored) as ChurchBinding) : null
+  if (!stored) return null
+  const binding = JSON.parse(stored) as ChurchBinding
+  // Joined before T-174: the relay was always the sync service.
+  return { ...binding, relayUrl: binding.relayUrl ?? binding.serviceUrl }
 }
 
 export function saveChurchBinding(binding: ChurchBinding) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(binding))
 }
 
+/** Forgets the church, and the PC session its device token gave (T-174). */
 export function clearChurchBinding() {
   localStorage.removeItem(STORAGE_KEY)
+  clearStoredUserToken()
 }

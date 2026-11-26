@@ -20,6 +20,7 @@ import {
   handleAnalyticsConsentRead,
   handleAnalyticsRoutes,
 } from '../routes/analytics'
+import { handleDeviceLogin } from '../routes/auth-device-login'
 import { authenticateLogin, type LoginBody } from '../routes/auth-login'
 import { handleUserLinkRoute } from '../routes/auth-user-link/handleUserLinkRoute'
 import { handleBackgroundMediaRoutes } from '../routes/background-media'
@@ -492,6 +493,11 @@ export function createFetchHandler(): (
           headers: { 'Content-Type': 'application/json' },
         }),
       )
+    }
+
+    // POST /api/auth/device-login - a joined phone over WebRTC (T-174)
+    if (req.method === 'POST' && url.pathname === '/api/auth/device-login') {
+      return handleCors(req, await handleDeviceLogin(req))
     }
 
     // POST /api/auth/login - verify credentials and set the auth cookie

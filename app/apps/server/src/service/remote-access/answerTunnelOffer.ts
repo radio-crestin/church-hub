@@ -1,4 +1,4 @@
-import { RTCPeerConnection } from 'werift'
+import { type RTCDataChannel, RTCPeerConnection } from 'werift'
 
 import { remoteAccessTarget } from './remoteAccessTarget'
 import { createTunnelSession } from './tunnelSession'
@@ -12,10 +12,13 @@ const logger = {
     log('remote-access', 'warn', msg, data),
 }
 
-const peers = new Set<RTCPeerConnection>()
+/** Each phone's connection, with its data channels. */
+const peers = new Map<RTCPeerConnection, Set<RTCDataChannel>>()
 
 /** ICE gathering rarely takes longer; past it the partial answer still works. */
 const GATHER_MS = 2500
+/** Lets the channels' close reach the phones before the connections go. */
+const CLOSE_GRACE_MS = 1000
 
 /**
  * Answers a phone's WebRTC offer: its data channel becomes a tunnel to this
@@ -26,9 +29,11 @@ export async function answerTunnelOffer(offerSdp: string): Promise<string> {
     iceServers: ICE_SERVERS,
     bundlePolicy: 'max-bundle',
   })
-  peers.add(pc)
+  const channels = new Set<RTCDataChannel>()
+  peers.set(pc, channels)
 
   pc.onDataChannel.subscribe((channel) => {
+    channels.add(channel)
     const session = createTunnelSession((text) => {
       if (channel.readyState === 'open') channel.send(text)
     }, remoteAccessTarget())
@@ -67,8 +72,14 @@ export async function answerTunnelOffer(offerSdp: string): Promise<string> {
   return answer.sdp
 }
 
-/** Disconnects every phone (remote access turned off). */
+/**
+ * Disconnects every phone (remote access turned off). Closing its channels
+ * first tells the phone at once; the connection alone would only time out.
+ */
 export function closeTunnels() {
-  for (const pc of peers) pc.close()
+  for (const [pc, channels] of peers) {
+    for (const channel of channels) channel.close()
+    setTimeout(() => void pc.close(), CLOSE_GRACE_MS)
+  }
   peers.clear()
 }

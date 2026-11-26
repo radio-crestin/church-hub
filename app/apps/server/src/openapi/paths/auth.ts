@@ -95,6 +95,53 @@ export const authPaths = {
       },
     },
   },
+  '/api/auth/device-login': {
+    post: {
+      tags: ['Authentication'],
+      summary: 'Sign in a joined phone with its device token',
+      description:
+        "For a phone that joined the church with a link (cloud sync) and reaches this computer over WebRTC: the sync service is asked whose the device token is, and the answer is that user and their session token, which the phone sends back as `X-User-Auth` (a WebRTC tunnel carries no cookies). A revoked token, the church server's own, or a user who is unknown here or inactive is refused.",
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['token'],
+              properties: {
+                token: {
+                  type: 'string',
+                  description: 'The device token of the join link.',
+                },
+              },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Signed in',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/CurrentUser' },
+                  token: {
+                    type: 'string',
+                    description: 'The session token, for `X-User-Auth`.',
+                  },
+                },
+              },
+            },
+          },
+        },
+        '400': { description: 'No token' },
+        '401': { description: 'The sync service refused the token' },
+        '502': { description: 'The sync service did not answer' },
+      },
+    },
+  },
   '/api/auth/login': {
     post: {
       tags: ['Authentication'],

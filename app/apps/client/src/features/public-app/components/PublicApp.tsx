@@ -57,9 +57,7 @@ function PublicAppShell() {
             {t('loading')}
           </p>
         )}
-        {session.kind === 'joined' && (
-          <ChurchSongs readUrl={session.binding.readUrl} />
-        )}
+        {session.kind === 'joined' && <ChurchSongs binding={session.binding} />}
         {session.kind === 'notJoined' && <SessionNotice notice="notJoined" />}
         {session.kind === 'removed' && <SessionNotice notice="removed" />}
         {session.kind === 'joinFailed' && (
