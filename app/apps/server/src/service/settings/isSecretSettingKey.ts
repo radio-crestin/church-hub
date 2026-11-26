@@ -1,5 +1,5 @@
 import { isServerSecretKey } from './isServerSecretKey'
-import { SECRET_SETTINGS } from '../secret-store'
+import { SECRET_SETTINGS } from '../secret-store/secretSettingFields'
 
 /**
  * Whether a settings row holds a secret: a server secret key, or a row with
