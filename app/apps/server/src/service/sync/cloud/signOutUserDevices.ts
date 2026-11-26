@@ -27,8 +27,10 @@ async function signOut(userId: number): Promise<void> {
  * After a user was deactivated or removed: their devices are signed out on
  * the sync service. The user change goes out at once, and the service,
  * applying it, revokes them and moves the read path; while sync is paused,
- * each of their devices is revoked by itself. A failure is logged, not
- * thrown: the user change stands, and the next sync cycle sends it again.
+ * each of their devices is revoked by itself. Callers don't wait for it:
+ * while the library uploads, the service takes seconds to apply the change.
+ * A failure is logged, not thrown: the user change stands, and the next sync
+ * cycle sends it again.
  */
 export async function signOutUserDevices(userId: number): Promise<void> {
   try {

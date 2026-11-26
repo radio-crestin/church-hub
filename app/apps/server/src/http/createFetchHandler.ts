@@ -2233,7 +2233,9 @@ export function createFetchHandler(): (
             }),
           )
         }
-        if (body.isActive === false) await signOutUserDevices(id)
+        // In the background: the sync service may take seconds (a first
+        // upload in progress), and the change stands either way.
+        if (body.isActive === false) void signOutUserDevices(id)
 
         const updatedUser = getUserById(id)
         return handleCors(
@@ -2271,7 +2273,8 @@ export function createFetchHandler(): (
           }),
         )
       }
-      await signOutUserDevices(id)
+      // In the background, like a deactivation
+      void signOutUserDevices(id)
 
       return handleCors(
         req,

@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdirSync, rmSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, type TestInfo, test } from '@playwright/test'
@@ -19,7 +19,23 @@ import { freePort } from './helpers/free-port'
 
 const APP_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
 
+/**
+ * Whether the process still runs. On Linux a process that exited but was
+ * never reaped (a zombie) has stopped too: an orphan is reaped by PID 1, and
+ * where PID 1 does not reap (a sandbox or container without an init) it stays
+ * a zombie that `kill(pid, 0)` still finds (T-209).
+ */
 function isAlive(pid: number): boolean {
+  if (process.platform === 'linux') {
+    let stat: string
+    try {
+      stat = readFileSync(`/proc/${pid}/stat`, 'utf8')
+    } catch {
+      return false // reaped
+    }
+    // The state follows the command name, which is in parentheses.
+    return stat[stat.lastIndexOf(')') + 2] !== 'Z'
+  }
   try {
     process.kill(pid, 0)
     return true
