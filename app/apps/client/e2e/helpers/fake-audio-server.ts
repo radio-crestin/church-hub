@@ -5,6 +5,8 @@
  * A spec starts it with startFakeAudioServer (fake-audio.ts) on the port the
  * test server looks at; the server takes it on at its first music command.
  *
+ * GET /calls lists the commands it was sent, so a spec can count them.
+ *
  * Usage: bun e2e/helpers/fake-audio-server.ts <port>
  */
 
@@ -19,6 +21,7 @@ let isMuted = false
 let volume = 50
 let offset = 0
 let startedAt = 0
+const calls: { path: string; body: Record<string, unknown> }[] = []
 
 const currentTime = () =>
   Math.min(
@@ -58,6 +61,7 @@ Bun.serve({
   async fetch(req) {
     const { pathname } = new URL(req.url)
     if (pathname === '/health') return Response.json({ ok: true })
+    if (pathname === '/calls') return Response.json(calls)
     if (pathname === '/state') {
       return Response.json({
         is_playing: isPlaying && currentTime() < TRACK_SECONDS,
@@ -72,11 +76,12 @@ Bun.serve({
     if (req.method !== 'POST' || !action) {
       return new Response('not found', { status: 404 })
     }
-    action(
+    const body =
       req.headers.get('content-length') === '0'
         ? {}
-        : await req.json().catch(() => ({})),
-    )
+        : await req.json().catch(() => ({}))
+    calls.push({ path: pathname, body })
+    action(body)
     return Response.json({ ok: true })
   },
 })

@@ -63,6 +63,8 @@ export interface ContentData {
   videoUrl?: string
   /** The video item plays again from the start until the step changes. */
   videoLoop?: boolean
+  /** A gallery image, shown full screen (ScreenImage). */
+  imageUrl?: string
   /** A presentation's looping background video (see `resolveScreenBackground`). */
   presentationBackground?: PresentationBackground | null
   /** A Slides item's slide (DeckSlideRenderer). */
@@ -203,6 +205,21 @@ function buildSongSlideContent(
 }
 
 /**
+ * The template what is shown is drawn with: a verse list's entry may carry
+ * its own (a Bible topic passage's) over the slide's.
+ */
+function getShownTemplateId(
+  content: TemporaryContent | null | undefined,
+): number | null | undefined {
+  if (content?.type === 'versete_tineri') {
+    const entry = content.data.entries[content.data.currentEntryIndex]
+    return entry?.templateId ?? content.data.templateId
+  }
+  return (content?.data as { templateId?: number | null } | undefined)
+    ?.templateId
+}
+
+/**
  * Shared hook for managing presentation content display.
  * Used by both LivePreview and ScreenRenderer to ensure consistent behavior.
  *
@@ -221,12 +238,11 @@ export function usePresentationContent({
   previewContent = null,
 }: UsePresentationContentOptions): UsePresentationContentResult {
   const { data: presentationState } = usePresentationState()
-  // A presentation's (or its item's) template, carried by what is shown
-  const shownTemplateId = (
-    (previewContent ?? presentationState?.temporaryContent)?.data as
-      | { templateId?: number | null }
-      | undefined
-  )?.templateId
+  // A presentation's (or its item's, or a topic passage's) template, carried
+  // by what is shown
+  const shownTemplateId = getShownTemplateId(
+    previewContent ?? presentationState?.temporaryContent,
+  )
   const screen = useTemplatedScreen(ownScreen, obsSceneName, shownTemplateId)
   const includeNextSlide =
     includeNextSlideOption ?? screen?.nextSlideConfig?.enabled ?? false
@@ -563,6 +579,18 @@ export function usePresentationContent({
             'empty',
             { videoUrl: temp.data.url, videoLoop: temp.data.loop === true },
             `video|${temp.data.url}`,
+          )
+          setNextSlideData(undefined)
+          return
+        }
+
+        // A gallery image, fit full screen over the empty slide, like a video.
+        if (temp.type === 'image') {
+          if (isCancelled) return
+          showContent(
+            'empty',
+            { imageUrl: temp.data.url },
+            `image|${temp.data.url}`,
           )
           setNextSlideData(undefined)
           return

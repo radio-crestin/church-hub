@@ -197,7 +197,7 @@ test.describe('Bible topics', () => {
       await request.delete(`/api/settings/app_settings/${READING_SPEED}`)
     })
 
-    test('▶ presents the whole topic, moving on by itself, and ■ stops it', async ({
+    test('▶ presents the whole topic, moving on by itself, and ▶ again stops it', async ({
       page,
       request,
     }) => {
@@ -218,7 +218,9 @@ test.describe('Bible topics', () => {
           autoAdvance: true,
           loop: false,
         })
-      const position = panel.getByTestId('bible-topic-play-position')
+      const play = panel.getByTestId('bible-topic-play')
+      await expect(play).toHaveAttribute('aria-pressed', 'true')
+      const position = panel.getByTestId('bible-topic-position')
       await expect(position).toHaveText(`1/${love.referenceCount}`)
       await expect(
         panel.getByTestId('bible-topic-passage').first(),
@@ -232,9 +234,9 @@ test.describe('Bible topics', () => {
         .toBe(1)
       await expect(position).toHaveText(`2/${love.referenceCount}`)
 
-      await panel.getByTestId('bible-topic-stop').click()
+      await play.click()
       await expect.poll(() => slideshowOnScreen(request)).toBeNull()
-      await expect(panel.getByTestId('bible-topic-play')).toBeVisible()
+      await expect(play).toHaveAttribute('aria-pressed', 'false')
     })
 
     test('🔁 plays the topic in a loop', async ({ page, request }) => {

@@ -9,6 +9,7 @@ export {
 export { deleteBackgroundMedia } from './deleteBackgroundMedia'
 export { getBackgroundMediaDir } from './getBackgroundMediaDir'
 export { getBackgroundVideoSeconds } from './getBackgroundVideoSeconds'
+export { getGalleryMediaRef } from './getGalleryMediaRef'
 export { listBackgroundMedia } from './listBackgroundMedia'
 export { listBackgroundVideoIds } from './listBackgroundVideoIds'
 export { parseRangeHeader } from './parseRangeHeader'

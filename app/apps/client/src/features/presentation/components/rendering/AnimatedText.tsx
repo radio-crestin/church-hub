@@ -262,6 +262,7 @@ const AnimatedTextInner = memo(function AnimatedText({
       onMorphRejected={layer.rejectMorph}
       split={morphLines === undefined ? null : splitBy}
       lineTransitions={lineTransitions}
+      typewriter={layer.typewriter}
     />
   ))
 }, arePropsEqual)

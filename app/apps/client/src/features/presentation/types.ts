@@ -65,6 +65,18 @@ export interface AddHighlightInput {
 // TEMPORARY CONTENT TYPES (for instant display)
 // ============================================================================
 
+/** The Bible topic passage a verse was presented from (T-902). */
+export interface TopicVerseSource {
+  topicId: number
+  /** The passage's reference, by book code */
+  passage: {
+    book: string
+    chapter: number
+    startVerse: number
+    endVerse: number
+  }
+}
+
 /**
  * Temporary Bible content for instant display
  */
@@ -84,6 +96,13 @@ export interface TemporaryBibleContent {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
+  /**
+   * The template screens that follow presentations draw it with: for a topic
+   * verse, its passage's or its topic's, set by the server.
+   */
+  templateId?: number | null
+  /** The topic passage it was presented from; the verses stepped to keep it. */
+  topic?: TopicVerseSource
 }
 
 /**
@@ -206,6 +225,8 @@ export interface VerseteTineriEntry {
   endVerse: number
   text: string
   sortOrder: number
+  /** Its own slide template (a topic passage's); unset: the slide's. */
+  templateId?: number | null
 }
 
 /**
@@ -267,6 +288,7 @@ export type TemporaryContent = (
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
   | { type: 'video'; data: TemporaryVideoContent }
+  | { type: 'image'; data: TemporaryImageContent }
   | { type: 'deck_slide'; data: TemporaryDeckSlideContent }
 ) & {
   /**
@@ -293,6 +315,13 @@ export interface TemporaryVideoContent {
   nextItemPreview?: NextItemPreview
   scheduleId?: number
   scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/** A gallery image, shown full screen on the displays (fit, on black). */
+export interface TemporaryImageContent {
+  /** The gallery image's id and URL (`/api/media/backgrounds/<id>`) */
+  mediaId: string
+  url: string
 }
 
 /**
@@ -334,6 +363,8 @@ export interface PresentTemporaryBibleInput {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
+  /** The topic passage it is presented from: drawn with its template. */
+  topic?: TopicVerseSource
 }
 
 /**
@@ -543,6 +574,8 @@ export type AnimationType =
   | 'slide-down'
   | 'zoom'
   | 'blur'
+  /** Enter only: the words are typed in; its duration is the longest it may take. */
+  | 'typewriter'
 
 /**
  * Easing types

@@ -14,6 +14,7 @@ import {
 } from './placeTooltip'
 
 interface TooltipProps {
+  /** What it says; empty: nothing shows. */
   content: string
   children: ReactNode
   /** The side it prefers; it flips and slides on its own to stay in the window. */
@@ -80,11 +81,13 @@ export function Tooltip({
     <div
       ref={triggerRef}
       className={`relative inline-flex ${className ?? ''}`}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={hide}
+      // A tap is not a hover: on touch the tooltip would stick over the page.
+      onPointerEnter={(e) => e.pointerType !== 'touch' && setIsVisible(true)}
+      onPointerLeave={hide}
     >
       {children}
       {isVisible &&
+        content &&
         createPortal(
           <div
             ref={tooltipRef}

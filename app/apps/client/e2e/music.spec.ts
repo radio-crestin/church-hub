@@ -53,7 +53,7 @@ async function openMusic(page: Page) {
 }
 
 async function clearQueue(page: Page) {
-  const clear = page.getByTitle('Clear Queue')
+  const clear = page.getByTestId('music-clear-queue')
   if (await clear.isVisible()) await clear.click()
   await expect(page.getByTestId('music-queue-item')).toHaveCount(0)
 }

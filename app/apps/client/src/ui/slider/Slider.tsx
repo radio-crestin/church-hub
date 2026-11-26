@@ -1,8 +1,10 @@
-import { forwardRef } from 'react'
+import { forwardRef, useRef } from 'react'
 
 interface SliderProps {
   value?: number[]
   onValueChange?: (value: number[]) => void
+  /** The value the user settles on: at the end of a drag, or each key press */
+  onValueCommit?: (value: number[]) => void
   min?: number
   max?: number
   step?: number
@@ -10,8 +12,12 @@ interface SliderProps {
   className?: string
   showValue?: boolean
   formatValue?: (value: number) => string
+  /** What the slider sets, for screen readers */
+  label?: string
   /** Test id of the range input */
   testId?: string
+  /** What a screen reader says for the value, e.g. "160 words a minute". */
+  ariaValueText?: string
 }
 
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(
@@ -19,6 +25,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
     {
       value = [0],
       onValueChange,
+      onValueCommit,
       min = 0,
       max = 100,
       step = 1,
@@ -26,10 +33,33 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
       className = '',
       showValue = true,
       formatValue,
+      label,
       testId,
+      ariaValueText,
     },
     ref,
   ) => {
+    const drag = useRef<{ value: number | null } | null>(null)
+
+    const startDrag = () => {
+      const current = { value: null as number | null }
+      drag.current = current
+      const controller = new AbortController()
+      const endDrag = () => {
+        controller.abort()
+        drag.current = null
+        if (current.value !== null) onValueCommit?.([current.value])
+      }
+      window.addEventListener('pointerup', endDrag, controller)
+      window.addEventListener('pointercancel', endDrag, controller)
+    }
+
+    const change = (next: number) => {
+      onValueChange?.([next])
+      if (drag.current) drag.current.value = next
+      else onValueCommit?.([next])
+    }
+
     return (
       <div
         className={`flex items-center ${showValue ? 'gap-3' : ''} ${className}`}
@@ -38,8 +68,16 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
           ref={ref}
           type="range"
           data-testid={testId}
+          aria-label={label}
+          aria-valuetext={ariaValueText}
           value={value[0]}
-          onChange={(e) => onValueChange?.([parseFloat(e.target.value)])}
+          onChange={(e) => {
+            // The user's moves are input events; the change event that ends a
+            // drag can carry the value shown after the commit, not the user's.
+            if (e.nativeEvent.type === 'input')
+              change(parseFloat(e.target.value))
+          }}
+          onPointerDown={startDrag}
           min={min}
           max={max}
           step={step}

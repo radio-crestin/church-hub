@@ -24,10 +24,10 @@ export function LibraryNavItem({
       onClick={onSelect}
       aria-current={isSelected ? 'page' : undefined}
       data-testid={testId}
-      className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors w-full ${
+      className={`flex min-h-11 w-full shrink-0 items-center gap-2 rounded-lg px-2.5 text-left text-sm transition-colors lg:min-h-9 ${
         isSelected
           ? 'bg-selected text-fg'
-          : 'bg-field text-fg-label hover:bg-hover hover:text-fg lg:bg-transparent'
+          : 'text-fg-label hover:bg-hover hover:text-fg'
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />

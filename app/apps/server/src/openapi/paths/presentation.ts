@@ -1,4 +1,32 @@
 export const presentationPaths = {
+  '/api/presentation/verse-loop': {
+    get: {
+      tags: ['Presentation'],
+      summary: "Get the verse slideshow's timer",
+      description:
+        'How long the verse of a playing (looping or auto-advancing) verse slideshow has left; null when none plays. Changing the `bible_reading_speed` setting rescales it.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      responses: {
+        '200': {
+          description: 'The running timer, or null',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: {
+                    $ref: '#/components/schemas/VerseLoopTimer',
+                    nullable: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
   '/api/presentation/state': {
     get: {
       tags: ['Presentation'],
@@ -276,6 +304,76 @@ export const presentationPaths = {
         },
         '400': { $ref: '#/components/responses/BadRequest' },
         '401': { $ref: '#/components/responses/Unauthorized' },
+      },
+    },
+  },
+  '/api/presentation/temporary-image': {
+    post: {
+      tags: ['Presentation'],
+      summary: 'Present a gallery image',
+      description:
+        'Show a gallery image full screen on the displays, fit inside the screen on black (temporaryContent type image). 400 when the id is malformed or the file is not an image, 404 when it is not in the gallery. Hide or clear-temporary takes it off.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/PresentGalleryMediaInput' },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Image presented',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/PresentationState' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
+      },
+    },
+  },
+  '/api/presentation/temporary-video': {
+    post: {
+      tags: ['Presentation'],
+      summary: 'Present a gallery video',
+      description:
+        'Play a gallery video full screen on the displays, once, from its start (temporaryContent type video). 400 when the id is malformed or the file is not a video, 404 when it is not in the gallery. Hide or clear-temporary takes it off.',
+      security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/PresentGalleryMediaInput' },
+          },
+        },
+      },
+      responses: {
+        '200': {
+          description: 'Video presented',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  data: { $ref: '#/components/schemas/PresentationState' },
+                },
+              },
+            },
+          },
+        },
+        '400': { $ref: '#/components/responses/BadRequest' },
+        '401': { $ref: '#/components/responses/Unauthorized' },
+        '404': { $ref: '#/components/responses/NotFound' },
       },
     },
   },

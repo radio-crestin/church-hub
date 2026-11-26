@@ -65,6 +65,18 @@ export interface TextStyleRange {
 // TEMPORARY CONTENT TYPES (for instant display)
 // ============================================================================
 
+/** The Bible topic passage a verse was presented from (T-902). */
+export interface TopicVerseSource {
+  topicId: number
+  /** The passage's reference, by book code */
+  passage: {
+    book: string
+    chapter: number
+    startVerse: number
+    endVerse: number
+  }
+}
+
 /**
  * Temporary Bible content for instant display
  */
@@ -84,6 +96,13 @@ export interface TemporaryBibleContent {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
+  /**
+   * The template screens that follow presentations draw it with: for a topic
+   * verse, its passage's or its topic's, set by the server.
+   */
+  templateId?: number | null
+  /** The topic passage it was presented from; the verses stepped to keep it. */
+  topic?: TopicVerseSource
 }
 
 /**
@@ -206,6 +225,8 @@ export interface VerseteTineriEntry {
   endVerse: number
   text: string
   sortOrder: number
+  /** Its own slide template (a topic passage's); unset: the slide's. */
+  templateId?: number | null
 }
 
 /**
@@ -232,6 +253,20 @@ export interface TemporaryVerseteTineriContent {
   /** The slide template screens that follow presentations draw it with. */
   templateId?: number | null
   scheduleItemIndex?: number // Index in flatItems for navigation
+}
+
+/**
+ * The timer of a playing verse slideshow (verse-loop.ts): the verse it times
+ * and how long it has left, so the operator sees when the next one goes up.
+ */
+export interface VerseLoopTimer {
+  /** The list that started the slideshow (`TemporaryVerseteTineriContent`). */
+  slideshow: string | null
+  entryIndex: number
+  /** The verse's whole reading time at the current speed. */
+  durationMs: number
+  /** Time left before the next verse goes up, as of sending. */
+  remainingMs: number
 }
 
 /**
@@ -273,6 +308,7 @@ export type TemporaryContent = (
   | { type: 'scene'; data: TemporarySceneContent }
   | { type: 'screen_share'; data: TemporaryScreenShareContent }
   | { type: 'video'; data: TemporaryVideoContent }
+  | { type: 'image'; data: TemporaryImageContent }
   | { type: 'deck_slide'; data: TemporaryDeckSlideContent }
 ) & {
   /**
@@ -302,6 +338,13 @@ export interface TemporaryVideoContent {
 }
 
 export type PresentTemporaryVideoInput = TemporaryVideoContent
+
+/** A gallery image, shown full screen on the displays (fit, on black). */
+export interface TemporaryImageContent {
+  /** The gallery image's id and URL (`/api/media/backgrounds/<id>`) */
+  mediaId: string
+  url: string
+}
 
 /**
  * One slide of a presentation's Slides item (service/slides-deck), with its
@@ -345,6 +388,8 @@ export interface PresentTemporaryBibleInput {
   secondaryText?: string
   secondaryBookName?: string
   secondaryTranslationAbbreviation?: string
+  /** The topic passage it is presented from: drawn with its template. */
+  topic?: TopicVerseSource
 }
 
 /**

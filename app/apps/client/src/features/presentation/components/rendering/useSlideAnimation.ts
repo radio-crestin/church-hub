@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getAnimationStyles } from './utils/getAnimationStyles'
+import { type LayerTypewriter, layerTypewriter } from './utils/layerTypewriter'
 import type { AnimationType } from '../../types'
 import { FACTORY_TRANSITIONS } from '../../utils/factoryTransitions'
 
@@ -54,6 +55,8 @@ export interface SlideLayer<T> {
    * size): turns the change into a whole-element crossfade before it paints.
    */
   rejectMorph?: () => void
+  /** Set while the layer types its text in (see layerTypewriter) */
+  typewriter: LayerTypewriter<T> | null
 }
 
 interface Morph<T> {
@@ -77,6 +80,9 @@ const ANIMATED_PROPERTIES = ['opacity', 'transform', 'filter']
 
 /** The CSS transition for one animation, with its own duration and easing. */
 function toCssTransition(config: SlideAnimationConfig): string {
+  // A typewriter changes no style: a transition would only slow the box down
+  // when the screen resizes as it types.
+  if (config.type === 'typewriter') return 'none'
   const duration = config.duration ?? DEFAULT_ANIMATION_DURATION
   const easing = config.easing ?? 'ease-out'
   return ANIMATED_PROPERTIES.map(
@@ -128,6 +134,8 @@ export function useSlideAnimation<T>({
   // Cache content for exit animations (show old content while animating out)
   const cachedContentRef = useRef<T>(content)
   const cachedKeyRef = useRef(contentKey)
+  // The slide the current one replaced; none when it came on an empty screen
+  const replacedContentRef = useRef<T | undefined>(undefined)
   const layerIdRef = useRef(0)
   const [leaving, setLeaving] = useState<LeavingLayer<T> | null>(null)
   const [morph, setMorph] = useState<Morph<T> | null>(null)
@@ -279,6 +287,7 @@ export function useSlideAnimation<T>({
     }
 
     if (becameVisible) {
+      replacedContentRef.current = undefined
       // Presentation starting - update content and animate in
       cachedContentRef.current = content
       cachedKeyRef.current = contentKey
@@ -308,6 +317,7 @@ export function useSlideAnimation<T>({
       }
     } else if (contentChanged) {
       const from = cachedContentRef.current
+      replacedContentRef.current = from
       cachedContentRef.current = content
       cachedKeyRef.current = contentKey
       if (canMorph?.(from, content)) {
@@ -407,6 +417,17 @@ export function useSlideAnimation<T>({
     isBecomingVisible ||
     (phase !== 'exiting' && cachedKeyRef.current === contentKey)
 
+  const typewriter = layerTypewriter({
+    enter: isBecomingVisible
+      ? getEnterAnimation(false)
+      : morph
+        ? getEnterAnimation(true)
+        : (currentEnterConfig ?? getEnterAnimation(false)),
+    entering: isBecomingVisible || phase === 'mounting' || phase === 'entering',
+    morphed: morph !== null && phase === 'visible',
+    replaces: replacedContentRef.current,
+  })
+
   const layers: SlideLayer<T>[] = []
   if (leaving) {
     const leavingStyles = getAnimationStyles(leaving.config.type ?? 'fade')
@@ -419,6 +440,7 @@ export function useSlideAnimation<T>({
       },
       leaving: true,
       morph: null,
+      typewriter: null,
     })
   }
   if (shouldRender) {
@@ -429,6 +451,7 @@ export function useSlideAnimation<T>({
       leaving: false,
       morph: morph?.count ?? null,
       rejectMorph,
+      typewriter,
     })
   }
   return layers

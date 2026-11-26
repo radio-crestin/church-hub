@@ -231,6 +231,13 @@ test.describe('Templates in presentations', () => {
       `${name} projector`,
       'primary',
     )
+    // The template is the topic's, kept by the server (T-902).
+    const topic = (await (await request.get('/api/bible/topics')).json())
+      .data[0] as { id: number }
+    const chosen = await request.put(`/api/bible/topics/${topic.id}/template`, {
+      data: { templateId: red },
+    })
+    expect(chosen.ok()).toBe(true)
     try {
       const display = await context.newPage()
       await display.goto(`/screen/${projector}`)
@@ -256,8 +263,7 @@ test.describe('Templates in presentations', () => {
             ],
             currentEntryIndex: 0,
             loop: true,
-            slideshow: 'topic:1',
-            templateId: red,
+            slideshow: `topic:${topic.id}`,
           },
         },
       )

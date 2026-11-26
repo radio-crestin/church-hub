@@ -7,6 +7,7 @@ import {
 import type {
   PresentationState,
   TextStyleRange,
+  VerseLoopTimer,
 } from '../service/presentation/types'
 import type { ScheduleAutomationState } from '../service/schedule-automation/types'
 import { wsLogger } from '../utils/fileLogger'
@@ -27,6 +28,14 @@ export type ScreenConfigUpdatedMessage = {
   type: 'screen_config_updated'
   payload: {
     screenId: number
+    updatedAt: number
+  }
+}
+
+export type BibleTopicsUpdatedMessage = {
+  type: 'bible_topics_updated'
+  payload: {
+    topicId: number
     updatedAt: number
   }
 }
@@ -463,6 +472,22 @@ export function broadcastScreenConfigUpdated(screenId: number) {
  * Notifies all connected clients that Drive sync just applied changes from
  * other devices, so open views can refetch songs/schedules and show badges.
  */
+/** A Bible topic's templates changed: clients reload the topics. */
+export function broadcastBibleTopicsUpdated(topicId: number) {
+  const message = JSON.stringify({
+    type: 'bible_topics_updated',
+    payload: { topicId, updatedAt: Date.now() },
+  } satisfies BibleTopicsUpdatedMessage)
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
 /** A slide template was saved, created or deleted: clients refetch it. */
 export function broadcastSlideTemplateUpdated(templateId: number) {
   const message = JSON.stringify({
@@ -530,6 +555,25 @@ export function broadcastScheduleAutomation(state: ScheduleAutomationState) {
   })
 
   wsLogger.debug(`Broadcasting schedule_automation to ${clients.size} clients`)
+
+  for (const [clientId, conn] of clients) {
+    try {
+      conn.ws.send(message)
+    } catch (error) {
+      wsLogger.error(`Failed to send to ${clientId}: ${error}`)
+      clients.delete(clientId)
+    }
+  }
+}
+
+/**
+ * Broadcasts the verse slideshow's timer each time it starts, changes speed
+ * or stops (null).
+ */
+export function broadcastVerseLoopTimer(timer: VerseLoopTimer | null) {
+  const message = JSON.stringify({ type: 'verse_loop_timer', payload: timer })
+
+  wsLogger.debug(`Broadcasting verse_loop_timer to ${clients.size} clients`)
 
   for (const [clientId, conn] of clients) {
     try {

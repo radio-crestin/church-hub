@@ -9,9 +9,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type {
-  BibleHistoryItem,
   BibleSearchResult,
   BibleVerse,
+  VerseTarget,
 } from '~/features/bible'
 import {
   BibleBookmarksPanel,
@@ -22,10 +22,12 @@ import {
   getVerseByReference,
   useAddBibleBookmark,
   useAddToHistory,
+  useAutoPresentOnSelect,
   useBibleBookmarks,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
   useBooks,
+  usePresentWhenSelected,
   useRemoveBibleBookmark,
   useSelectedBibleTranslations,
   useVerses,
@@ -50,6 +52,7 @@ import {
   useSetSlideHighlights,
   useSlideHighlights,
 } from '~/features/presentation/hooks/useSlideHighlights'
+import type { TopicVerseSource } from '~/features/presentation/types'
 import type { ScheduleItem } from '~/features/schedules'
 import {
   getSchedulePassageTarget,
@@ -390,6 +393,12 @@ function BiblePage() {
   const temporaryBibleTranslationId =
     presentationState?.temporaryContent?.type === 'bible'
       ? presentationState.temporaryContent.data.translationId
+      : undefined
+  // The topic passage the verse on screen was presented from: the verse
+  // stepped to next keeps it, and so its template.
+  const shownTopic =
+    presentationState?.temporaryContent?.type === 'bible'
+      ? presentationState.temporaryContent.data.topic
       : undefined
   const { data: temporaryBooks = [] } = useBooks(temporaryBibleTranslationId)
 
@@ -901,7 +910,7 @@ function BiblePage() {
 
   // Handle verse presentation to screen (API call)
   const presentVerseToScreen = useCallback(
-    async (verse: BibleVerse, verseIndex: number) => {
+    async (verse: BibleVerse, verseIndex: number, topic?: TopicVerseSource) => {
       const reference = formatVerseReference(
         verse.bookName,
         verse.chapter,
@@ -943,6 +952,7 @@ function BiblePage() {
         secondaryText,
         secondaryBookName,
         secondaryTranslationAbbreviation,
+        topic,
       })
 
       // Bring back whatever highlighting was saved with this verse. Live
@@ -1017,10 +1027,10 @@ function BiblePage() {
         if (clampedIndex !== presentedIndex) {
           navigation.presentVerse(clampedIndex)
         }
-        presentVerseToScreen(verse, clampedIndex)
+        presentVerseToScreen(verse, clampedIndex, shownTopic)
       }
     }
-  }, [navigation, verses, presentVerseToScreen])
+  }, [navigation, verses, presentVerseToScreen, shownTopic])
 
   // Handle verse selection - immediately present it
   const handleSelectVerse = useCallback(
@@ -1048,13 +1058,14 @@ function BiblePage() {
     [navigation, presentVerseToScreen, urlSelectOnly, navigate],
   )
 
-  // A verse presented from a topic: the page follows the screen to its
-  // chapter (the server sync), so the next verse continues the passage.
+  // A verse presented from a topic, drawn with the topic's template: the page
+  // follows the screen to its chapter (the server sync), so the next verse
+  // continues the passage.
   const handlePresentTopicVerse = useCallback(
-    async (verse: BibleVerse) => {
+    async (verse: BibleVerse, topic: TopicVerseSource) => {
       isBrowsingRef.current = false
       hasNavigatedOnOpen.current = true
-      await presentVerseToScreen(verse, verse.verse - 1)
+      await presentVerseToScreen(verse, verse.verse - 1, topic)
     },
     [presentVerseToScreen],
   )
@@ -1124,7 +1135,7 @@ function BiblePage() {
       const verse = verses[nextIndex]
       if (verse) {
         navigation.presentVerse(nextIndex)
-        await presentVerseToScreen(verse, nextIndex)
+        await presentVerseToScreen(verse, nextIndex, shownTopic)
       }
     } else {
       // Just move selection (not presenting)
@@ -1138,6 +1149,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
+    shownTopic,
   ])
 
   const handlePreviousVerse = useCallback(async () => {
@@ -1175,7 +1187,7 @@ function BiblePage() {
       const verse = verses[prevIndex]
       if (verse) {
         navigation.presentVerse(prevIndex)
-        await presentVerseToScreen(verse, prevIndex)
+        await presentVerseToScreen(verse, prevIndex, shownTopic)
       }
     } else {
       // Just move selection (not presenting)
@@ -1189,6 +1201,7 @@ function BiblePage() {
     verses,
     presentVerseToScreen,
     navigateTemporary,
+    shownTopic,
   ])
 
   // Handle hide presentation (Escape) - clears slide but keeps selection
@@ -1252,6 +1265,70 @@ function BiblePage() {
     showSlide,
   ])
   usePageShortcutEvent('bible', 'showSlide', handleShowSelectedVerse)
+
+  // A verse picked in History or Bookmarks: select it without presenting
+  // (navigated via the URL), on the navigation tab on a phone.
+  const selectPanelVerse = useCallback(
+    (target: VerseTarget & { bookName: string }) => {
+      isBrowsingRef.current = true
+      pendingInternalNavRef.current = true
+      setPhoneTab('navigation')
+      navigate({
+        to: '/bible',
+        search: {
+          book: target.bookId,
+          bookName: target.bookName,
+          chapter: target.chapter,
+          verse: target.verse,
+          select: true,
+        },
+      })
+    },
+    [navigate],
+  )
+  const presentWhenSelected = usePresentWhenSelected({
+    navigationState: navigation.state,
+    verses,
+    showSelected: handleShowSelectedVerse,
+  })
+  // A double-click in History or Bookmarks shows the verse right away.
+  const presentPanelVerse = useCallback(
+    (target: VerseTarget & { bookName: string }) => {
+      selectPanelVerse(target)
+      presentWhenSelected(target)
+    },
+    [selectPanelVerse, presentWhenSelected],
+  )
+
+  // Settings → Bible: "Present a verse as soon as I pick it" turns every
+  // pick (search results, History, Bookmarks, a program) into a present.
+  const autoPresent = useAutoPresentOnSelect()
+  const pickPanelVerse = autoPresent.enabled
+    ? presentPanelVerse
+    : selectPanelVerse
+  const pickSearchResult = useCallback(
+    (result: BibleSearchResult) => {
+      handleSelectSearchResult(result)
+      if (autoPresent.enabled) presentWhenSelected(result)
+    },
+    [handleSelectSearchResult, autoPresent.enabled, presentWhenSelected],
+  )
+  const pickSchedulePassage = useCallback(
+    (item: ScheduleItem) => {
+      handleSelectSchedulePassage(item)
+      const target = getSchedulePassageTarget(item)
+      const book = primaryBooks.find((b) => b.bookName === target?.bookName)
+      if (autoPresent.enabled && target && book) {
+        presentWhenSelected({ ...target, bookId: book.id })
+      }
+    },
+    [
+      handleSelectSchedulePassage,
+      autoPresent.enabled,
+      primaryBooks,
+      presentWhenSelected,
+    ],
+  )
 
   // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {
@@ -1396,7 +1473,7 @@ function BiblePage() {
             <BibleNavigationPanel
               navigation={navigation}
               onSelectVerse={handleSelectVerse}
-              onSelectSearchResult={handleSelectSearchResult}
+              onSelectSearchResult={pickSearchResult}
               onPresentSearched={handlePresentSearched}
               onNextVerse={handleNextVerse}
               onPreviousVerse={handlePreviousVerse}
@@ -1458,22 +1535,8 @@ function BiblePage() {
           onToggleCollapse={
             isLargeScreen ? () => setHistoryOpen(!historyOpen) : undefined
           }
-          onSelectVerse={(item: BibleHistoryItem) => {
-            // Navigate via URL - select only without presenting
-            isBrowsingRef.current = true
-            pendingInternalNavRef.current = true
-            setPhoneTab('navigation')
-            navigate({
-              to: '/bible',
-              search: {
-                book: item.bookId,
-                bookName: item.bookName,
-                chapter: item.chapter,
-                verse: item.verse,
-                select: true,
-              },
-            })
-          }}
+          onSelectVerse={pickPanelVerse}
+          onPresentVerse={presentPanelVerse}
         />
       ),
     },
@@ -1489,23 +1552,8 @@ function BiblePage() {
           }
           activeVerseId={focusedVerse?.id}
           translationId={primaryTranslation?.id}
-          onSelectVerse={(bookmark) => {
-            // Navigate via URL - select only without presenting, the same as
-            // picking a verse out of the history.
-            isBrowsingRef.current = true
-            pendingInternalNavRef.current = true
-            setPhoneTab('navigation')
-            navigate({
-              to: '/bible',
-              search: {
-                book: bookmark.bookId,
-                bookName: bookmark.bookName,
-                chapter: bookmark.chapter,
-                verse: bookmark.verse,
-                select: true,
-              },
-            })
-          }}
+          onSelectVerse={pickPanelVerse}
+          onPresentVerse={presentPanelVerse}
         />
       ),
     },
@@ -1549,7 +1597,7 @@ function BiblePage() {
       render: () => (
         <SchedulePanel
           activeReference={activePassageReference}
-          onSelectPassage={handleSelectSchedulePassage}
+          onSelectPassage={pickSchedulePassage}
           onSelectSong={handleSelectScheduleSong}
           onOpenSchedule={(scheduleId) =>
             navigate({
@@ -1595,7 +1643,7 @@ function BiblePage() {
 
   return (
     <PagePermissionGuard permission="bible.view">
-      <div className="flex flex-col gap-4 h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
+      <div className="flex flex-col gap-4 h-full lg:overflow-hidden">
         {/* Same single labelled menu as the song page, so both pages expose
             their actions the same way. */}
         <PageHeader

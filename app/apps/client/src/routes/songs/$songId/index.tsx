@@ -1063,7 +1063,7 @@ function SongPreviewPage() {
   ]
 
   return (
-    <div className="flex flex-col h-full lg:overflow-hidden lg:h-[calc(100vh-3rem)]">
+    <div className="flex flex-col h-full lg:overflow-hidden">
       {/* Header - Back button, title, and action buttons */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3 lg:mb-4 flex-shrink-0">
         <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 lg:gap-4 min-w-0 flex-1">

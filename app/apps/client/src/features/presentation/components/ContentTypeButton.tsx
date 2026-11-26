@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Book, BookOpen, Music } from 'lucide-react'
+import { Book, BookOpen, ImageIcon, Music, VideoIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 import type { TemporaryContent } from '../types'
 
@@ -18,6 +19,7 @@ export function ContentTypeButton({
   temporaryContent,
 }: ContentTypeButtonProps) {
   const navigate = useNavigate()
+  const { t } = useTranslation('gallery')
 
   // Navigate to content source directly based on type
   switch (temporaryContent.type) {
@@ -102,6 +104,29 @@ export function ContentTypeButton({
           <span className="truncate min-w-0">
             {bookName} {startChapter}:{currentVerse?.verse ?? 1}
           </span>
+        </button>
+      )
+    }
+
+    // A file presented from the gallery leads back to it; a presentation's
+    // video item is followed on its presentation instead.
+    case 'image':
+    case 'video': {
+      const { type } = temporaryContent
+      if (type === 'video' && temporaryContent.data.scheduleId) return null
+      const Icon = type === 'video' ? VideoIcon : ImageIcon
+      return (
+        <button
+          type="button"
+          onClick={() => navigate({ to: '/gallery' })}
+          className={baseClassName}
+        >
+          <Icon
+            size={16}
+            strokeWidth={1.5}
+            className="shrink-0 text-fg-label"
+          />
+          <span className="truncate min-w-0">{t(`kinds.${type}`)}</span>
         </button>
       )
     }

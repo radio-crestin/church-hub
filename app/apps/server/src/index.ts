@@ -51,6 +51,7 @@ import { handleLivestreamRoutes } from './routes/livestream'
 import { handleMIDIRoutes } from './routes/midi'
 import { handleMusicRoutes } from './routes/music'
 import { handleNotificationRoutes } from './routes/notifications'
+import { handlePresentationGalleryMediaRoutes } from './routes/presentation-gallery-media'
 import { handleRemoteAccessRoutes } from './routes/remote-access'
 import { handleScheduleItemRoutes } from './routes/schedule-items'
 import { handleScheduleMidiRoutes } from './routes/schedule-midi'
@@ -246,7 +247,12 @@ import {
   updatePresentationState,
   upsertScreen,
 } from './service/presentation'
-import { startVerseLoop } from './service/presentation/verse-loop'
+import {
+  getVerseLoopTimer,
+  READING_SPEED_SETTING_KEY,
+  rescaleVerseLoop,
+  startVerseLoop,
+} from './service/presentation/verse-loop'
 import {
   applyRemoteAccess,
   registerRemoteAccessListener,
@@ -1502,18 +1508,23 @@ async function startRealServer(): Promise<void> {
           // any authenticated user may persist — no extra permission required.
           const isLayoutDivider =
             table === 'app_settings' && body.key.startsWith('divider.')
+          // The operator running a verse slideshow sets its reading speed.
+          const isReadingSpeed =
+            table === 'app_settings' && body.key === READING_SPEED_SETTING_KEY
+          const anyOfPermissions: Permission[] | null = isAppearance
+            ? ['settings.edit', 'settings.edit_appearance']
+            : isReadingSpeed
+              ? ['settings.edit', 'control_room.control']
+              : null
 
           let permError: Response | null
           if (isBibleSelection) {
             permError = checkPermission('bible.view')
           } else if (isLayoutDivider) {
             permError = null
-          } else if (isAppearance) {
+          } else if (anyOfPermissions) {
             const denied = _context
-              ? requireAnyPermission([
-                  'settings.edit',
-                  'settings.edit_appearance',
-                ])(_context)
+              ? requireAnyPermission(anyOfPermissions)(_context)
               : new Response(JSON.stringify({ error: 'Unauthorized' }), {
                   status: 401,
                   headers: { 'Content-Type': 'application/json' },
@@ -1540,6 +1551,7 @@ async function startRealServer(): Promise<void> {
 
           // Broadcast settings update via WebSocket
           broadcastSettingsUpdated(table, body.key)
+          if (isReadingSpeed) rescaleVerseLoop()
 
           // Reload MIDI shortcuts if keyboard shortcuts or sidebar config were updated
           if (
@@ -1582,6 +1594,9 @@ async function startRealServer(): Promise<void> {
         const key = deleteSettingMatch[2]
 
         const result = deleteSetting(table, key)
+        if (table === 'app_settings' && key === READING_SPEED_SETTING_KEY) {
+          rescaleVerseLoop()
+        }
 
         if (!result.success) {
           return handleCors(
@@ -4139,6 +4154,22 @@ async function startRealServer(): Promise<void> {
         )
       }
 
+      // GET /api/presentation/verse-loop - The verse slideshow's running timer
+      if (
+        req.method === 'GET' &&
+        url.pathname === '/api/presentation/verse-loop'
+      ) {
+        const permError = checkPermission('control_room.view')
+        if (permError) return permError
+
+        return handleCors(
+          req,
+          new Response(JSON.stringify({ data: getVerseLoopTimer() }), {
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+      }
+
       // PUT /api/presentation/state - Update presentation state
       if (req.method === 'PUT' && url.pathname === '/api/presentation/state') {
         const permError = checkPermission('control_room.control')
@@ -4631,6 +4662,19 @@ async function startRealServer(): Promise<void> {
           )
         }
       }
+
+      // POST /api/presentation/temporary-image, /temporary-video - A gallery file
+      const galleryMediaResponse = await handlePresentationGalleryMediaRoutes(
+        req,
+        url,
+        handleCors,
+        checkPermission,
+        (state) => {
+          broadcastPresentationState(state)
+          triggerSceneAutomation(state)
+        },
+      )
+      if (galleryMediaResponse) return galleryMediaResponse
 
       // ============================================================
       // Songs API Endpoints

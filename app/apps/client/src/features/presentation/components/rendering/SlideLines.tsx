@@ -2,7 +2,9 @@ import { useCallback } from 'react'
 
 import { SlideWord } from './SlideWord'
 import { groupWordPieces } from './utils/groupWordPieces'
+import type { TypewriterReveal } from './utils/revealAfter'
 import type { SlideLine } from './utils/splitSlideLines'
+import { tokenReveal } from './utils/tokenReveal'
 
 const NO_WRAP: React.CSSProperties = { whiteSpace: 'nowrap' }
 
@@ -17,6 +19,22 @@ interface SlideLinesProps {
   underline?: boolean
   /** Collects each line's and word's element by its key */
   unitRef?: (key: string, element: HTMLElement | null) => void
+  /** What a typewriter still hides, in offsets of the whole text */
+  reveal?: TypewriterReveal | null
+}
+
+/** Where each token starts in the whole text. */
+function tokenStarts(lines: SlideLine[]): number[][] {
+  let at = 0
+  return lines.map((line) => {
+    const starts = line.tokens.map((token) => {
+      const start = at
+      at += token.text.length
+      return start
+    })
+    if (line.breaks) at++
+    return starts
+  })
 }
 
 /**
@@ -32,13 +50,16 @@ export function SlideLines({
   hidden,
   underline,
   unitRef,
+  reveal,
 }: SlideLinesProps) {
   const lineRef = useCallback(
     (key: string) => (element: HTMLElement | null) => unitRef?.(key, element),
     [unitRef],
   )
+  const starts = reveal ? tokenStarts(lines) : null
   const renderToken = (line: number, token: number) => {
     const { text, html, isWord, glides } = lines[line].tokens[token]
+    const start = starts?.[line][token] ?? 0
     return (
       <SlideWord
         key={tokenKeys[line][token]}
@@ -50,6 +71,7 @@ export function SlideLines({
         glides={glides}
         hidden={hidden?.[line]?.[token]}
         underline={underline}
+        reveal={tokenReveal(reveal, start, start + text.length)}
       />
     )
   }

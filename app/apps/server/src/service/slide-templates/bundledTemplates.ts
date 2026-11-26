@@ -8,6 +8,11 @@ export interface BundledTemplate {
   /** Stored as is; the client shows it translated (templates.bundled.<key>). */
   name: string
   design: () => TemplateDesign
+  /**
+   * Among the fitting defaults of the Bible topics: verses read at a glance
+   * on it (strong contrast, a calm background).
+   */
+  forTopics?: true
 }
 
 /**
@@ -47,6 +52,7 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
   // For verse loops before and between services (CH-178).
   {
     key: 'verses_evening',
+    forTopics: true,
     name: 'Verses · Evening',
     design: () =>
       getPaletteDesign({
@@ -59,6 +65,7 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
   },
   {
     key: 'verses_light',
+    forTopics: true,
     name: 'Verses · Light',
     design: () =>
       getPaletteDesign({
@@ -71,6 +78,7 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
   },
   {
     key: 'verses_calm',
+    forTopics: true,
     name: 'Verses · Calm',
     design: () =>
       getPaletteDesign({
@@ -79,6 +87,34 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
         accent: '#8fd3bd',
         fontFamily: 'Fira Sans',
         italic: false,
+      }),
+  },
+  // The verses type themselves in, letter by letter (the typewriter text
+  // animation), on a sheet of paper or a quiet night.
+  {
+    key: 'typewriter_paper',
+    name: 'Typewriter · Paper',
+    design: () =>
+      getPaletteDesign({
+        background: '#f3ede1',
+        text: '#2a2621',
+        accent: '#8c5a2b',
+        fontFamily: 'Fira Sans',
+        italic: false,
+        typewriter: true,
+      }),
+  },
+  {
+    key: 'typewriter_night',
+    name: 'Typewriter · Night',
+    design: () =>
+      getPaletteDesign({
+        background: '#14171c',
+        text: '#ece7dc',
+        accent: '#d8b874',
+        fontFamily: 'Fira Sans',
+        italic: false,
+        typewriter: true,
       }),
   },
   // Worship themes on a photo or a looping video, like a projection
@@ -97,11 +133,13 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
   },
   {
     key: 'photo_golden_wheat',
+    forTopics: true,
     name: 'Golden wheat',
     design: () => onMedia('golden-wheat.jpg', 0.6, '#F0A54A', 'Lora'),
   },
   {
     key: 'photo_calm_sea',
+    forTopics: true,
     name: 'Calm sea',
     design: () => onMedia('calm-ocean.jpg', 0.6, '#E9B872', 'Montserrat'),
   },
@@ -112,6 +150,7 @@ export const BUNDLED_TEMPLATES: BundledTemplate[] = [
   },
   {
     key: 'photo_sea_of_clouds',
+    forTopics: true,
     name: 'Sea of clouds',
     design: () => onMedia('sea-of-clouds.jpg', 0.55, '#F2B8A0', 'Lora'),
   },
