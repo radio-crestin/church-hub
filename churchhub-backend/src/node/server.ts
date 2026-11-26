@@ -12,6 +12,7 @@ import app from '../index'
 import { buildNodeBindings } from './buildNodeBindings'
 import { connectRedis } from './connectRedis'
 import { createCidrMatcher } from './createCidrMatcher'
+import { assertProductionSettings } from './assertProductionSettings'
 import { createSyncGuard } from './createSyncGuard'
 import { resolveClientIp } from './resolveClientIp'
 import { withClientIp } from './withClientIp'
@@ -19,9 +20,7 @@ import { withClientIp } from './withClientIp'
 const SHUTDOWN_TIMEOUT_MS = 10_000
 
 const settings = process.env
-if (!settings.REDIS_URL && settings.NODE_ENV === 'production') {
-  throw new Error('REDIS_URL is required in production: limits and signaling must be shared by every replica')
-}
+assertProductionSettings(settings)
 const redis = settings.REDIS_URL ? connectRedis(settings.REDIS_URL) : null
 if (!redis) {
   console.warn('[server] REDIS_URL is not set: signaling and rate limits live in memory (one process only)')
