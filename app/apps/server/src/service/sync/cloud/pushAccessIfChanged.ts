@@ -14,7 +14,10 @@ function permissionsOf(grants: Grant[], ownerId: number): string[] {
     .sort()
 }
 
-/** This server's roles and users, as the service checks writes against. */
+/**
+ * This server's roles and users, as the service checks writes against, and
+ * the rule that a deactivated or removed user's devices are revoked.
+ */
 function readAccess() {
   const db = getRawDatabase()
   const roleGrants = db
@@ -59,29 +62,45 @@ function readAccess() {
       isActive: user.is_active === 1,
       permissions: permissionsOf(userGrants, user.id),
     }))
-  return { roles, users }
+  return { roles, users, revokeDevicesWithUser: true }
+}
+
+/** What the service did with a pushed access. */
+export interface AccessPush {
+  /** False from an older service, which leaves the devices to revoke. */
+  revokesDevicesWithUser: boolean
 }
 
 /**
  * Mirrors this server's roles and users to the service, the authority every
  * phone's write is checked against, whenever they changed since last time.
+ * The service revokes the devices of users deactivated or removed and moves
+ * the read path, which this server keeps at once. Null: nothing changed.
  */
 export async function pushAccessIfChanged(
   identity: CloudIdentity,
-): Promise<void> {
+): Promise<AccessPush | null> {
   const access = readAccess()
   const hash = new Bun.CryptoHasher('sha256')
     .update(JSON.stringify(access))
     .digest('hex')
-  if (hash === identity.accessHash) return
+  if (hash === identity.accessHash) return null
 
-  const response = await syncServiceRequest(
-    { serviceUrl: identity.serviceUrl, identity },
-    'PUT',
-    '/access',
-    access,
-  )
+  const response = await syncServiceRequest<{
+    revokedDevices?: number
+    readUrl?: string
+  }>({ serviceUrl: identity.serviceUrl, identity }, 'PUT', '/access', access)
   if (response.status !== 200) throw serviceError(response)
-  await updateCloudIdentity({ accessHash: hash })
+  const { revokedDevices, readUrl } = response.body
+  const moved = readUrl !== undefined && readUrl !== identity.readUrl
+  await updateCloudIdentity({
+    accessHash: hash,
+    ...(moved && { readUrl, headEtag: null }),
+  })
   identity.accessHash = hash
+  if (moved) {
+    identity.readUrl = readUrl
+    identity.headEtag = null
+  }
+  return { revokesDevicesWithUser: revokedDevices !== undefined }
 }

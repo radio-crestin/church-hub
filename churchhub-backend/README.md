@@ -24,6 +24,7 @@ This worker provides a stateless OAuth flow using:
 | `/auth/drive/callback` | GET | Handles Google callback, returns tokens (+ account email) |
 | `/auth/drive/refresh` | POST | Refreshes a Drive access token |
 | `/health` | GET | Health check endpoint |
+| `/health/ready` | GET | Readiness: 503 `{status:"starting"}` while the Node runtime's startup sync probe is pending, else 200 with `sync`: `enabled`, `disabled` (the probe failed; /sync answers 503) or `off`. Always ready on the Worker. Use it for readiness/startup probes and `/health` for liveness |
 | `/feature-requests` | POST | "Request a feature": stores the screenshot (the S3 bucket, or R2 when bound), opens a public GitHub issue that embeds it (no email), notifies WhatsApp via WAHA (with email). Max 3/min and 50 per rolling 24h per IP (hashed IP counter in `SIGNALING_KV`) |
 | `/feature-requests/screenshots/:id` | GET | Serves a feature-request screenshot from its storage (embedded in the issue; random id, cached a year) |
 | `/sync/*` | GET, POST, PUT, DELETE | Cloud sync service (see below); documented at `/sync/openapi.json`, rendered at `/sync/docs` |

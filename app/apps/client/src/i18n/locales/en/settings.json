@@ -442,7 +442,14 @@
           "title": "Regenerate Token",
           "message": "This will invalidate the current token for \"{{name}}\". The user will need to be re-authenticated.",
           "confirm": "Regenerate"
-        }
+        },
+        "deactivate": {
+          "title": "Deactivate user",
+          "message": "\"{{name}}\" will no longer be able to sign in.",
+          "confirm": "Deactivate"
+        },
+        "devicesSignedOut_one": "Their device will be signed out. To join again, it has to be added again.",
+        "devicesSignedOut_other": "Their {{count}} devices will be signed out. To join again, they have to be added again."
       },
       "toast": {
         "created": "User created successfully",

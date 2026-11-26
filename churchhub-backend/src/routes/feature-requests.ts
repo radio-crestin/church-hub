@@ -83,7 +83,8 @@ featureRequests.get(`${SCREENSHOT_ROUTE_PREFIX}/:id`, async (c) => {
   const id = c.req.param('id')
   if (!SCREENSHOT_ID_PATTERN.test(id)) return c.json({ error: 'Not found' }, 404)
 
-  const screenshot = await getScreenshotStore(c.env).load(id)
+  const store = getScreenshotStore(c.env)
+  const screenshot = store ? await store.load(id) : null
   if (!screenshot) return c.json({ error: 'Not found' }, 404)
 
   return new Response(screenshot.body, {
