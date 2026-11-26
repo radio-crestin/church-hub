@@ -1,4 +1,6 @@
 import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   type APIRequestContext,
   expect,
@@ -362,6 +364,111 @@ test.describe('Slides editor', () => {
         )
       })
       .toBe(true)
+  })
+
+  test('an imported text box keeps its fonts, sizes, colours and indents when edited', async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width: 1600, height: 900 })
+    const schedule = await request.post('/api/schedules', {
+      data: { title: `E2E Imported text ${Date.now()}` },
+    })
+    const scheduleId = (await schedule.json()).data.id as number
+
+    // PowerPoint fixture (a), imported through the Add menu.
+    await page.goto(`/schedules/${scheduleId}`)
+    await page.getByTestId('schedule-add-item').click()
+    const chooser = page.waitForEvent('filechooser')
+    await page.getByTestId('add-schedule-item-importPptx').click()
+    await (await chooser).setFiles(
+      path.join(
+        path.dirname(fileURLToPath(import.meta.url)),
+        'fixtures',
+        'pptx',
+        'a-inheritance.pptx',
+      ),
+    )
+    await expect(page.getByTestId('pptx-import-dialog')).toHaveAttribute(
+      'data-status',
+      'done',
+      { timeout: 30_000 },
+    )
+    await page.getByTestId('pptx-import-done').click()
+    const res = await request.get(`/api/schedules/${scheduleId}`)
+    const item = ((await res.json()).data.items as { id: number }[])[0]!
+    const imported = await savedDeck(request, scheduleId)
+    const media = imported.slides[0]!.elements.flatMap((e) =>
+      e.mediaId ? [e.mediaId] : [],
+    )
+
+    try {
+      await page.goto(`/schedules/${scheduleId}/slides/${item.id}`)
+      const element = (id: string) =>
+        page.locator(
+          `[data-testid="deck-editor-element"][data-element-id="${id}"]`,
+        )
+      const input = page.getByTestId('deck-editor-text-input')
+      type Text = DeckElement & {
+        fontFamily?: string
+        fontSize?: number
+        color?: string
+      }
+      const saved = async (id: string) =>
+        (await savedDeck(request, scheduleId)).slides[0]!.elements.find(
+          (e) => e.id === id,
+        ) as Text
+
+      // The title: a word typed at its end, in its own bold Cambria.
+      await element('2').dblclick()
+      await expect(input).toBeFocused()
+      await page.keyboard.press('End')
+      await page.keyboard.type(' azi')
+      await page.keyboard.press('Escape')
+      await expect
+        .poll(async () => (await saved('2')).html)
+        .toContain('Bine ați venit azi')
+      expect(await saved('2')).toMatchObject({
+        fontFamily: 'Cambria',
+        fontSize: 88,
+        color: '#1f3864',
+      })
+      expect((await saved('2')).html).toMatch(
+        /<p style="text-align: left"><strong>Bine ați venit azi<\/strong><\/p>/,
+      )
+
+      // The body: its red word, smaller second level and indents stay.
+      await element('3').dblclick()
+      await expect(input).toBeFocused()
+      await page.keyboard.press('ControlOrMeta+End')
+      await page.keyboard.type(' acum')
+      await page.keyboard.press('Escape')
+      await expect
+        .poll(async () => (await saved('3')).html)
+        .toContain('important acum')
+      const body = await saved('3')
+      expect(body).toMatchObject({ fontFamily: 'Calibri', fontSize: 56 })
+      const items = body.html!.match(/<li[^>]*>.*?<\/li>/g) ?? []
+      expect(items).toHaveLength(4)
+      expect(items[2]).toMatch(/margin-left: [\d.]+em/)
+      expect(items[2]).toContain('font-size: 0.857em')
+      // Still red (the editor writes colours as rgb()), bold.
+      expect(items[3]).toMatch(
+        /<span style="color: (#ff0000|rgb\(255, 0, 0\))"><strong>important acum<\/strong><\/span>/,
+      )
+
+      // The Design tab sizes the selected words, in em of the box's size.
+      await element('2').dblclick()
+      await expect(input).toBeFocused()
+      await page.keyboard.press('ControlOrMeta+A')
+      await page.getByTestId('deck-editor-font-size').fill('44')
+      await expect
+        .poll(async () => (await saved('2')).html)
+        .toContain('font-size: 0.5em')
+      expect((await saved('2')).fontSize).toBe(88)
+    } finally {
+      for (const id of media) await request.delete(`${MEDIA_API}/${id}`)
+    }
   })
 
   test('a deck saved while its slide is on screen shows the change at once', async ({
