@@ -18,6 +18,8 @@ export interface AccessUser {
 export interface Access {
   roles: AccessRole[]
   users: AccessUser[]
+  /** The server's signal: a deactivated or removed user's devices are revoked. */
+  revokeDevicesWithUser: boolean
 }
 
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
@@ -58,7 +60,10 @@ function parseCommon(raw: unknown, where: string) {
 
 /** Validates `PUT access`: the church's roles and users, as the PC has them. */
 export function parseAccess(body: unknown): Access {
-  const { roles, users } = (body ?? {}) as Record<string, unknown>
+  const { roles, users, revokeDevicesWithUser } = (body ?? {}) as Record<
+    string,
+    unknown
+  >
   if (!Array.isArray(roles) || roles.length > MAX_ROLES) {
     invalid(`roles must be an array of at most ${MAX_ROLES}`)
   }
@@ -81,5 +86,6 @@ export function parseAccess(body: unknown): Access {
         isActive: item.isActive !== false,
       }
     }),
+    revokeDevicesWithUser: revokeDevicesWithUser === true,
   }
 }

@@ -9,6 +9,12 @@ const BACKEND_DIR = fileURLToPath(
   new URL('../../../../../churchhub-backend', import.meta.url),
 )
 const READY_LINE = /\[server\] Church Hub backend listening/
+/**
+ * /sync answers 503 not_configured until the startup probe has checked the
+ * bucket's conditional writes (createSyncGuard): ready once it passed.
+ */
+const SYNC_READY_LINE = /\[sync\] conditional writes verified/
+const SYNC_DISABLED_LINE = /sync disabled/
 const BOOT_TIMEOUT_MS = 60_000
 const INSTALL_TIMEOUT_MS = 300_000
 
@@ -91,7 +97,13 @@ export class SyncService {
       )
       const onData = (chunk: Buffer) => {
         this.output += chunk.toString()
-        if (READY_LINE.test(this.output)) {
+        if (SYNC_DISABLED_LINE.test(this.output)) {
+          clearTimeout(timer)
+          reject(new Error(`sync service refused the bucket:\n${this.output}`))
+        } else if (
+          READY_LINE.test(this.output) &&
+          SYNC_READY_LINE.test(this.output)
+        ) {
           clearTimeout(timer)
           resolve()
         }
