@@ -22,6 +22,7 @@ import {
   getVerseByReference,
   useAddBibleBookmark,
   useAddToHistory,
+  useAutoPresentOnSelect,
   useBibleBookmarks,
   useBibleKeyboardShortcuts,
   useBibleNavigation,
@@ -1288,6 +1289,36 @@ function BiblePage() {
     [selectPanelVerse, presentWhenSelected],
   )
 
+  // Settings → Bible: "Present a verse as soon as I pick it" turns every
+  // pick (search results, History, Bookmarks, a program) into a present.
+  const autoPresent = useAutoPresentOnSelect()
+  const pickPanelVerse = autoPresent.enabled
+    ? presentPanelVerse
+    : selectPanelVerse
+  const pickSearchResult = useCallback(
+    (result: BibleSearchResult) => {
+      handleSelectSearchResult(result)
+      if (autoPresent.enabled) presentWhenSelected(result)
+    },
+    [handleSelectSearchResult, autoPresent.enabled, presentWhenSelected],
+  )
+  const pickSchedulePassage = useCallback(
+    (item: ScheduleItem) => {
+      handleSelectSchedulePassage(item)
+      const target = getSchedulePassageTarget(item)
+      const book = primaryBooks.find((b) => b.bookName === target?.bookName)
+      if (autoPresent.enabled && target && book) {
+        presentWhenSelected({ ...target, bookId: book.id })
+      }
+    },
+    [
+      handleSelectSchedulePassage,
+      autoPresent.enabled,
+      primaryBooks,
+      presentWhenSelected,
+    ],
+  )
+
   // Handle go back - use browser history when navigated internally, hierarchical when external
   const handleGoBack = useCallback(() => {
     // If there's a verse being presented, enable browse mode to prevent sync from snapping back
@@ -1431,7 +1462,7 @@ function BiblePage() {
             <BibleNavigationPanel
               navigation={navigation}
               onSelectVerse={handleSelectVerse}
-              onSelectSearchResult={handleSelectSearchResult}
+              onSelectSearchResult={pickSearchResult}
               onPresentSearched={handlePresentSearched}
               onNextVerse={handleNextVerse}
               onPreviousVerse={handlePreviousVerse}
@@ -1493,7 +1524,7 @@ function BiblePage() {
           onToggleCollapse={
             isLargeScreen ? () => setHistoryOpen(!historyOpen) : undefined
           }
-          onSelectVerse={selectPanelVerse}
+          onSelectVerse={pickPanelVerse}
           onPresentVerse={presentPanelVerse}
         />
       ),
@@ -1510,7 +1541,7 @@ function BiblePage() {
           }
           activeVerseId={focusedVerse?.id}
           translationId={primaryTranslation?.id}
-          onSelectVerse={selectPanelVerse}
+          onSelectVerse={pickPanelVerse}
           onPresentVerse={presentPanelVerse}
         />
       ),
@@ -1555,7 +1586,7 @@ function BiblePage() {
       render: () => (
         <SchedulePanel
           activeReference={activePassageReference}
-          onSelectPassage={handleSelectSchedulePassage}
+          onSelectPassage={pickSchedulePassage}
           onSelectSong={handleSelectScheduleSong}
           onOpenSchedule={(scheduleId) =>
             navigate({

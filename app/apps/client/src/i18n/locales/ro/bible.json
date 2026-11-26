@@ -36,9 +36,12 @@
     "next": "Următorul",
     "prevVerse": "Versetul anterior",
     "nextVerse": "Versetul următor",
-    "show": "Afișează",
+    "show": "Afișează pe ecran",
     "hide": "Ascunde",
-    "clearHighlights": "Șterge evidențierile"
+    "clearHighlights": "Șterge evidențierile",
+    "showHint": "Trimite pe proiector și pe celelalte ecrane ceea ce vezi în previzualizare",
+    "settings": "Setări de previzualizare",
+    "bibleSettings": "Mai multe setări pentru Biblie"
   },
   "shortcuts": {
     "title": "Scurtături de tastatură",
@@ -98,6 +101,10 @@
       "title": "Viteza de citire",
       "description": "Cât rămâne fiecare verset pe ecran când marcajele sau o temă rulează singure: după numărul de cuvinte, la această viteză, dar cel puțin 3 secunde.",
       "label": "Cuvinte pe minut"
+    },
+    "autoPresent": {
+      "label": "Afișează versetul imediat ce îl selectez",
+      "description": "Când selectezi un verset din rezultate, din Istoric, din Marcaje sau dintr-un program, acesta apare imediat pe ecran, fără să mai apeși încă o dată."
     }
   },
   "translation": {

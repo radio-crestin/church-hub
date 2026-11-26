@@ -1,4 +1,5 @@
 export { useAIBibleSearch } from './useAIBibleSearch'
+export { useAutoPresentOnSelect } from './useAutoPresentOnSelect'
 export type {
   AvailableBible,
   AvailableBiblesData,

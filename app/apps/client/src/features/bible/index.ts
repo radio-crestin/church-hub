@@ -32,6 +32,7 @@ export {
   useAddBibleBookmark,
   useAddBibleBookmarkNote,
   useAddToHistory,
+  useAutoPresentOnSelect,
   useBibleBookmarkNotes,
   useBibleBookmarks,
   useBibleHistory,
