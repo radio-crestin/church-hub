@@ -5,6 +5,11 @@ import type { Setting, SettingsTable, UpsertSettingInput } from './types'
 import { getDatabase } from '../../db'
 import { appSettings, cacheMetadata, userPreferences } from '../../db/schema'
 import { toErrorMessage } from '../../utils/toErrorMessage'
+import {
+  maskSettingValue,
+  openSettingValue,
+  sealSettingValue,
+} from '../secret-store'
 import type { OperationResult } from '../users'
 
 const DEBUG = process.env.DEBUG === 'true'
@@ -20,9 +25,23 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
   if (level === 'debug' && !DEBUG) return
 }
 
+/** The value as stored, secrets still sealed. */
+function readStoredValue(table: SettingsTable, key: string): string | null {
+  const schemaTable = tableMap[table]
+  return (
+    getDatabase()
+      .select({ value: schemaTable.value })
+      .from(schemaTable)
+      .where(eq(schemaTable.key, key))
+      .get()?.value ?? null
+  )
+}
+
 /**
  * Upserts a setting in the specified table
- * Creates a new record if key doesn't exist, updates if it does
+ * Creates a new record if key doesn't exist, updates if it does. Secret
+ * fields (secret-store/secretSettingFields) are sealed; one sent back as the
+ * mask keeps the secret saved before.
  */
 export function upsertSetting(
   table: SettingsTable,
@@ -33,16 +52,24 @@ export function upsertSetting(
 
     const db = getDatabase()
     const schemaTable = tableMap[table]
+    const value =
+      table === 'app_settings'
+        ? sealSettingValue(
+            input.key,
+            input.value,
+            readStoredValue(table, input.key),
+          )
+        : input.value
 
     db.insert(schemaTable)
       .values({
         key: input.key,
-        value: input.value,
+        value,
       })
       .onConflictDoUpdate({
         target: schemaTable.key,
         set: {
-          value: input.value,
+          value,
           updatedAt: sql`(unixepoch())`,
         },
       })
@@ -92,7 +119,8 @@ export function deleteSetting(
 }
 
 /**
- * Gets a setting by key from the specified table
+ * Gets a setting by key from the specified table, its secret fields opened:
+ * for the server's own use (the settings API uses getPublicSetting).
  * Returns null if not found
  */
 export function getSetting(table: SettingsTable, key: string): Setting | null {
@@ -123,7 +151,10 @@ export function getSetting(table: SettingsTable, key: string): Setting | null {
     return {
       id: result.id,
       key: result.key,
-      value: result.value,
+      value:
+        table === 'app_settings'
+          ? openSettingValue(result.key, result.value)
+          : result.value,
       created_at:
         result.created_at instanceof Date
           ? Math.floor(result.created_at.getTime() / 1000)
@@ -139,8 +170,25 @@ export function getSetting(table: SettingsTable, key: string): Setting | null {
   }
 }
 
+/** A setting as the settings API returns it: saved secrets masked. */
+export function toPublicSetting(table: SettingsTable, setting: Setting) {
+  return table === 'app_settings'
+    ? { ...setting, value: maskSettingValue(setting.key, setting.value) }
+    : setting
+}
+
+/** One setting for the settings API (toPublicSetting), or null. */
+export function getPublicSetting(
+  table: SettingsTable,
+  key: string,
+): Setting | null {
+  const setting = getSetting(table, key)
+  return setting && toPublicSetting(table, setting)
+}
+
 /**
- * Gets all settings from the specified table, without server secret keys
+ * Gets all settings from the specified table for the settings API: without
+ * server secret keys, saved secrets masked
  */
 export function getAllSettings(table: SettingsTable): Setting[] {
   try {
@@ -167,7 +215,10 @@ export function getAllSettings(table: SettingsTable): Setting[] {
       .map((r) => ({
         id: r.id,
         key: r.key,
-        value: r.value,
+        value:
+          table === 'app_settings'
+            ? maskSettingValue(r.key, openSettingValue(r.key, r.value))
+            : r.value,
         created_at:
           r.created_at instanceof Date
             ? Math.floor(r.created_at.getTime() / 1000)

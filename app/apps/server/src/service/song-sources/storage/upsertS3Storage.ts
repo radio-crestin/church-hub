@@ -1,6 +1,7 @@
 import { getS3Storage } from './getS3Storage'
 import type { S3Storage, S3StorageInput } from './types'
 import { getRawDatabase } from '../../../db'
+import { sealSecret, secretPlaces } from '../../secret-store'
 
 const trimSlashes = (value: string) => value.trim().replace(/^\/+|\/+$/g, '')
 
@@ -54,7 +55,7 @@ export function upsertS3Storage(input: S3StorageInput): S3Storage {
       storage.bucket,
       storage.pathPrefix,
       storage.accessKeyId,
-      storage.secretAccessKey,
+      sealSecret(storage.secretAccessKey, secretPlaces.s3SecretAccessKey),
       storage.publicBaseUrl,
     )
   return storage
