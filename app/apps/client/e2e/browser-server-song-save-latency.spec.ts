@@ -7,10 +7,10 @@ import { SyncService } from './helpers/sync-service'
 import { pageApi, waitForApp } from './helpers/web-app'
 
 /**
- * A joined phone's in-browser server (T-175) keeps answering while its sync
- * sends a song it saved (T-218): its sync cycle used to serialize and merge
- * the whole library in one go on the worker, so a call made while it ran
- * waited ~8 s.
+ * A joined phone's in-browser server (T-175) answers right after a song is
+ * saved and while its sync sends it (T-218): the save used to scan the whole
+ * search index (~2 s) and the sync round serialize and merge the whole
+ * library (~9 s), each blocking the worker.
  */
 
 const s3 = new FakeS3()
@@ -92,9 +92,10 @@ test.describe
       await page.goto(joinUrl)
       await waitForApp(page)
 
+      const lyric = `Saved on the phone ${Date.now()}`
       const song = await pageApi(page, 'POST', '/api/songs', {
         title: `E2E Quick Save ${Date.now()}`,
-        slides: [{ content: '<p>Saved on the phone</p>', sortOrder: 0 }],
+        slides: [{ content: `<p>${lyric}</p>`, sortOrder: 0 }],
       })
       expect(song.status, JSON.stringify(song.json)).toBe(201)
       const songId = (song.json?.data as { id: number }).id
@@ -126,6 +127,16 @@ test.describe
         Math.max(...times),
         `GET /api/screens while the save syncs (ms): ${times}`,
       ).toBeLessThan(1000)
+
+      // Its words are found at once (the index row is the song's rowid).
+      const found = await pageApi(
+        page,
+        'GET',
+        `/api/songs/search?q=${encodeURIComponent(lyric)}`,
+      )
+      expect(
+        (found.json?.data as { id: number }[]).map((hit) => hit.id),
+      ).toContain(songId)
 
       // The save did sync: nothing is left to send.
       await expect
