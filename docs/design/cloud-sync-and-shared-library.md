@@ -224,6 +224,11 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   2. **Never overwrite a local edit**: a song is updated from its source only when `last_manual_edit` is NULL **and** its content hash still equals the `source_hash` saved at import. Otherwise it gets a "new version available" badge and the lyrics diff.
   3. **Review mode or auto-apply**, per source.
   - New local columns on `songs`: `source_id`, `source_song_id`, `source_hash`, `content_hash`.
+- **A song shared by a link, as built (T-177)**: any song's menu has *Share link* (`songs.view`; cloud sync must be on).
+  - The PC (or a phone's browser server) sends the song as it reads now, plain text with each chord on its word, to `PUT /sync/churches/:id/song-links/:songUuid`. The service keeps it in its private bucket as `song-links/<linkId>.json`.
+  - `linkId` is an HMAC of the church and the song's uuid with `SYNC_SECRET`. Nobody can guess another song's link, and every device of the church gets the same link for the same song; sharing it again updates the page. `DELETE` stops the link.
+  - The link is `<public app>/song/<linkId>?s=<service>`. The public app reads `GET /sync/song-links/:linkId` (public, cached 60 s) and shows the song's page: words, chords over them (hideable), label, author and key. Nothing of the app starts for a visitor.
+  - On a browser joined to the church that shared it (`churchId` matches), the link opens the app on `/songs/shared/<uuid>`, which finds this device's copy (`GET /api/song-links/by-uuid/:uuid`) and shows the song.
 
 ## 10. Plan (each step a task with its own e2e)
 
