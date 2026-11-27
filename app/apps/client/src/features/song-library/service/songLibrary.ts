@@ -3,6 +3,7 @@ import { fetchJsonWithStatus } from '~/utils/fetcher'
 import type {
   CuratorDecision,
   CuratorStatus,
+  FeaturedSource,
   LibrarySubmission,
 } from '../types'
 
@@ -28,7 +29,7 @@ const TIMEOUT_MS = 90_000
 
 async function call<T>(
   url: string,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PUT',
   body?: unknown,
 ): Promise<T> {
   const { status, body: json } = await fetchJsonWithStatus<ApiResponse<T>>(
@@ -83,4 +84,14 @@ export function decideLibrarySubmission(
     'POST',
     decision,
   )
+}
+
+export function getFeaturedSources(): Promise<FeaturedSource[]> {
+  return call('/api/song-library/featured', 'GET')
+}
+
+export function saveFeaturedSources(
+  sources: FeaturedSource[],
+): Promise<unknown> {
+  return call('/api/song-library/featured', 'PUT', { sources })
 }

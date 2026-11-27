@@ -30,3 +30,13 @@ export type CuratorDecision =
   | { decision: 'approved' }
   | { decision: 'merged'; librarySongId: string }
   | { decision: 'rejected'; reason: string | null }
+
+/** A song source every app is offered: a library Church Hub manages. */
+export interface FeaturedSource {
+  sourceId: string
+  name: string
+  categoryName: string
+  description: string | null
+  homepage: string | null
+  license: string | null
+}

@@ -44,5 +44,20 @@
       "rejected": "Song rejected."
     },
     "decisionFailed": "The library could not be updated. Try again."
+  },
+  "featured": {
+    "title": "Sources every church is offered",
+    "description": "Libraries Church Hub manages, in the order apps list them. Each is read by every app at start and shipped with the installer for churches without internet. Publish a library before adding it here.",
+    "empty": "No sources yet: apps use their built-in list.",
+    "sourceId": "Library id (e.g. resurse-crestine)",
+    "name": "Name",
+    "category": "Category for its songs",
+    "add": "Add",
+    "save": "Save the list",
+    "saved": "Sources saved. Every app gets them at its next start.",
+    "saveFailed": "The list could not be saved. A library may not be published yet.",
+    "up": "Move {{name}} up",
+    "down": "Move {{name}} down",
+    "remove": "Remove {{name}}"
   }
 }

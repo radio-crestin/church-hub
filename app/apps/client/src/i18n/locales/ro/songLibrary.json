@@ -46,5 +46,20 @@
       "rejected": "Cântarea a fost respinsă."
     },
     "decisionFailed": "Biblioteca nu a putut fi actualizată. Încearcă din nou."
+  },
+  "featured": {
+    "title": "Surse oferite tuturor bisericilor",
+    "description": "Bibliotecile pe care le administrează Church Hub, în ordinea în care le arată aplicațiile. Fiecare aplicație le citește la pornire, iar programul de instalare le include pentru bisericile fără internet. Publică biblioteca înainte de a o adăuga aici.",
+    "empty": "Încă nu sunt surse: aplicațiile folosesc lista lor implicită.",
+    "sourceId": "Id-ul bibliotecii (de ex. resurse-crestine)",
+    "name": "Nume",
+    "category": "Categoria cântărilor",
+    "add": "Adaugă",
+    "save": "Salvează lista",
+    "saved": "Sursele au fost salvate. Fiecare aplicație le primește la următoarea pornire.",
+    "saveFailed": "Lista nu a putut fi salvată. Poate o bibliotecă nu este încă publicată.",
+    "up": "Mută {{name}} mai sus",
+    "down": "Mută {{name}} mai jos",
+    "remove": "Scoate {{name}}"
   }
 }

@@ -61,6 +61,19 @@ const submission = {
   },
 }
 
+const featuredSource = {
+  type: 'object',
+  properties: {
+    sourceId: { type: 'string' },
+    name: { type: 'string' },
+    categoryName: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    homepage: { type: ['string', 'null'] },
+    license: { type: ['string', 'null'] },
+  },
+  required: ['sourceId', 'name', 'categoryName'],
+}
+
 /**
  * The curated Church Hub Library (T-177): songs sent to it, and its
  * curators’ queue. The curator routes are localhost only (users.edit); the
@@ -145,6 +158,41 @@ export const songLibraryPaths: Record<string, Record<string, unknown>> = {
             properties: { id: { type: 'string' }, title: { type: 'string' } },
           },
         }),
+        ...curatorErrors,
+      },
+    },
+  },
+  '/api/song-library/featured': {
+    get: {
+      tags: ['Songs'],
+      summary: 'The song sources every app is offered',
+      description:
+        'Church Hub’s featured list as this app last read it (from the cloud at start, else the installer’s copy); empty before one is published.',
+      responses: {
+        '200': json('In order', { type: 'array', items: featuredSource }),
+        ...curatorErrors,
+      },
+    },
+    put: {
+      tags: ['Songs'],
+      summary: 'Publish the song sources every app is offered (a curator)',
+      description:
+        'Libraries Church Hub manages (published with scripts/publish-library.ts or the curated one), each with a name and the category its songs land in. Every app reads the list at start; installers ship it with its libraries.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { sources: { type: 'array', items: featuredSource } },
+              required: ['sources'],
+            },
+          },
+        },
+      },
+      responses: {
+        '200': json('Published', { type: 'object' }),
+        '400': error('A source is a church’s library or not published yet'),
         ...curatorErrors,
       },
     },

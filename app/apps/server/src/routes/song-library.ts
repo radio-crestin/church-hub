@@ -2,7 +2,9 @@ import {
   type CuratorDecision,
   decideLibrarySubmission,
   getCuratorStatus,
+  getFeaturedSources,
   listLibrarySubmissions,
+  saveFeaturedSources,
   searchLibrarySongs,
   submitSongsToLibrary,
 } from '../service/song-library'
@@ -78,6 +80,8 @@ function parseDecision(body: Record<string, unknown>): CuratorDecision | null {
  * GET  /api/song-library/submissions               → the queue, with slides and likely duplicates
  * GET  /api/song-library/songs?q=                  → library songs to merge into
  * POST /api/song-library/submissions/:id/decision  { decision, librarySongId?, reason? }
+ * GET  /api/song-library/featured                  → the sources every app is offered
+ * PUT  /api/song-library/featured                  { sources } → published (a curator)
  * The curator's routes are localhost only with users.edit, like the
  * owner's: the account signs in with Google (owner sign-in, intent curate).
  */
@@ -119,6 +123,22 @@ export async function handleSongLibraryRoutes(
   }
   if (pathname === '/api/song-library/songs' && req.method === 'GET') {
     return answer(() => searchLibrarySongs(url.searchParams.get('q') ?? ''))
+  }
+  if (pathname === '/api/song-library/featured') {
+    if (req.method === 'GET') {
+      return Response.json({ data: getFeaturedSources() })
+    }
+    if (req.method === 'PUT') {
+      const body = (await req.json().catch(() => ({}))) as { sources?: unknown }
+      if (!Array.isArray(body.sources)) {
+        return Response.json({ error: 'sources is required' }, { status: 400 })
+      }
+      return answer(() =>
+        saveFeaturedSources(
+          body.sources as Parameters<typeof saveFeaturedSources>[0],
+        ),
+      )
+    }
   }
   const decision = pathname.match(DECISION_PATH)
   if (decision && req.method === 'POST') {

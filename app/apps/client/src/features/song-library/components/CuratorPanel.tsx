@@ -2,6 +2,7 @@ import { Loader2, LogIn } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '~/ui/button'
+import { FeaturedSourcesEditor } from './FeaturedSourcesEditor'
 import { SubmissionCard } from './SubmissionCard'
 import { useCuratorSignIn } from '../hooks/useCuratorSignIn'
 import { useLibrarySubmissions } from '../hooks/useLibrarySubmissions'
@@ -73,6 +74,9 @@ export function CuratorPanel() {
       {submissions.data?.map((submission) => (
         <SubmissionCard key={submission.id} submission={submission} />
       ))}
+      <div className="border-t border-line pt-4">
+        <FeaturedSourcesEditor />
+      </div>
     </div>
   )
 }
