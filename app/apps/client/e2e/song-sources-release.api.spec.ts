@@ -92,9 +92,10 @@ test('the app reads Resurse Creștine from the release', async () => {
   const check = await checkSource(api, SOURCE)
   expect(check.newCount + check.imported).toBe(2)
 
-  // The bucket's endpoint is gone with the bucket.
+  // The bucket's endpoint is gone with the bucket: a 404, not the client page.
   const managed = await api.get(`/api/song-sources/${SOURCE}/managed`)
-  expect(managed.ok()).toBe(false)
+  expect(managed.status()).toBe(404)
+  expect(managed.headers()['content-type']).toContain('application/json')
 })
 
 test('a song file whose checksum is not the published one is refused', async () => {
