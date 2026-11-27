@@ -9,8 +9,8 @@ export const BACKEND_DIR = fileURLToPath(
 const INSTALL_TIMEOUT_MS = 300_000
 
 /**
- * Installs churchhub-backend's npm dependencies on first use: they live
- * outside the app's workspace.
+ * Installs churchhub-backend's npm dependencies when missing: they live
+ * outside the app's workspace. Called once per run, from global-setup.ts.
  */
 export function installBackendDependencies(): void {
   const manifest = JSON.parse(

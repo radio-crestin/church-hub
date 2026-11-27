@@ -43,14 +43,6 @@ export const SERVER_EVENTS = {
   app_started: [],
   server_message: ['level', 'message', 'source'],
   $exception: ['source'],
-  /** Only when the user sends a feature request: see `feedbackLogs`. */
-  $feedback_report: [
-    'report_id',
-    'os_version',
-    'app_version',
-    'server_log_tail',
-    'tauri_log_tail',
-  ],
 } as const
 
 /** Sent with every client event (`distinct_id` is the random device id). */

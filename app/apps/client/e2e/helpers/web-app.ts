@@ -51,6 +51,7 @@ export async function findSong(
     'GET',
     `/api/songs/search?q=${encodeURIComponent(title)}`,
   )
+  expect(found.status, JSON.stringify(found.json)).toBe(200)
   return (found.json?.data as { id: number; title: string }[]).find(
     (song) => song.title === title,
   )?.id

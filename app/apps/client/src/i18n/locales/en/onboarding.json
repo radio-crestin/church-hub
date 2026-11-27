@@ -24,8 +24,7 @@
       "livestream": "Run the live stream on YouTube with OBS",
       "music": "Play music before and after the service",
       "song_key": "The key each song was sung in",
-      "live_translation": "Translate the sermon live for listeners",
-      "feedback": "Send ideas and problems to the Church Hub team"
+      "live_translation": "Translate the sermon live for listeners"
     }
   },
   "done": {

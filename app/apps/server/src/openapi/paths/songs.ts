@@ -548,7 +548,7 @@ export const songsPaths = {
       tags: ['Songs'],
       summary: 'Match external candidates against the library',
       description:
-        'Classifies external (not-yet-imported) songs against the local library so the discovery flow can show only the ones the user lacks. Per candidate the verdict is one of exact-filename, exact-title, similar, or new. Batched: send at most 500 candidates per request.',
+        'Classifies external (not-yet-imported) songs against the local library so the discovery flow can show only the ones the user lacks. Per candidate the verdict is one of exact-source (the same source song), exact-lyrics (the same lyrics fingerprint), exact-filename, exact-title, similar, or new. Batched: send at most 500 candidates per request.',
       security: [{ bearerAuth: [] }, { cookieAuth: [] }],
       requestBody: {
         required: true,

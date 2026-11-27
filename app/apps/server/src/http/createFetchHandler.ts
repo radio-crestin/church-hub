@@ -30,7 +30,6 @@ import { handleBibleTopicRoutes } from '../routes/bible-topics'
 import { handleCloudBackupRoutes } from '../routes/cloud-backup'
 import { CLOUD_BACKUP_PERMISSIONS } from '../routes/cloud-backup-permissions'
 import { handleCloudSyncRoutes } from '../routes/cloud-sync'
-import { handleFeatureRequestRoutes } from '../routes/feature-requests'
 import { handleLiveTranslationRoutes } from '../routes/live-translation'
 import { handleLivestreamRoutes } from '../routes/livestream'
 import { handleMIDIRoutes } from '../routes/midi'
@@ -325,12 +324,7 @@ import { createLogger } from '../utils/logger'
 import { getLogsDir } from '../utils/paths'
 import { peerAddress } from '../utils/peerAddress'
 // PostHog client (errors + events) — initialised on import.
-import {
-  captureException as captureExceptionPostHog,
-  captureFeedbackReport,
-  captureMessage as captureMessageServer,
-  flushPostHog,
-} from '../utils/posthog'
+import { captureMessage as captureMessageServer } from '../utils/posthog'
 import { logRequest, logResponse } from '../utils/request-logger'
 import { setRequestPeer } from '../utils/request-peer'
 import { proxyToVite, serveStaticFile } from '../utils/static-server'
@@ -836,7 +830,7 @@ export function createFetchHandler(): (
       // shared navigation shell) rather than to general Settings, so gating
       // them by `settings.view` would wrongly lock out feature-only users.
       //  - sidebar_configuration: drives the nav shell for EVERY user (e.g.
-      //    whether Feedback is hidden) → readable by any authenticated user.
+      //    which pages it lists) → readable by any authenticated user.
       //  - selected/default bible translation: needed to render the Bible
       //    page → gated by `bible.view`, not `settings.view`.
       const isSidebarConfig =
@@ -7655,81 +7649,6 @@ export function createFetchHandler(): (
       )
     }
 
-    // ============================================================
-    // Feedback logs (feature requests themselves: routes/feature-requests)
-    // ============================================================
-
-    // POST /api/feedback/attach-logs - Upload server + Tauri log tails to
-    // PostHog under the user's support id (PostHog distinct_id, sent as
-    // ticketId) when they send a feature request. The maintainer gets the
-    // same id privately with the request and finds the logs as a
-    // `$feedback_report` event keyed by it.
-    if (req.method === 'POST' && url.pathname === '/api/feedback/attach-logs') {
-      const denied = checkPermission('settings.view')
-      if (denied) return denied
-      try {
-        const body = (await req.json()) as {
-          ticketId?: string
-          osVersion?: string
-          appVersion?: string
-        }
-        if (!body.ticketId || typeof body.ticketId !== 'string') {
-          return handleCors(
-            req,
-            new Response(
-              JSON.stringify({
-                success: false,
-                error: 'ticketId is required',
-              }),
-              {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' },
-              },
-            ),
-          )
-        }
-
-        try {
-          const logs = await readRecentLogs()
-          captureFeedbackReport(body.ticketId, {
-            ticket_id: body.ticketId,
-            os_version: body.osVersion ?? 'unknown',
-            app_version: body.appVersion ?? 'unknown',
-            server_log_tail: logs.serverTail,
-            tauri_log_tail: logs.tauriTail,
-          })
-          // Force flush so the logs are durable before we return — the
-          // client may close the modal immediately, and Bun's process can
-          // be terminated by a Tauri restart.
-          await flushPostHog()
-        } catch (logErr) {
-          captureExceptionPostHog(logErr, { source: 'feedback_log_capture' })
-        }
-
-        return handleCors(
-          req,
-          new Response(
-            JSON.stringify({ success: true, ticketId: body.ticketId }),
-            { headers: { 'Content-Type': 'application/json' } },
-          ),
-        )
-      } catch {
-        return handleCors(
-          req,
-          new Response(
-            JSON.stringify({
-              success: false,
-              error: 'Failed to attach logs',
-            }),
-            {
-              status: 500,
-              headers: { 'Content-Type': 'application/json' },
-            },
-          ),
-        )
-      }
-    }
-
     // Livestream routes (YouTube, OBS integration)
     const livestreamResponse = await handleLivestreamRoutes(
       req,
@@ -7898,14 +7817,13 @@ export function createFetchHandler(): (
     )
     if (analyticsResponse) return analyticsResponse
 
-    // "Request a feature" (relayed to the Cloudflare worker)
-    const featureRequestResponse = await handleFeatureRequestRoutes(
-      req,
-      url,
-      handleCors,
-      _context,
-    )
-    if (featureRequestResponse) return featureRequestResponse
+    // An API path no route answered: a 404, never the client app's page
+    if (url.pathname.startsWith('/api/')) {
+      return handleCors(
+        req,
+        Response.json({ error: 'Not found' }, { status: 404 }),
+      )
+    }
 
     // Serve client app (static files in production, proxy to Vite in development)
     if (canServeStaticFiles && clientDistPath) {

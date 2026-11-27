@@ -66,7 +66,7 @@ describe('resolveClientIp', () => {
 
 describe('withClientIp', () => {
   test('replaces a spoofed CF-Connecting-IP and keeps the body', async () => {
-    const request = new Request('http://backend/feature-requests', {
+    const request = new Request('http://backend/sync/churches', {
       method: 'POST',
       headers: { 'CF-Connecting-IP': '9.9.9.9', 'Content-Type': 'application/json' },
       body: '{"a":1}',

@@ -32,7 +32,6 @@ Church Hub sends anonymous usage data so we can see how the app is used, find pr
 | `app_started` | The server started | nothing else |
 | `server_message` | A problem the server noticed | `level`, `message`, `source` |
 | `$exception` | An error in the server: its message, type and where in the code | `source` |
-| `$feedback_report` | Only when you send feedback (see below) | `report_id`, `os_version`, `app_version`, `server_log_tail`, `tauri_log_tail` |
 
 **Sent with every event:** `distinct_id` (this device's random id), `route`, `install_id` (this installation's random id), `component` (client or server), `runtime` (desktop app or browser), `release` (the app's version), `environment`.
 
@@ -65,10 +64,6 @@ As long as PostHog's plan for the project allows: about one year for events and 
 
 The text of buttons and pages, song lyrics, Bible verses, programs and their items, anything you type, file and folder names, names, emails and passwords, your IP address or your network's addresses.
 
-### When you send feedback
-
-Only when you press Send in Feedback: the app's recent logs (the server's and the desktop app's) are sent privately to the developer under your device's random id, together with the system version and app version, so the problem can be found. Logs can contain file paths and network addresses. This happens even with usage data turned off, because you chose to send it.
-
 ### How to turn it off
 
 Settings > Privacy > **Share anonymous usage data** (on by default; needs the right to edit settings). From then on no event, error or screen recording is sent, neither by the app windows nor by the server, on every device connected to this app. A window that has heard it is off does not start PostHog at all on its next start; a new device sends nothing until it has asked the server.
@@ -88,7 +83,6 @@ Aceleași evenimente și detalii ca în tabelele de mai sus (numele lor sunt cel
 - `startup_failed`: la pornire, aplicația nu a putut ajunge la server.
 - `$exception`, `warning`, `server_message`: erori și probleme, cu mesajul lor (fără adrese).
 - `$snapshot`: o bucată din înregistrarea ecranului, cu textele ascunse.
-- `$feedback_report`: doar când trimiți feedback (vezi mai jos).
 
 Cu fiecare eveniment se trimit: id-ul aleatoriu al dispozitivului, id-ul aleatoriu al instalării, modelul paginii (de exemplu `/songs/$songId`), versiunea aplicației, sistemul de operare și versiunea lui, motorul browserului, dimensiunea ecranului și a ferestrei.
 
@@ -113,10 +107,6 @@ Fiecare dispozitiv primește un id aleatoriu, iar fiecare instalare altul; niciu
 ### Ce nu colectăm niciodată
 
 Textul butoanelor și al paginilor, versurile cântărilor, versetele biblice, programele și elementele lor, nimic din ce scrii, nume de fișiere și foldere, nume, adrese de e-mail și parole, adresa ta IP sau adresele din rețeaua ta.
-
-### Când trimiți feedback
-
-Doar când apeși Trimite în Feedback: jurnalele recente ale aplicației (ale serverului și ale aplicației desktop) ajung în mod privat la dezvoltator, sub id-ul aleatoriu al dispozitivului tău, împreună cu versiunea sistemului și a aplicației, ca problema să poată fi găsită. Jurnalele pot conține căi de fișiere și adrese de rețea. Se întâmplă chiar și cu datele de utilizare oprite, pentru că tu ai ales să le trimiți.
 
 ### Cum oprești trimiterea
 

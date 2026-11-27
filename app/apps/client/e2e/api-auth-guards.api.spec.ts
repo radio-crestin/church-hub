@@ -57,13 +57,6 @@ test.describe('API auth guards', () => {
       const res = await rawRequest(lanBaseUrl(), path, {})
       expect(res.status, path).toBe(401)
     }
-    // The "Request a feature" relay never reaches the worker anonymously.
-    const feature = await rawRequest(lanBaseUrl(), '/api/feature-requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}',
-    })
-    expect(feature.status).toBe(401)
   })
 
   test('a LAN device naming itself localhost gets no localhost-only route', async ({

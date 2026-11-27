@@ -2,6 +2,7 @@ export { bundleFilesToSongs } from './bundleFilesToSongs'
 export { decodeHtmlEntities } from './decodeHtmlEntities'
 export { htmlToPlainText } from './htmlToPlainText'
 export { isOpenSongXml } from './isOpenSongXml'
+export * from './library'
 export { mightBeOpenSongFile } from './mightBeOpenSongFile'
 export {
   type CantariCrestineResponse,

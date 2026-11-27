@@ -32,8 +32,6 @@
     "anonymous": "Each device gets a random id, and each installation another one; neither is linked to your name, email, computer name or account. No person profiles are created. Your IP address is not stored and is not used to find your location. Web addresses and IP addresses (also local network ones) are removed from everything sent.",
     "neverTitle": "What is never collected",
     "never": "The text of buttons and pages, song lyrics, Bible verses, presentations and their items, anything you type, file and folder names, names, emails and passwords, your IP address or your network's addresses.",
-    "feedbackTitle": "When you send feedback",
-    "feedback": "Only when you press Send in Feedback: the app's recent logs (the server's and the desktop app's) are sent privately to the developer under your device's random id, together with the system version and app version, so the problem can be found. Logs can contain file paths and network addresses. This happens even with usage data turned off, because you chose to send it.",
     "offTitle": "How to turn it off",
     "off": "Turn off \"Share anonymous usage data\" above. From then on no event, error or screen recording is sent, neither by the app windows nor by the server, on every device connected to this app."
   },
@@ -51,8 +49,7 @@
   "serverEvents": {
     "app_started": "The server started.",
     "server_message": "A problem the server noticed.",
-    "$exception": "An error in the server: its message, its type and where in the code it happened.",
-    "$feedback_report": "Only when you send feedback: the recent logs (see below)."
+    "$exception": "An error in the server: its message, its type and where in the code it happened."
   },
   "properties": {
     "element": "The button's code name (its test id), never its text",
@@ -75,11 +72,6 @@
     "source": "Which part of the code reported it",
     "component": "client or server",
     "level": "How serious it is",
-    "report_id": "Your device's random id, sent with your feedback",
-    "os_version": "The operating system's version",
-    "app_version": "The app's version",
-    "server_log_tail": "The end of the server's log",
-    "tauri_log_tail": "The end of the desktop app's log",
     "distinct_id": "This device's random id",
     "install_id": "This installation's random id",
     "runtime": "Desktop app or browser",

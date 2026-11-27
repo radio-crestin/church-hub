@@ -5,13 +5,8 @@ import { join } from 'node:path'
 import { getLogsDir } from '../../utils/paths'
 
 /**
- * Reads the tail of the last `daysBack` days of log files. Used by the
- * feedback flow so we can ship recent server + Tauri logs to PostHog
- * under a report ID without bloating GitHub issues.
- *
- * Per-file cap of `maxBytes` (default 32 KiB) × 7 days × 2 streams =
- * ~448 KiB worst case, comfortably under PostHog's 1 MiB
- * event-property limit.
+ * Reads the tail of the last `daysBack` days of server and Tauri log
+ * files, at most `maxBytes` per file (GET /api/logs).
  */
 const DEFAULT_MAX_BYTES = 32 * 1024
 const DEFAULT_DAYS_BACK = 7

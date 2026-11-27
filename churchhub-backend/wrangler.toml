@@ -22,27 +22,10 @@ head_sampling_rate = 1
 # (src/middleware/requestLogger.ts) logs the route pattern of every request.
 invocation_logs = false
 
-# KV namespace for WebRTC signaling relay; also holds the per-IP (hashed)
-# rolling 24h quota of POST /feature-requests.
+# KV namespace for WebRTC signaling relay.
 [[kv_namespaces]]
 binding = "SIGNALING_KV"
 id = "bc1b72f2df754e88a81e8e8c99ccee50"
-
-# "Request a feature" screenshots, embedded in the public GitHub issue through
-# GET /feature-requests/screenshots/:id. Create once before the first deploy:
-#   npx wrangler r2 bucket create church-hub-feature-requests
-[[r2_buckets]]
-binding = "FEATURE_REQUEST_SCREENSHOTS"
-bucket_name = "church-hub-feature-requests"
-
-# Abuse guard for POST /feature-requests: 3 requests per minute per IP.
-[[ratelimits]]
-name = "FEATURE_REQUEST_RATE_LIMITER"
-namespace_id = "1001"
-
-  [ratelimits.simple]
-  limit = 3
-  period = 60
 
 # Abuse guard for POST /sync/churches (registering a church server): 3 per
 # minute per IP. A church registers once, so this never limits real use.
@@ -52,6 +35,16 @@ namespace_id = "1002"
 
   [ratelimits.simple]
   limit = 3
+  period = 60
+
+# Abuse guard for POST /sync/library/submissions (a song sent to the curated
+# Church Hub Library): 5 per minute per IP.
+[[ratelimits]]
+name = "LIBRARY_RATE_LIMITER"
+namespace_id = "1003"
+
+  [ratelimits.simple]
+  limit = 5
   period = 60
 
 # Church Hub Cloud backup (/backup): every request, 60 per minute per IP
@@ -103,15 +96,12 @@ COOKIE_MAX_AGE = 600
 # - COOKIE_ENCRYPTION_KEY (generate: openssl rand -hex 32)
 # - ALLOWED_ORIGINS (comma-separated list)
 # - YOUTUBE_REDIRECT_URI
-# - GITHUB_TOKEN (fine-grained PAT, radio-crestin/church-hub only, Issues:
-#   read and write only; it opens the feature-request issues)
-# - WAHA_URL, WAHA_API_KEY, WAHA_CHAT_ID (+ optional WAHA_SESSION,
-#   WAHA_ACCESS_CLIENT_ID, WAHA_ACCESS_CLIENT_SECRET) for the WhatsApp
-#   notice of each feature request. Unset = WhatsApp is skipped.
 # - Cloud sync (no database: each church's state is an encrypted object in
 #   the bucket): SYNC_SECRET, S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID,
 #   S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL (+ optional S3_REGION,
 #   S3_STATE_BUCKET, SYNC_COMPACT_AFTER). Unset = /sync/* answers 503.
+#   The curated Church Hub Library's curators: LIBRARY_CURATORS (Google
+#   emails or subs, comma-separated). Unset = nobody curates.
 # - Cloud backup (free, Google sign-in; a PRIVATE bucket of its own, never
 #   the public sync bucket): BACKUP_SECRET, BACKUP_KEY_SECRET (never rotate:
 #   it derives every account key), BACKUP_S3_ENDPOINT, BACKUP_S3_BUCKET,
