@@ -130,6 +130,7 @@ const API_SPECS = /\.api\.spec\.ts$/
 
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   // Files are spread over the workers; a file's tests run in order on one
   // worker, against that worker's own server (see SERVER_COUNT).
   fullyParallel: false,
