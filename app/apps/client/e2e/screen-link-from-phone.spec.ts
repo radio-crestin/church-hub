@@ -125,8 +125,10 @@ test.describe
         .click()
       await phonePage.getByTestId('screen-show-elsewhere').click()
       const url = phonePage.getByTestId('screen-link-url')
+      // The phone's server may still be busy finishing its first start.
       await expect(url).toHaveValue(
         new RegExp(`^${publicApp.url}/screen/${screen.id}#`),
+        { timeout: 30_000 },
       )
       screenLink = await url.inputValue()
       // The link carries a token of its own, never the phone's session.
