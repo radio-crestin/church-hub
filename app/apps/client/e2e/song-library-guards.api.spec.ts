@@ -22,6 +22,8 @@ const SONG =
 const s3 = new FakeS3()
 const google = new FakeGoogle()
 const service = new SyncService()
+/** A church's own library (a 16-character church id, then its folder). */
+const CHURCH_LIBRARY = 'AAAAAAAAAAAAAAAA-abc'
 const library = () => `${service.url}/sync/libraries/church-hub`
 
 function submit(body: unknown) {
@@ -146,11 +148,11 @@ test.describe
         checksum: null,
       })
 
-      const churchLibrary = await publish('church-1-abc', {
+      const churchLibrary = await publish(CHURCH_LIBRARY, {
         baseChecksum: null,
-        manifest: { ...manifest, sourceId: 'church-1-abc' },
+        manifest: { ...manifest, sourceId: CHURCH_LIBRARY },
       })
-      expect(churchLibrary.status).toBe(403)
+      expect(churchLibrary.status).toBe(401)
 
       expect(
         (await publish('church-hub', { baseChecksum: null, manifest })).status,

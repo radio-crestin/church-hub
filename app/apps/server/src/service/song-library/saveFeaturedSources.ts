@@ -1,3 +1,4 @@
+import { getFeaturedSources } from './getFeaturedSources'
 import { getLibraryServiceUrl } from './getLibraryServiceUrl'
 import { requireCuratorTicket } from './requireCuratorTicket'
 import {
@@ -11,11 +12,11 @@ import {
 
 /**
  * Publishes the sources every app is offered (a curator's edit), then
- * reads the list back so this app shows it at once.
+ * reads the list back so this app shows it at once; answers that list.
  */
 export async function saveFeaturedSources(
   sources: FeaturedSource[],
-): Promise<void> {
+): Promise<FeaturedSource[]> {
   const response = await syncServiceRequest(
     {
       serviceUrl: await getLibraryServiceUrl(),
@@ -27,4 +28,5 @@ export async function saveFeaturedSources(
   )
   if (response.status >= 400) throw serviceError(response)
   await refreshFeaturedSources()
+  return getFeaturedSources()
 }

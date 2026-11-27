@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { existsSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -30,15 +30,30 @@ const s3 = new FakeS3()
 const google = new FakeGoogle()
 const service = new SyncService()
 
-/** Runs one of the server's scripts as the build does. */
-function runScript(args: string[], env: Record<string, string>) {
-  const result = spawnSync('bun', args, {
-    cwd: join(APP_DIR, 'apps/server'),
-    env: { ...process.env, CHURCH_HUB_SYNC_URL: service.url, ...env },
-    encoding: 'utf8',
-    timeout: 120_000,
+/**
+ * Runs one of the server's scripts as the build does; asynchronously, as
+ * the sync service it talks to runs in this test's own process.
+ */
+function runScript(
+  args: string[],
+  env: Record<string, string>,
+): Promise<{ status: number; output: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      'bun',
+      args,
+      {
+        cwd: join(APP_DIR, 'apps/server'),
+        env: { ...process.env, CHURCH_HUB_SYNC_URL: service.url, ...env },
+        timeout: 120_000,
+      },
+      (error, stdout, stderr) =>
+        resolve({
+          status: error ? Number(error.code ?? 1) || 1 : 0,
+          output: `${stdout}${stderr}`,
+        }),
+    )
   })
-  return { status: result.status, output: `${result.stdout}${result.stderr}` }
 }
 
 test.describe
@@ -104,16 +119,19 @@ test.describe
         'E2E Hymns',
         'E2E Hymns',
       ]
-      const refused = runScript(args, { LIBRARY_PUBLISH_TOKEN: 'wrong-token' })
+      const refused = await runScript(args, {
+        LIBRARY_PUBLISH_TOKEN: 'wrong-token',
+      })
       expect(refused.status).not.toBe(0)
-      const published = runScript(args, {
+      const published = await runScript(args, {
         LIBRARY_PUBLISH_TOKEN: PUBLISH_TOKEN,
       })
       expect(published.output).toContain('published 2 songs')
       expect(published.status).toBe(0)
       // Nothing changed: nothing is sent again.
       expect(
-        runScript(args, { LIBRARY_PUBLISH_TOKEN: PUBLISH_TOKEN }).output,
+        (await runScript(args, { LIBRARY_PUBLISH_TOKEN: PUBLISH_TOKEN }))
+          .output,
       ).toContain('unchanged')
     })
 
@@ -123,6 +141,14 @@ test.describe
     }) => {
       google.account = CURATOR
       await signInCurator(request)
+      // This test PC may keep a list from an earlier run.
+      expect(
+        (
+          await request.put('/api/song-library/featured', {
+            data: { sources: [] },
+          })
+        ).ok(),
+      ).toBe(true)
       await page.goto('/settings/song-library')
       const editor = page.getByTestId('featured-sources')
       await expect(editor).toBeVisible({ timeout: 15_000 })
@@ -152,9 +178,12 @@ test.describe
       request,
     }) => {
       const bundled = join(folder, 'song-libraries')
-      const bundle = runScript(['scripts/bundle-song-libraries.ts', bundled], {
-        CI: 'true',
-      })
+      const bundle = await runScript(
+        ['scripts/bundle-song-libraries.ts', bundled],
+        {
+          CI: 'true',
+        },
+      )
       expect(bundle.output).toContain('Bundled E2E Hymns: 2 songs')
       expect(existsSync(join(bundled, 'featured.json'))).toBe(true)
       expect(existsSync(join(bundled, SOURCE_ID, 'manifest.json'))).toBe(true)

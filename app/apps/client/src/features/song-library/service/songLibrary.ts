@@ -92,6 +92,6 @@ export function getFeaturedSources(): Promise<FeaturedSource[]> {
 
 export function saveFeaturedSources(
   sources: FeaturedSource[],
-): Promise<unknown> {
+): Promise<FeaturedSource[]> {
   return call('/api/song-library/featured', 'PUT', { sources })
 }

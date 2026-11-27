@@ -191,7 +191,10 @@ export const songLibraryPaths: Record<string, Record<string, unknown>> = {
         },
       },
       responses: {
-        '200': json('Published', { type: 'object' }),
+        '200': json('Published; the list as saved', {
+          type: 'array',
+          items: featuredSource,
+        }),
         '400': error('A source is a church’s library or not published yet'),
         ...curatorErrors,
       },
