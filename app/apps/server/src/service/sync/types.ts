@@ -41,6 +41,12 @@ export interface LibrarySong extends DeviceAttributed {
   presentationOrder: string | null
   /** Absent from libraries written before T-173. */
   alternateTitles?: string | null
+  /**
+   * Its background override (ScreenBackgroundConfig as JSON); its media
+   * reaches phones through the church's bucket (cloud-media). Absent before
+   * T-215: left as it is.
+   */
+  background?: string | null
   /** The song's tags (song_tag uuids). Absent before T-173. */
   tagUuids?: string[]
   presentationCount: number
@@ -286,8 +292,6 @@ export interface MergeResult {
   merged: LibraryFile
   /** Remote-driven changes to apply to the local DB. */
   applyOps: ApplyOp[]
-  /** True when the merged file differs from the remote file (upload needed). */
-  uploadNeeded: boolean
 }
 
 export interface SyncCycleResult {

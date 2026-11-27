@@ -1,4 +1,7 @@
-import { requirePermission } from '../middleware/permissions'
+import {
+  requireAnyPermission,
+  requirePermission,
+} from '../middleware/permissions'
 import type { RequestContext } from '../middleware/types'
 import {
   BACKGROUND_MEDIA_URL_PREFIX,
@@ -15,6 +18,13 @@ type HandleCors = (req: Request, res: Response) => Response
 
 const logger = createLogger('background-media')
 
+/** Who may load a file: what shows it (screens, songs, programs). */
+const MEDIA_VIEWERS: Permission[] = [
+  'displays.view',
+  'songs.view',
+  'programs.view',
+]
+
 const MEDIA_ITEM_PATH_REGEX = /^\/api\/media\/backgrounds\/([^/]+)$/
 
 /**
@@ -25,12 +35,13 @@ const MEDIA_ITEM_PATH_REGEX = /^\/api\/media\/backgrounds\/([^/]+)$/
  * - GET    /api/media/backgrounds/:id  file bytes (Range/HEAD supported)
  * - DELETE /api/media/backgrounds/:id
  *
- * Reads need `displays.view` — the same permission `GET /api/screens/:id`
+ * The list needs `displays.view` — the same permission `GET /api/screens/:id`
  * requires, so every display that can load a screen config (including
  * cookie-less localhost projector windows, which get the view-only
  * permission set) can load the backgrounds it references via <img>/<video>.
- * Writes need `displays.edit`, like the screen config updates that store the
- * returned URL.
+ * A file is also shown to whoever sees the songs or programs naming it (a
+ * phone over WebRTC showing a song's background). Writes need
+ * `displays.edit`, like the screen config updates that store the returned URL.
  */
 export async function handleBackgroundMediaRoutes(
   req: Request,
@@ -90,8 +101,9 @@ export async function handleBackgroundMediaRoutes(
 
     // GET|HEAD /api/media/backgrounds/:id - Serve the file (Range aware)
     if ((req.method === 'GET' || req.method === 'HEAD') && itemId) {
-      const permError = checkPermission('displays.view')
-      if (permError) return permError
+      if (!context) return respond(401, { error: 'Unauthorized' })
+      const denied = requireAnyPermission(MEDIA_VIEWERS)(context)
+      if (denied) return handleCors(req, denied)
 
       const response = await serveBackgroundMedia(
         itemId,

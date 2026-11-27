@@ -9,7 +9,7 @@ interface BackgroundMediaThumbnailProps {
 export function BackgroundMediaThumbnail({
   media,
 }: BackgroundMediaThumbnailProps) {
-  const src = useMediaUrl(media.url) ?? ''
+  const src = useMediaUrl(media.url).src ?? ''
 
   if (media.kind === 'video') {
     return (

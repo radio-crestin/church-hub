@@ -29,7 +29,7 @@ export class FakeS3 {
   readonly delays = new Map<string, number>()
   /** Paths answered with this HTTP status, like a server refusing them. */
   readonly statuses = new Map<string, number>()
-  /** Refuse PUT and DELETE without an Authorization header (anonymous writes). */
+  /** Refuse PUT and DELETE unsigned (anonymous writes): no Authorization header, no presigned query. */
   signedWritesOnly = false
   /** Multipart uploads in progress, by upload id: their key and parts. */
   readonly multipart = new Map<
@@ -153,7 +153,10 @@ export class FakeS3 {
         return
       }
       const write = req.method === 'PUT' || req.method === 'DELETE'
-      if (write && this.signedWritesOnly && !req.headers.authorization) {
+      // Signed by the Authorization header, or presigned in the query.
+      const signed =
+        !!req.headers.authorization || search.has('X-Amz-Signature')
+      if (write && this.signedWritesOnly && !signed) {
         res.writeHead(403).end()
         return
       }

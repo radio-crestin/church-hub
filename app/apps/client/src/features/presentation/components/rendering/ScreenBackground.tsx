@@ -1,3 +1,4 @@
+import { MediaUnavailable } from '~/features/background-media/components/MediaUnavailable'
 import { useMediaUrl } from '~/features/background-media/hooks/useMediaUrl'
 import { ScreenBackgroundStill } from './ScreenBackgroundStill'
 import { ScreenBackgroundVideo } from './ScreenBackgroundVideo'
@@ -33,7 +34,7 @@ export function ScreenBackground({
 }: ScreenBackgroundProps) {
   const type = background?.type ?? 'color'
   const opacity = background?.opacity ?? 1
-  const src = useMediaUrl(
+  const { src, unavailable } = useMediaUrl(
     type === 'image' ? background?.imageUrl : background?.videoUrl,
   )
 
@@ -66,6 +67,7 @@ export function ScreenBackground({
           ) : (
             <ScreenBackgroundStill src={src} opacity={opacity} />
           ))}
+        {unavailable && <MediaUnavailable kind={type} compact />}
       </div>
     )
   }

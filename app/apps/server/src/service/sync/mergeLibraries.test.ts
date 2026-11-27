@@ -1,3 +1,4 @@
+import { libraryChanged } from './libraryChanged'
 import { emptyLibrary as emptyLibraryOf } from './libraryCollections'
 import { dirtyKey, mergeLibraries } from './mergeLibraries'
 import type { LibraryFile, LibrarySong } from './types'
@@ -43,7 +44,7 @@ describe('mergeLibraries', () => {
     const result = mergeLibraries(local, null, new Set(), NOW)
 
     expect(result.applyOps).toEqual([])
-    expect(result.uploadNeeded).toBe(true)
+    expect(libraryChanged(result.merged, null)).toBe(true)
     expect(result.merged.songs.map((s) => s.uuid)).toEqual(['a'])
   })
 
@@ -107,7 +108,7 @@ describe('mergeLibraries', () => {
     const result = mergeLibraries(local, remote, new Set(), NOW)
 
     expect(result.applyOps).toEqual([])
-    expect(result.uploadNeeded).toBe(true)
+    expect(libraryChanged(result.merged, remote)).toBe(true)
     expect(result.merged.songs[0]?.title).toBe('Newer')
   })
 
@@ -244,7 +245,7 @@ describe('mergeLibraries', () => {
     const result = mergeLibraries(local, remote, new Set(), NOW)
 
     expect(result.applyOps).toEqual([])
-    expect(result.uploadNeeded).toBe(false)
+    expect(libraryChanged(result.merged, remote)).toBe(false)
   })
 
   test('expired tombstones are pruned from the merged file', () => {

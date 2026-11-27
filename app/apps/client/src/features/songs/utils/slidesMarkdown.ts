@@ -1,10 +1,3 @@
-export interface MarkdownSlide {
-  id: string | number
-  content: string
-  sortOrder: number
-  label?: string | null
-}
-
 function decodeHtmlEntities(text: string): string {
   return text
     .replace(/&quot;/g, '"')
@@ -40,35 +33,4 @@ export function markdownToHtml(markdown: string): string {
   html = html.replace(/__(.+?)__/g, '<u>$1</u>')
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
   return html
-}
-
-export function slidesToMarkdown(slides: Array<{ content: string }>): string {
-  return slides.map((s) => htmlToMarkdown(s.content)).join('\n\n---\n\n')
-}
-
-export function markdownToSlides(text: string): MarkdownSlide[] {
-  if (!text.trim()) return []
-
-  const normalized = text.replace(/\n\s*---\s*\n/g, '\n\n')
-  const slideTexts = normalized
-    .split(/\n\s*\n/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0)
-
-  const result: MarkdownSlide[] = []
-  for (const slideText of slideTexts) {
-    const lines = slideText.split('\n').filter((line) => line.trim().length > 0)
-    if (lines.length === 0) continue
-
-    const htmlContent = lines
-      .map((line) => `<p>${markdownToHtml(line)}</p>`)
-      .join('')
-
-    result.push({
-      id: `temp-${Date.now()}-${result.length}`,
-      content: htmlContent || '<p></p>',
-      sortOrder: result.length,
-    })
-  }
-  return result
 }

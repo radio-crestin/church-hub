@@ -52,8 +52,9 @@ export const SYNCED_TABLES: SyncedTable[] = [
   { entityType: 'song_category', table: 'song_categories', uuidColumn: 'uuid' },
   { entityType: 'song_group', table: 'song_groups', uuidColumn: 'uuid' },
   { entityType: 'song_tag', table: 'song_tags', uuidColumn: 'uuid' },
-  // Presenting a song (its count, when last shown) and its background (its
-  // media stays on this device) are no edit of it.
+  // Presenting a song (its count, when last shown) is no edit of it. Its
+  // background is: the media it shows reaches phones through the church's
+  // bucket (service/cloud-media).
   {
     entityType: 'song',
     table: 'songs',
@@ -74,6 +75,7 @@ export const SYNCED_TABLES: SyncedTable[] = [
       'hymn_number',
       'key_line',
       'presentation_order',
+      'background',
       'last_manual_edit',
     ],
   },

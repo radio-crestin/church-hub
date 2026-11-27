@@ -116,6 +116,12 @@ function upsertSong(song: LibrarySong): number | null {
 
   const songId = idByUuid('songs', song.uuid)
   if (songId === null) return null
+  if (song.background !== undefined) {
+    db.query('UPDATE songs SET background = ? WHERE id = ?').run(
+      song.background,
+      songId,
+    )
+  }
 
   // Its tags, by uuid (tags are applied before songs); a library written
   // before songs carried them leaves them as they are.

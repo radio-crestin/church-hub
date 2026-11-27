@@ -187,7 +187,7 @@ const SHOTS: Shot[] = [
   { name: 'songs-view', take: (p, d) => open(p, `/songs/${d.songIds[0]}`) },
   {
     name: 'song-editor',
-    take: (p, d) => open(p, `/songs/${d.songIds[0]}/edit`),
+    take: (p, d) => open(p, `/songs/${d.songIds[0]}?edit=slides`),
   },
   {
     name: 'song-history',

@@ -167,8 +167,8 @@ test.describe('App update - page', () => {
 
   test('the old sidecar update API is gone', async ({ request }) => {
     // Downloads and installs go through the Tauri updater in the shell now;
-    // nothing should still answer on the sidecar: an API path no route
-    // answers is a 404 (#330).
+    // nothing should still answer on the sidecar: an /api path no route
+    // answers is a 404.
     for (const path of [
       '/api/app-update/status',
       '/api/app-update/config',

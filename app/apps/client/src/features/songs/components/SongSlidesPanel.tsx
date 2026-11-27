@@ -1,6 +1,5 @@
-import { Check, Loader2, Pencil, Play, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useRef } from 'react'
 
 import { SlideCounter } from './SlideCounter'
 import { type SongSlideRailItem, SongSlideRailList } from './SongSlideRailList'
@@ -10,25 +9,13 @@ import { FontSizeButtons } from '../../../ui/button'
 import { isTypingTarget } from '../../../utils/isTypingTarget'
 import type { SongSlide, SongWithSlides } from '../types'
 import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
-import {
-  type MarkdownSlide,
-  markdownToSlides,
-  slidesToMarkdown,
-} from '../utils/slidesMarkdown'
 
 interface SongSlidesPanelProps {
   song: SongWithSlides
   presentedSlideIndex: number | null
   selectedSlideIndex: number
   isLoading: boolean
-  isSaving?: boolean
-  isEditMode: boolean
-  onToggleEditMode: () => void
-  /** Whether the current user may edit (songs.edit). Hides the edit toggle. */
-  canEdit?: boolean
-  onSave?: () => void
   onSlideClick: (slide: SongSlide, index: number) => void
-  onApplyText?: (slides: MarkdownSlide[]) => void | Promise<void>
   /** Preview mode: a single click stages instead of projecting. */
   previewMode?: boolean
   /** Index of the slide staged for preview (indigo, not yet projected). */
@@ -36,30 +23,6 @@ interface SongSlidesPanelProps {
   /** Double-click handler (preview mode): projects the slide immediately. */
   onSlideDoubleClick?: (slide: SongSlide, index: number) => void
 }
-
-/** Identifies the first line of every non-empty slide block in the text. */
-function computeSlideBlocks(
-  text: string,
-): Array<{ blockIdx: number; line: number }> {
-  const lines = text.split('\n')
-  const blocks: Array<{ blockIdx: number; line: number }> = []
-  let blockIdx = 0
-  let inBlock = false
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim()
-    if (trimmed === '---' || trimmed === '') {
-      inBlock = false
-    } else if (!inBlock) {
-      blocks.push({ blockIdx, line: i })
-      blockIdx++
-      inBlock = true
-    }
-  }
-  return blocks
-}
-
-const TEXTAREA_LINE_HEIGHT_PX = 20
-const TEXTAREA_PADDING_TOP_PX = 8
 
 // Font size of the view-mode lyrics list; the base matches Tailwind's `text-sm`.
 const SLIDE_FONT_BASE_REM = 0.875
@@ -75,32 +38,15 @@ export function SongSlidesPanel({
   presentedSlideIndex,
   selectedSlideIndex,
   isLoading,
-  isSaving,
-  isEditMode,
-  onToggleEditMode,
-  canEdit = true,
-  onSave,
   onSlideClick,
-  onApplyText,
   previewMode = false,
   stagedSlideIndex = null,
   onSlideDoubleClick,
 }: SongSlidesPanelProps) {
-  const { t } = useTranslation('songs')
   const fontScale = useFontScale(SLIDE_FONT_SCALE_KEY, SLIDE_FONT_BASE_REM)
   const highlightedRef = useRef<HTMLButtonElement>(null)
   const selectedRef = useRef<HTMLButtonElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const gutterRef = useRef<HTMLDivElement>(null)
-  const [textValue, setTextValue] = useState('')
-  const [presentingIdx, setPresentingIdx] = useState<number | null>(null)
-
-  // Sorted original slides — used to seed the textarea on entering edit mode.
-  const sortedSlides = useMemo(
-    () => [...song.slides].sort((a, b) => a.sortOrder - b.sortOrder),
-    [song.slides],
-  )
 
   // Expanded slides for view mode (auto-inserts choruses) and for presenting.
   const expandedSlides = useMemo(
@@ -139,11 +85,7 @@ export function SongSlidesPanel({
   )
 
   // Follows the projector exactly like the program page's list does.
-  useFollowPresentedScroll(
-    containerRef,
-    highlightedRef,
-    isEditMode ? null : presentedSlideIndex,
-  )
+  useFollowPresentedScroll(containerRef, highlightedRef, presentedSlideIndex)
 
   // Hand the keyboard to the live slide as well. Presenting opens the
   // projection window, which takes the keyboard as it appears; what the
@@ -152,16 +94,15 @@ export function SongSlidesPanel({
   // taken from a field the operator is typing in.
   useEffect(() => {
     const element = highlightedRef.current
-    if (isEditMode || !element) return
+    if (!element) return
     if (isTypingTarget(document.activeElement)) return
     element.focus({ preventScroll: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presentedSlideIndex, isEditMode])
+  }, [presentedSlideIndex])
 
   // Auto-scroll to selected slide (view mode)
   useEffect(() => {
     if (
-      !isEditMode &&
       presentedSlideIndex === null &&
       selectedRef.current &&
       containerRef.current
@@ -171,83 +112,12 @@ export function SongSlidesPanel({
         behavior: 'smooth',
       })
     }
-  }, [selectedSlideIndex, presentedSlideIndex, isEditMode])
-
-  const parsedSlides = useMemo(() => markdownToSlides(textValue), [textValue])
-
-  const slideBlocks = useMemo(() => computeSlideBlocks(textValue), [textValue])
-
-  const applyTextValue = useCallback(async () => {
-    if (!onApplyText) return
-    await onApplyText(parsedSlides)
-  }, [onApplyText, parsedSlides])
-
-  const handleSaveClick = useCallback(async () => {
-    await applyTextValue()
-    onSave?.()
-  }, [applyTextValue, onSave])
-
-  // The gutter is moved straight from the scroll event: going through React
-  // state re-rendered the whole panel on every event and the buttons trailed
-  // the text on a long song.
-  const syncGutterToTextarea = useCallback(() => {
-    const textarea = textareaRef.current
-    if (!textarea || !gutterRef.current) return
-    gutterRef.current.style.transform = `translateY(${-textarea.scrollTop}px)`
-  }, [])
-
-  // The gutter's buttons sit on top of the text, so a wheel turned over one
-  // would scroll nothing; hand it to the textarea.
-  const scrollTextareaWithWheel = useCallback(
-    (event: React.WheelEvent<HTMLDivElement>) => {
-      textareaRef.current?.scrollBy(event.deltaX, event.deltaY)
-    },
-    [],
-  )
-
-  // Seed textarea from sorted slides when entering edit mode; clear on exit.
-  // The caret starts at the top so the first line is in view: left at the end
-  // (where setting a value puts it), focusing would jump a long song to its
-  // last line.
-  useEffect(() => {
-    if (isEditMode) {
-      setTextValue(slidesToMarkdown(sortedSlides))
-      setTimeout(() => {
-        const textarea = textareaRef.current
-        if (!textarea) return
-        textarea.setSelectionRange(0, 0)
-        textarea.scrollTop = 0
-        textarea.focus({ preventScroll: true })
-        syncGutterToTextarea()
-      }, 0)
-    } else {
-      setTextValue('')
-    }
-    // Only re-seed on the edit-mode boundary, not on every slide edit.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode])
-
-  const handlePresentBlock = useCallback(
-    async (blockIdx: number) => {
-      setPresentingIdx(blockIdx)
-      try {
-        await applyTextValue()
-        const expanded = expandedSlides[blockIdx]
-        onSlideClick(
-          expanded ?? ({ ...sortedSlides[0], id: -1 } as SongSlide),
-          blockIdx,
-        )
-      } finally {
-        setPresentingIdx(null)
-      }
-    },
-    [applyTextValue, expandedSlides, onSlideClick, sortedSlides],
-  )
+  }, [selectedSlideIndex, presentedSlideIndex])
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-5 h-5 animate-spin text-fg-hint" />
+        <Loader2 className="w-6 h-6 animate-spin text-fg" />
       </div>
     )
   }
@@ -256,68 +126,16 @@ export function SongSlidesPanel({
     <div className="flex flex-col h-full">
       {/* Toolbar */}
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-line shrink-0">
-        <div className="flex items-center gap-2">
-          {canEdit && (
-            <button
-              type="button"
-              data-testid="toggle-slides-edit-mode"
-              onClick={onToggleEditMode}
-              className={`flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors ${
-                isEditMode
-                  ? 'bg-selected text-fg'
-                  : 'bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover'
-              }`}
-            >
-              <Pencil size={14} strokeWidth={1.75} />
-              <span>{t('preview.editMode')}</span>
-            </button>
-          )}
-          {!isEditMode && (
-            <FontSizeButtons
-              fontScale={fontScale}
-              testIdPrefix="song-slides-font"
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Where the operator is in the song — the presented slide while
-              this song is live, otherwise the one they have selected. */}
-          {!isEditMode && (
-            <SlideCounter
-              currentIndex={presentedSlideIndex ?? selectedSlideIndex ?? null}
-              total={expandedSlides.length}
-            />
-          )}
-          {isEditMode && (
-            <>
-              <button
-                type="button"
-                onClick={onToggleEditMode}
-                className="flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover"
-              >
-                <X size={14} strokeWidth={1.75} />
-                <span>{t('preview.discardChanges')}</span>
-              </button>
-              <button
-                type="button"
-                data-testid="save-slides-edit-mode"
-                onClick={handleSaveClick}
-                className={`flex items-center gap-1.5 h-8 px-3 text-sm font-medium rounded-lg transition-colors bg-primary text-white ${
-                  isSaving ? 'opacity-70 cursor-wait' : 'hover:bg-indigo-700'
-                }`}
-              >
-                {isSaving ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Check size={14} strokeWidth={1.75} />
-                )}
-                <span>
-                  {isSaving ? t('preview.saving') : t('preview.exitEditMode')}
-                </span>
-              </button>
-            </>
-          )}
-        </div>
+        <FontSizeButtons
+          fontScale={fontScale}
+          testIdPrefix="song-slides-font"
+        />
+        {/* Where the operator is in the song — the presented slide while this
+            song is live, otherwise the one they have selected. */}
+        <SlideCounter
+          currentIndex={presentedSlideIndex ?? selectedSlideIndex ?? null}
+          total={expandedSlides.length}
+        />
       </div>
 
       {/* Slides */}
@@ -325,90 +143,20 @@ export function SongSlidesPanel({
         ref={containerRef}
         className="flex-1 min-h-0 overflow-hidden lg:overflow-y-auto scrollbar-thin py-1 pl-1 pr-2"
       >
-        {isEditMode ? (
-          <div className="flex flex-col gap-2 h-full">
-            <div className="relative flex-1 min-h-[60vh] lg:min-h-[200px]">
-              <textarea
-                ref={textareaRef}
-                data-testid="slides-text-textarea"
-                value={textValue}
-                onChange={(e) => setTextValue(e.target.value)}
-                onScroll={syncGutterToTextarea}
-                onBlur={() => {
-                  void applyTextValue()
-                }}
-                placeholder={t('editAsText.placeholder')}
-                spellCheck={false}
-                style={{
-                  lineHeight: `${TEXTAREA_LINE_HEIGHT_PX}px`,
-                  paddingTop: `${TEXTAREA_PADDING_TOP_PX}px`,
-                  paddingBottom: `${TEXTAREA_PADDING_TOP_PX}px`,
-                }}
-                className="absolute inset-0 w-full h-full pl-3 pr-16 bg-field border-0 rounded-[10px] text-fg placeholder:text-fg-hint focus:outline-none focus:ring-1 focus:ring-inset focus:ring-focus font-mono text-sm resize-none whitespace-pre"
-              />
-              {/* Gutter overlay with per-block Play buttons — offset to clear the textarea scrollbar */}
-              <div
-                className="pointer-events-none absolute right-5 top-0 bottom-0 w-11 overflow-hidden"
-                onWheel={scrollTextareaWithWheel}
-              >
-                <div ref={gutterRef} className="relative w-full h-full">
-                  {slideBlocks.map(({ blockIdx, line }) => {
-                    const isLive = presentedSlideIndex === blockIdx
-                    const isLoading = presentingIdx === blockIdx
-                    return (
-                      <button
-                        key={blockIdx}
-                        type="button"
-                        disabled={presentingIdx !== null}
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          void handlePresentBlock(blockIdx)
-                        }}
-                        style={{
-                          top: `${TEXTAREA_PADDING_TOP_PX + line * TEXTAREA_LINE_HEIGHT_PX}px`,
-                          height: `${TEXTAREA_LINE_HEIGHT_PX}px`,
-                        }}
-                        className={`pointer-events-auto absolute left-1 right-1 flex items-center justify-center gap-0.5 px-1 text-[11px] font-medium tabular-nums rounded-md transition-colors ${
-                          isLive
-                            ? 'bg-live-tint text-live ring-1 ring-inset ring-live'
-                            : 'bg-panel text-fg-label ring-1 ring-inset ring-line hover:bg-hover hover:text-fg'
-                        } disabled:opacity-60`}
-                        title={t('preview.presentSlide')}
-                      >
-                        {isLoading ? (
-                          <Loader2
-                            size={10}
-                            strokeWidth={2.4}
-                            className="animate-spin"
-                          />
-                        ) : (
-                          <Play size={10} strokeWidth={2.4} />
-                        )}
-                        <span>{blockIdx + 1}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-fg-hint">{t('editAsText.formatHelp')}</p>
-          </div>
-        ) : (
-          <SongSlideRailList
-            items={railItems}
-            presentedIndex={presentedSlideIndex}
-            highlightedIndex={highlightedIndex}
-            textStyle={fontScale.textStyle}
-            presentedRef={highlightedRef}
-            highlightedRef={selectedRef}
-            onSlideClick={(index) => onSlideClick(expandedSlides[index], index)}
-            onSlideDoubleClick={
-              previewMode
-                ? (index) => onSlideDoubleClick?.(expandedSlides[index], index)
-                : undefined
-            }
-          />
-        )}
+        <SongSlideRailList
+          items={railItems}
+          presentedIndex={presentedSlideIndex}
+          highlightedIndex={highlightedIndex}
+          textStyle={fontScale.textStyle}
+          presentedRef={highlightedRef}
+          highlightedRef={selectedRef}
+          onSlideClick={(index) => onSlideClick(expandedSlides[index], index)}
+          onSlideDoubleClick={
+            previewMode
+              ? (index) => onSlideDoubleClick?.(expandedSlides[index], index)
+              : undefined
+          }
+        />
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ import { actionsMenuItem, openActionsMenu } from './helpers/actions-menu'
  * labelled menu, so what matters is that every action is still reachable,
  * still named, and still reports its on/off state. On the song page, marking
  * the song, adding it to a program and setting its key stay beside the menu
- * as named icon buttons, in that order.
+ * as named icon buttons, in that order, and Edit is the bar's last button.
  */
 
 const SONG_ACTION_ITEMS = [
@@ -21,13 +21,14 @@ const SONG_ACTION_ITEMS = [
   'song-export-pdf',
   'song-export-docx',
   'song-toggle-layout',
-  'song-edit',
 ] as const
 
+/** Beside the menu, in this order; Edit (T-201) comes after the menu. */
 const SONG_HEADER_BUTTONS = [
   'song-bookmark-toggle',
   'song-add-to-schedule',
   'song-set-key-line',
+  'song-edit',
 ] as const
 
 async function createSong(
@@ -90,7 +91,11 @@ test.describe('Page actions menu', () => {
       for (const testId of SONG_HEADER_BUTTONS) {
         const button = page.getByTestId(testId)
         await expect(button).toBeVisible()
-        await expect(button).toHaveAttribute('aria-label', /.+/)
+        // Named, by an aria-label or by its own visible text.
+        const name =
+          (await button.getAttribute('aria-label')) ??
+          (await button.innerText())
+        expect(name.trim().length).toBeGreaterThan(0)
       }
     } finally {
       await request.delete(`/api/songs/${song.id}`).catch(() => {})
@@ -134,11 +139,16 @@ test.describe('Page actions menu', () => {
     try {
       await openSong(page, song.id)
 
-      const row = await actionsMenuItem(page, 'song-actions-menu', 'song-edit')
+      const row = await actionsMenuItem(
+        page,
+        'song-actions-menu',
+        'song-toggle-layout',
+      )
       await row.click()
 
       await expect(page.getByTestId('song-actions-menu-panel')).toBeHidden()
-      await expect(page).toHaveURL(new RegExp(`/songs/${song.id}/edit`), {
+      // The layout switch took effect: the PowerPoint stage is up.
+      await expect(page.getByTestId('stage-present')).toBeVisible({
         timeout: 10000,
       })
     } finally {

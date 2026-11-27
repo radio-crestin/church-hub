@@ -5,6 +5,7 @@ import {
   updateCloudIdentity,
 } from './cloudIdentityStore'
 import { fetchRemoteChanges } from './fetchRemoteChanges'
+import { keysToMerge } from './keysToMerge'
 import { pushChanges } from './pushChanges'
 import { refreshReadUrl } from './refreshReadUrl'
 import { rollBackRejected } from './rollBackRejected'
@@ -35,6 +36,15 @@ const CHECK_IN_EVERY_MS = 15 * 60 * 1000
 
 let running: Promise<SyncCycleResult> | null = null
 let lastCheckInAt = 0
+let followUp: (() => Promise<void>) | null = null
+
+/**
+ * Work that follows each successful cycle on this device, outside the
+ * cycle's turn (the PC publishing the media its data shows: cloud-media).
+ */
+export function setCloudSyncFollowUp(work: () => Promise<void>): void {
+  followUp = work
+}
 
 interface RoundResult {
   outcome: 'done' | 'conflict' | 'unchanged'
@@ -68,7 +78,16 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
   }
 
   const state = getSyncState()
-  const local = serializeLibrary(state.deviceId, state.deviceName, dirtyKeys)
+  // A snapshot (a first join) is the whole church: everything is merged.
+  const keys = remote?.fromSnapshot
+    ? undefined
+    : keysToMerge(dirtyKeys, remote?.library ?? null)
+  const local = serializeLibrary(
+    state.deviceId,
+    state.deviceName,
+    dirtyKeys,
+    keys,
+  )
   const { merged, applyOps } = mergeLibraries(
     local,
     remote?.library ?? null,
@@ -88,7 +107,7 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
     local,
     dirtyKeys,
     applyOps,
-    getSyncVersions(),
+    getSyncVersions(keys),
     getChangeAuthors(),
   )
   if (changes.length > 0) {
@@ -145,9 +164,14 @@ export async function runCloudSyncCycle({
 } = {}): Promise<SyncCycleResult> {
   if (running && !waitsItsTurn) return { success: true, skipped: 'no_changes' }
   while (running) await running
-  running = cloudSyncCycle().finally(() => {
-    running = null
-  })
+  running = cloudSyncCycle()
+    .then((result) => {
+      if (result.success) void followUp?.()
+      return result
+    })
+    .finally(() => {
+      running = null
+    })
   return running
 }
 

@@ -28,6 +28,18 @@ export interface Bucket {
   delete(key: string): Promise<void>
   /** Where readers GET `key` from, without credentials. */
   publicUrl(key: string): string
+  /**
+   * A URL that lets its holder PUT exactly this object (its type, length
+   * and cache rule are signed) for `ttlSeconds`, without the service's keys.
+   */
+  presignPut(key: string, object: PresignedObject, ttlSeconds: number): Promise<string>
+}
+
+/** What a presigned PUT must send: the signed headers. */
+export interface PresignedObject {
+  contentType: string
+  contentLength: number
+  cacheControl: string
 }
 
 /** A conditional write that lost: 412, or 409 while another one is in flight. */
@@ -76,9 +88,12 @@ export function createBucket(env: Bindings, name = env.S3_BUCKET): Bucket {
     service: 's3',
     region: env.S3_REGION || 'auto',
   })
-  const base = `${S3_ENDPOINT.replace(/\/+$/, '')}/${name}`
-  const objectUrl = (key: string) =>
-    `${base}/${key.split('/').map(encodeURIComponent).join('/')}`
+  const bucketUrl = (endpoint: string) => `${endpoint.replace(/\/+$/, '')}/${name}`
+  const base = bucketUrl(S3_ENDPOINT)
+  const encodeKey = (key: string) => key.split('/').map(encodeURIComponent).join('/')
+  const objectUrl = (key: string) => `${base}/${encodeKey(key)}`
+  // The address uploaders reach, when the service's own is internal.
+  const presignBase = bucketUrl(env.S3_PRESIGN_ENDPOINT || S3_ENDPOINT)
 
   const send = async (
     url: string,
@@ -154,6 +169,22 @@ export function createBucket(env: Bindings, name = env.S3_BUCKET): Bucket {
     },
     publicUrl(key) {
       return `${S3_PUBLIC_URL.replace(/\/+$/, '')}/${key}`
+    },
+    async presignPut(key, object, ttlSeconds) {
+      const url = new URL(`${presignBase}/${encodeKey(key)}`)
+      url.searchParams.set('X-Amz-Expires', String(ttlSeconds))
+      // allHeaders: aws4fetch leaves Content-Length out of the signature
+      // otherwise; signed, the store refuses a body of any other length.
+      const signed = await client.sign(url.toString(), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': object.contentType,
+          'Content-Length': String(object.contentLength),
+          'Cache-Control': object.cacheControl,
+        },
+        aws: { signQuery: true, allHeaders: true },
+      })
+      return signed.url
     },
   }
 }

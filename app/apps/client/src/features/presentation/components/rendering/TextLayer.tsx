@@ -68,7 +68,8 @@ export function TextLayer({
     content
   const textRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
-  const fontsLoadedVersion = useFontsLoadedVersion()
+  const lastFit = useRef<number | null>(null)
+  const fontsLoadedVersion = useFontsLoadedVersion(style.fontFamily)
 
   const styledHtml = useMemo(() => {
     if (!styleRanges || styleRanges.length === 0) return null
@@ -107,7 +108,9 @@ export function TextLayer({
       height,
       style.maxFontSize,
       minFontSize,
+      lastFit.current,
     )
+    lastFit.current = fontSize
 
     // The fit measures plain text at the screen's own size; the slide's scale
     // and any enlarged run are applied on top of it and can push the words off
