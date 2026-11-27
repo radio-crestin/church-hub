@@ -12,28 +12,29 @@ function randomPart(): string {
 }
 
 /**
- * Shares the church's songs, or changes what it shares, then publishes
- * them. The library's folder is `<churchId>-<random>`: the service lets only
- * this church write it.
+ * Creates a share (no `id`) or changes what one shares, then publishes it.
+ * A new share's folder is `<churchId>-<random>`: the service lets only this
+ * church write it. Null when there is no share with this `id`.
  */
 export async function saveShare(
   input: LibraryShareInput,
-): Promise<LibraryShare> {
+  id?: number,
+): Promise<LibraryShare | null> {
   const identity = await requireCloudIdentity()
-  const share = upsertShare(
+  if (id !== undefined && !getShare(id)) return null
+  const churchName = getInstallation()?.name ?? 'Church Hub'
+  const savedId = upsertShare(
     {
       ...input,
-      name:
-        input.name.trim().slice(0, 200) ||
-        (getInstallation()?.name ?? 'Church Hub'),
-      publisher:
-        input.publisher?.trim().slice(0, 200) ||
-        (getInstallation()?.name ?? 'Church Hub'),
+      name: input.name.trim().slice(0, 200) || churchName,
+      publisher: input.publisher?.trim().slice(0, 200) || churchName,
     },
-    () => `${identity.churchId}-${randomPart()}`,
+    id !== undefined
+      ? { id }
+      : { sourceId: `${identity.churchId}-${randomPart()}` },
   )
-  await publishShare({ force: true }).catch(() => {
+  await publishShare(savedId, { force: true }).catch(() => {
     // Recorded on the share (lastError) and retried by the periodic sync.
   })
-  return getShare() ?? share
+  return getShare(savedId)
 }

@@ -41,6 +41,8 @@ const submission = {
     sourceSongId: { type: ['string', 'null'] },
     churchName: { type: ['string', 'null'] },
     note: { type: ['string', 'null'] },
+    batchId: { type: 'string', description: 'Shared by the songs sent together' },
+    batchSize: { type: 'integer' },
   },
 }
 
@@ -65,7 +67,53 @@ export const libraryOpenApiPaths = {
       description:
         'The public URL of libraries/catalog.json: {format: church-hub-library-catalog, version: 1, libraries: [{sourceId, name, publisher, songCount, updatedAt}]}, the libraries their publishers listed. A library’s manifest is at <sourceId>/manifest.json next to it.',
       responses: {
-        '200': ok('Its URL', { catalogUrl: { type: 'string' } }),
+        '200': ok('Their URLs', {
+          catalogUrl: { type: 'string' },
+          featuredUrl: {
+            type: 'string',
+            description:
+              'libraries/featured.json: {format: church-hub-featured-sources, version: 1, updatedAt, sources: [{sourceId, name, categoryName, description, homepage, license}]}, the sources every app lists',
+          },
+        }),
+      },
+    },
+  },
+  '/sync/featured-sources': {
+    put: {
+      summary: 'Publish the sources every app lists',
+      description:
+        'The libraries Church Hub manages (no church’s: the curated one, Resurse Creștine…) every app offers, in order. Each must be published already. A curator ticket or the build’s LIBRARY_PUBLISH_TOKEN.',
+      security: [{ ownerTicket: [] }, { publishToken: [] }],
+      requestBody: json(
+        {
+          sources: {
+            type: 'array',
+            maxItems: 100,
+            items: {
+              type: 'object',
+              properties: {
+                sourceId: { type: 'string' },
+                name: { type: 'string' },
+                categoryName: { type: 'string' },
+                description: { type: 'string' },
+                homepage: { type: 'string' },
+                license: { type: 'string' },
+              },
+              required: ['sourceId', 'name', 'categoryName'],
+            },
+          },
+        },
+        ['sources']
+      ),
+      responses: {
+        '200': ok('Published', {
+          format: { type: 'string' },
+          version: { type: 'integer' },
+          updatedAt: { type: 'string' },
+          sources: { type: 'array', items: { type: 'object' } },
+        }),
+        ...writeErrors,
+        '400': error('Not a list, a church’s library, or one not published yet (invalid_request, not_published)'),
       },
     },
   },
@@ -136,26 +184,37 @@ export const libraryOpenApiPaths = {
   },
   '/sync/libraries/church-hub/submissions': {
     post: {
-      summary: 'Submit a song to the Church Hub Library',
+      summary: 'Submit songs to the Church Hub Library',
       description:
-        'Any church sends one song (its OpenSong file) for the curators to review. It is kept privately until decided. Rate-limited per IP (LIBRARY_RATE_LIMITER).',
+        'A church sends one song or many (a category, a selection: up to 500), each as its OpenSong file, for the curators to review. Each song becomes its own submission, decided on its own; they share a batchId. Kept privately until decided. Rate-limited per IP (LIBRARY_RATE_LIMITER), one request whatever its size.',
       requestBody: json(
         {
-          title: { type: 'string', maxLength: 200 },
-          xml: { type: 'string', description: 'OpenSong XML, under 200 KB' },
-          sourceSongId: { type: 'string' },
+          songs: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 500,
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string', maxLength: 200 },
+                xml: { type: 'string', description: 'OpenSong XML, under 200 KB' },
+                sourceSongId: { type: 'string' },
+              },
+              required: ['title', 'xml'],
+            },
+          },
           churchName: { type: 'string' },
           note: { type: 'string', maxLength: 1000 },
         },
-        ['title', 'xml']
+        ['songs']
       ),
       responses: {
         '201': ok('Received', {
-          id: { type: 'string' },
-          submittedAt: { type: 'number' },
+          batchId: { type: 'string' },
+          submitted: { type: 'integer' },
         }),
-        '400': error('No title, or not an OpenSong song (invalid_request)'),
-        '413': error('Body over 256 KB (too_large)'),
+        '400': error('No songs, too many, or one is not an OpenSong song (invalid_request)'),
+        '413': error('Body over 16 MB (too_large)'),
         '429': error('Too many submissions (rate_limited)'),
       },
     },

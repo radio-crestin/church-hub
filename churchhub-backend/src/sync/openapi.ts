@@ -3,6 +3,7 @@
  * /sync/openapi.json, rendered by Scalar at /sync/docs).
  */
 import { libraryOpenApiPaths } from '../library/libraryOpenApi'
+import { songLinksOpenApiPaths } from '../songLinks/songLinksOpenApi'
 import { installationHeaders, ownerOpenApiPaths } from './owner/ownerOpenApi'
 import { ENTITY_TYPES } from './types'
 
@@ -54,6 +55,12 @@ export const syncOpenApi = {
         scheme: 'bearer',
         description:
           'A device token (chs_…): the church server’s from registration, or a device’s from POST devices.',
+      },
+      publishToken: {
+        type: 'http',
+        scheme: 'bearer',
+        description:
+          'LIBRARY_PUBLISH_TOKEN: the build that publishes the libraries Church Hub manages.',
       },
       ownerTicket: {
         type: 'http',
@@ -541,6 +548,7 @@ export const syncOpenApi = {
     },
     ...ownerOpenApiPaths,
     ...libraryOpenApiPaths,
+    ...songLinksOpenApiPaths,
     '/sync/openapi.json': {
       get: {
         summary: 'This document',

@@ -24,6 +24,9 @@ export interface Submission extends SubmittedSong {
   sourceSongId: string | null
   churchName: string | null
   note: string | null
+  /** The songs sent together (a category, a selection) share it. */
+  batchId: string
+  batchSize: number
 }
 
 export type Decision = 'approved' | 'merged' | 'rejected'
@@ -72,4 +75,24 @@ export interface Catalog {
   format: 'church-hub-library-catalog'
   version: 1
   libraries: CatalogEntry[]
+}
+
+/** One source Church Hub offers every app: a library it manages. */
+export interface FeaturedSource {
+  /** Its folder under libraries/: `<sourceId>/manifest.json`. */
+  sourceId: string
+  name: string
+  /** The category its songs land in. */
+  categoryName: string
+  description: string | null
+  homepage: string | null
+  license: string | null
+}
+
+/** `libraries/featured.json`: the sources every app lists, in order. */
+export interface FeaturedSources {
+  format: 'church-hub-featured-sources'
+  version: 1
+  updatedAt: string
+  sources: FeaturedSource[]
 }

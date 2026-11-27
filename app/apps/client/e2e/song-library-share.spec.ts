@@ -23,8 +23,9 @@ import {
 import { SYNC_BUCKET, SyncService } from './helpers/sync-service'
 
 /**
- * Shared song libraries (T-176): "Share my songs" publishes the church's
- * songs through the sync service (no S3 keys of its own) as hash-named
+ * Shared song libraries (T-176, T-177): "Share my songs" publishes groups of
+ * the church's songs (the whole library, or categories and songs picked),
+ * each with its own link, through the sync service (no S3 keys of its own) as hash-named
  * gzipped shards plus a manifest under libraries/<sourceId>/, unlisted or in
  * the public catalog. Any church imports one through the one song-source
  * path: deduplicated by source song, then lyrics fingerprint; a song follows
@@ -43,6 +44,10 @@ const ours = [
     lyrics: `${tag} pe drumul spre casa cantam`,
   },
 ]
+// A second share: two of these three songs, picked one by one.
+const picksCategory = `E2E Picks ${tag}`
+const picksName = `Alese ${tag}`
+const picks = [`Cer senin ${tag}`, `Ape linistite ${tag}`, `Vant usor ${tag}`]
 // Another church's library, put straight in the bucket.
 const otherId = `OtherChurch${tag.slice(0, 5)}-lib`
 const otherName = `Biserica vecina ${tag}`
@@ -112,13 +117,21 @@ async function songsWithLyrics(request: APIRequestContext, text: string) {
   return ((await res.json()).data as { id: number }[]).length
 }
 
-async function share(request: APIRequestContext) {
-  return (await (await request.get('/api/song-sources/share')).json()).data as {
-    sourceId: string
-    manifestUrl: string | null
-    listed: boolean
-    songCount: number
-  } | null
+interface Share {
+  id: number
+  name: string
+  sourceId: string
+  manifestUrl: string | null
+  listed: boolean
+  songCount: number
+}
+
+async function shares(request: APIRequestContext): Promise<Share[]> {
+  return (await (await request.get('/api/song-sources/shares')).json()).data
+}
+
+async function share(request: APIRequestContext, name = shareName) {
+  return (await shares(request)).find((s) => s.name === name) ?? null
 }
 
 /** The listed libraries' names, as the bucket's public catalog has them. */
@@ -143,6 +156,7 @@ test.describe
     let categoryId = 0
     let otherSourceId = ''
     let bigSourceId = ''
+    let picksSourceId = ''
 
     test.beforeAll(async ({ request }) => {
       s3.signedWritesOnly = true
@@ -168,17 +182,37 @@ test.describe
         })
         expect(created.ok()).toBeTruthy()
       }
+      const picked = await request.post('/api/categories', {
+        data: { name: picksCategory },
+      })
+      const picksCategoryId = (await picked.json()).data.id
+      for (const title of picks) {
+        const created = await request.post('/api/songs', {
+          data: {
+            title,
+            categoryId: picksCategoryId,
+            slides: [{ content: `<p>${title} versuri</p>`, sortOrder: 0 }],
+          },
+        })
+        expect(created.ok()).toBeTruthy()
+      }
     })
 
     test.beforeEach(({ page }) => setAppLanguage(page, 'en'))
 
     test.afterAll(async ({ request }) => {
       await stopSongUpdates(request)
-      await request.delete('/api/song-sources/share')
-      for (const id of [otherSourceId, bigSourceId]) {
+      for (const { id } of await shares(request)) {
+        await request.delete(`/api/song-sources/shares/${id}`)
+      }
+      for (const id of [otherSourceId, bigSourceId, picksSourceId]) {
         if (id) await request.delete(`/api/song-sources/${id}`)
       }
-      await deleteCategoriesNamed(request, [ourCategory, otherName])
+      await deleteCategoriesNamed(request, [
+        ourCategory,
+        picksCategory,
+        otherName,
+      ])
       await setAutoUpdate(request, true)
       await clearNotifications(request)
       await request.delete('/api/sync/cloud')
@@ -192,13 +226,20 @@ test.describe
     }) => {
       await page.goto('/settings/songs')
       const section = page.getByTestId('share-my-songs')
-      await section.getByLabel('Name').fill(shareName)
-      await section.getByLabel('Chosen categories').check()
-      await section
-        .getByTestId('share-categories')
+      await expect(section.getByText('Nothing shared yet.')).toBeVisible()
+      await section.getByRole('button', { name: 'New share' }).click()
+      const form = section.getByTestId('share-form')
+      await form.getByLabel('Name').fill(shareName)
+      // Nothing picked yet: there is nothing to share.
+      await expect(
+        form.getByRole('button', { name: 'Share', exact: true }),
+      ).toBeDisabled()
+      await form
+        .getByTestId('share-selection-categories')
         .getByLabel(ourCategory)
         .check()
-      await section.getByRole('button', { name: 'Share', exact: true }).click()
+      await form.getByRole('button', { name: 'Share', exact: true }).click()
+      await expect(form).toHaveCount(0)
       const link = section.getByTestId('library-share-link')
       await expect(link).toContainText('/libraries/')
       await expect(
@@ -252,8 +293,17 @@ test.describe
     }) => {
       await page.goto('/settings/songs')
       const section = page.getByTestId('share-my-songs')
-      await section.getByLabel('List it in the public catalog').check()
-      await section.getByRole('button', { name: 'Save', exact: true }).click()
+      await section
+        .getByTestId('library-share')
+        .getByRole('button', { name: 'Edit' })
+        .click()
+      const form = section.getByTestId('share-form')
+      // The share's contents come back as they were saved.
+      await expect(
+        form.getByTestId('share-selection-categories').getByLabel(ourCategory),
+      ).toBeChecked()
+      await form.getByLabel('List it in the public catalog').check()
+      await form.getByRole('button', { name: 'Save', exact: true }).click()
       await expect(
         section
           .getByTestId('library-share')
@@ -291,6 +341,56 @@ test.describe
         { method: 'DELETE' },
       )
       expect(anonymous.status).toBe(401)
+    })
+
+    test('a second share of two picked songs gets its own link, which brings exactly those songs', async ({
+      page,
+      request,
+    }) => {
+      const nothing = await request.post('/api/song-sources/shares', {
+        data: { name: 'Empty', categoryIds: [], songIds: [], listed: false },
+      })
+      expect(nothing.status()).toBe(400)
+
+      await page.goto('/settings/songs')
+      const section = page.getByTestId('share-my-songs')
+      await section.getByRole('button', { name: 'New share' }).click()
+      const form = section.getByTestId('share-form')
+      await form.getByLabel('Name').fill(picksName)
+      for (const title of picks.slice(0, 2)) {
+        await form.getByTestId('share-selection-search').fill(title)
+        await form
+          .getByTestId('share-selection-results')
+          .getByLabel(title)
+          .check()
+      }
+      await expect(
+        form.getByTestId('share-selection-chosen').getByRole('listitem'),
+      ).toHaveCount(2)
+      await form.getByRole('button', { name: 'Share', exact: true }).click()
+      await expect(section.getByTestId('library-share')).toHaveCount(2)
+
+      const first = await share(request)
+      const second = await share(request, picksName)
+      expect(second?.songCount).toBe(2)
+      expect(second?.manifestUrl).toBe(manifestUrl(second?.sourceId ?? ''))
+      expect(second?.manifestUrl).not.toBe(first?.manifestUrl)
+      await expect(
+        section
+          .getByTestId('library-share-link')
+          .filter({ hasText: second?.sourceId ?? '' }),
+      ).toBeVisible()
+
+      // Added as a source here, the link holds just the two songs picked.
+      picksSourceId = await addLinkSource(request, second?.manifestUrl ?? '')
+      const read = await request.get(`/api/song-sources/${picksSourceId}/songs`)
+      const files = (await read.json()).data as { xml: string }[]
+      expect(files).toHaveLength(2)
+      const xml = files.map((file) => file.xml).join('')
+      expect(xml).toContain(picks[0])
+      expect(xml).toContain(picks[1])
+      expect(xml).not.toContain(picks[2])
+      expect(xml).not.toContain(ours[0].title)
     })
 
     test('importing deduplicates by source song, then by lyrics fingerprint', async ({
@@ -415,13 +515,17 @@ test.describe
       expect(shardGets()).toBe(1)
     })
 
-    test('stopping the share takes it out of the catalog and the bucket', async ({
+    test('stopping a share takes it out of the catalog and the bucket', async ({
       request,
     }) => {
       const shared = await share(request)
-      const stopped = await request.delete('/api/song-sources/share')
+      const stopped = await request.delete(
+        `/api/song-sources/shares/${shared?.id}`,
+      )
       expect(stopped.ok()).toBeTruthy()
       expect(await share(request)).toBeNull()
+      // The other share is still there.
+      expect((await share(request, picksName))?.manifestUrl).toBeTruthy()
       expect(bucketCatalog()).not.toContain(shareName)
       const left = [...s3.objects.keys()].filter((key) =>
         key.includes(`/libraries/${shared?.sourceId}/`),

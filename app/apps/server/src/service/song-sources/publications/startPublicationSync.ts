@@ -2,7 +2,7 @@ import { listPublications } from './listPublications'
 import { syncPublication } from './syncPublication'
 import { createLogger } from '../../../utils/logger'
 import { publishShare } from '../shares/publishShare'
-import { getShare } from '../shares/shareStore'
+import { listShares } from '../shares/shareStore'
 import { getS3Storage } from '../storage/getS3Storage'
 
 const logger = createLogger('song-sources')
@@ -34,19 +34,21 @@ export async function syncAllPublications(): Promise<void> {
   }
 }
 
-/** Publishes the church's shared library again when its songs changed. */
-async function syncShare(): Promise<void> {
-  if (!getShare()) return
-  await publishShare().catch((error) =>
-    logger.warning(`Sharing the songs failed: ${error}`),
-  )
+/** Publishes each of the church's shares again when its songs changed. */
+async function syncShares(): Promise<void> {
+  for (const share of listShares()) {
+    // A failure is recorded on the share (lastError) and retried next round.
+    await publishShare(share.id).catch((error) =>
+      logger.warning(`Sharing "${share.name}" failed: ${error}`),
+    )
+  }
 }
 
 /** Starts the periodic sync; returns a stop function. */
 export function startPublicationSync(): () => void {
   const timer = setInterval(() => {
     void syncAllPublications()
-    void syncShare()
+    void syncShares()
   }, SYNC_INTERVAL_MS)
   return () => clearInterval(timer)
 }

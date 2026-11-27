@@ -84,7 +84,11 @@ import {
   startAppStartSchedule,
   stepBackground,
 } from './service/schedule-automation'
-import { startPublicationSync, startSongUpdates } from './service/song-sources'
+import {
+  startFeaturedSourcesRefresh,
+  startPublicationSync,
+  startSongUpdates,
+} from './service/song-sources'
 import { warmupSearchIndex as warmupSongsSearchIndex } from './service/songs'
 import { startSyncScheduler } from './service/sync'
 import { setCloudSyncFollowUp } from './service/sync/cloud/runCloudSyncCycle'
@@ -336,6 +340,10 @@ async function main() {
   // Keep the categories published to the user's S3 bucket up to date
   // (no-op until a bucket and a published category exist).
   startPublicationSync()
+
+  // Read the song sources Church Hub offers (its featured list) from the
+  // cloud; offline, the last list read or the installer's stays in use.
+  startFeaturedSourcesRefresh()
 
   // Check the song sources for new songs (and add them, when updating songs
   // automatically) in a worker thread, a bit after start.

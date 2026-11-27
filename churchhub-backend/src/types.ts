@@ -65,6 +65,11 @@ export interface Bindings {
    * (emails or subs, comma-separated), and the abuse guard on submissions.
    */
   LIBRARY_CURATORS?: string
+  /**
+   * The build that publishes the libraries Church Hub manages (Resurse
+   * Creștine…) writes them with this bearer token, as a curator would.
+   */
+  LIBRARY_PUBLISH_TOKEN?: string
   LIBRARY_RATE_LIMITER?: RateLimit
   /**
    * Church Hub Cloud backup (free, Google sign-in): a PRIVATE bucket of its

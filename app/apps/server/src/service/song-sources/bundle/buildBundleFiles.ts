@@ -21,7 +21,7 @@ export function buildBundleFiles(
 ): SongBundleFiles {
   return assembleBundle(
     source,
-    readCategorySongs(categoryId).map((song) => ({
+    readCategorySongs({ categoryId }).map((song) => ({
       id: song.uuid || `song-${song.id}`,
       title: song.title,
       baseName: baseName(song),

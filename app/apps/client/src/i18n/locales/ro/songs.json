@@ -399,6 +399,13 @@
     "toggleLayoutDescription": "Comută între editorul clasic și cel PowerPoint",
     "editDescription": "Deschide editorul pentru versuri și slide-uri"
   },
+  "selection": {
+    "categories": "Categorii întregi",
+    "songs": "Cântări alese una câte una",
+    "search": "Caută cântări de adăugat",
+    "noResults": "Nicio cântare găsită.",
+    "remove": "Scoate {{title}}"
+  },
   "songEditor": {
     "done": "Gata",
     "details": "Detaliile cântării",

@@ -214,11 +214,21 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - **A church's shared set**: the whole library or chosen categories, unlisted by default or listed in the catalog. Publishing goes through the service; the church needs no S3 keys of its own.
   - **Resurse Crestine**: unchanged.
 - **Submissions**: "Submit to the Church Hub Library" sends the song through the service to `submissions/` in the bucket. Our curators review it in a page of the app (approve, merge into an existing song, or reject); approving rebuilds the shard.
+- **Submissions, as built (T-177)**:
+  - **Submitting**: a song's menu has *Submit to the Church Hub Library* (`songs.edit`), with an optional note. The PC sends the song as its OpenSong file to `POST /sync/libraries/church-hub/submissions`. It needs no cloud sync of its own, and it is rate-limited per IP (`LIBRARY_RATE_LIMITER`, 5 a minute). The service keeps it privately as `submissions/pending/<id>.json` in the state bucket.
+  - **Curators**: the Google accounts listed in the service's `LIBRARY_CURATORS` (the cloud `library_curator` role; the project team at first). They sign in through the owner sign-in (intent `curate`, the one-hour `cho_` ticket) on Settings > Church Hub Library (localhost, `users.edit`), which lists the queue: each song's lyrics, the note, and library songs with the same lyrics fingerprint or title.
+  - **Publishing**: approving or merging builds the next library on the curator's PC with song-formats' `upsertLibrarySong`, which rebuilds only that song's shard (all shards only when the shard count doubles). The PC uploads the shard (`PUT /sync/libraries/:sourceId/shards/:hash`, checked against its hash) and then the manifest (`PUT /sync/libraries/:sourceId/manifest`, with the base checksum; If-Match; 409 `library_changed` makes it build again). The service drops the shards that neither the new manifest nor the previous one lists. `POST …/submissions/:id/decision` then records the decision under `submissions/decided/`, once the song is in the published manifest. Rejecting publishes nothing.
+  - The library routes are shared with the churches' own libraries (T-176): `authorizeLibraryWrite` checks a curator for `church-hub`, and a church's token for `<churchId>-…`.
 - **Importing** any source on any client goes through the existing T-035 path:
   1. **Dedup** on the client: by source song id, then by a **lyrics fingerprint** (new: sha256 of the normalized lyrics), then exact title, then fuzzy match. A match is linked, never duplicated.
   2. **Never overwrite a local edit**: a song is updated from its source only when `last_manual_edit` is NULL **and** its content hash still equals the `source_hash` saved at import. Otherwise it gets a "new version available" badge and the lyrics diff.
   3. **Review mode or auto-apply**, per source.
   - New local columns on `songs`: `source_id`, `source_song_id`, `source_hash`, `content_hash`.
+- **A song shared by a link, as built (T-177)**: any song's menu has *Share link* (`songs.view`; cloud sync must be on).
+  - The PC (or a phone's browser server) sends the song as it reads now, plain text with each chord on its word, to `PUT /sync/churches/:id/song-links/:songUuid`. The service keeps it in its private bucket as `song-links/<linkId>.json`.
+  - `linkId` is an HMAC of the church and the song's uuid with `SYNC_SECRET`. Nobody can guess another song's link, and every device of the church gets the same link for the same song; sharing it again updates the page. `DELETE` stops the link.
+  - The link is `<public app>/song/<linkId>?s=<service>`. The public app reads `GET /sync/song-links/:linkId` (public, cached 60 s) and shows the song's page: words, chords over them (hideable), label, author and key. Nothing of the app starts for a visitor.
+  - On a browser joined to the church that shared it (`churchId` matches), the link opens the app on `/songs/shared/<uuid>`, which finds this device's copy (`GET /api/song-links/by-uuid/:uuid`) and shows the song.
 
 ## 10. Plan (each step a task with its own e2e)
 

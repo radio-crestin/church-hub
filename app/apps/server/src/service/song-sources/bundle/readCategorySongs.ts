@@ -39,26 +39,35 @@ interface SlideRow {
   label: string | null
 }
 
-/**
- * Every song of a category (null: the songs with none) with its slides in
- * order, two queries in all.
- */
-export function readCategorySongs(categoryId: number | null): CategorySong[] {
+/** Which songs: a category's (null: the songs with none), or chosen ones. */
+export type CategorySongsFilter =
+  | { categoryId: number | null }
+  | { songIds: number[] }
+
+/** Songs with their slides in order, two queries in all. */
+export function readCategorySongs(filter: CategorySongsFilter): CategorySong[] {
   const db = getRawDatabase()
+  const [condition, value] =
+    'categoryId' in filter
+      ? (['category_id IS ?', filter.categoryId] as const)
+      : ([
+          'id IN (SELECT value FROM json_each(?))',
+          JSON.stringify(filter.songIds),
+        ] as const)
   const songRows = db
-    .query<SongRow, [number | null]>(
+    .query<SongRow, [number | string | null]>(
       `SELECT id, uuid, title, source_filename, author, copyright, ccli, tempo,
               time_signature, theme, alt_theme, hymn_number, key_line
-         FROM songs WHERE category_id IS ? ORDER BY title, id`,
+         FROM songs WHERE ${condition} ORDER BY title, id`,
     )
-    .all(categoryId)
+    .all(value)
   const slideRows = db
-    .query<SlideRow, [number | null]>(
+    .query<SlideRow, [number | string | null]>(
       `SELECT sl.song_id, sl.content, sl.label
          FROM song_slides sl JOIN songs s ON s.id = sl.song_id
-        WHERE s.category_id IS ? ORDER BY sl.song_id, sl.sort_order, sl.id`,
+        WHERE s.${condition} ORDER BY sl.song_id, sl.sort_order, sl.id`,
     )
-    .all(categoryId)
+    .all(value)
 
   const slidesBySong = new Map<number, CategorySong['slides']>()
   for (const row of slideRows) {

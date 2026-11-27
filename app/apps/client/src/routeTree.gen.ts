@@ -28,6 +28,7 @@ import { Route as SettingsUsersRouteImport } from './routes/settings/users'
 import { Route as SettingsUpdatesRouteImport } from './routes/settings/updates'
 import { Route as SettingsThemesRouteImport } from './routes/settings/themes'
 import { Route as SettingsSongsRouteImport } from './routes/settings/songs'
+import { Route as SettingsSongLibraryRouteImport } from './routes/settings/song-library'
 import { Route as SettingsSidebarRouteImport } from './routes/settings/sidebar'
 import { Route as SettingsShortcutsRouteImport } from './routes/settings/shortcuts'
 import { Route as SettingsScreensRouteImport } from './routes/settings/screens'
@@ -52,6 +53,7 @@ import { Route as LivestreamObsRouteImport } from './routes/livestream/obs'
 import { Route as LivestreamMixerRouteImport } from './routes/livestream/mixer'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
+import { Route as SongsSharedUuidRouteImport } from './routes/songs/shared/$uuid'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as LivestreamScenesSceneIdRouteImport } from './routes/livestream/scenes/$sceneId'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
@@ -150,6 +152,11 @@ const SettingsThemesRoute = SettingsThemesRouteImport.update({
 const SettingsSongsRoute = SettingsSongsRouteImport.update({
   id: '/songs',
   path: '/songs',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsSongLibraryRoute = SettingsSongLibraryRouteImport.update({
+  id: '/song-library',
+  path: '/song-library',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsSidebarRoute = SettingsSidebarRouteImport.update({
@@ -272,6 +279,11 @@ const SongsSongIdIndexRoute = SongsSongIdIndexRouteImport.update({
   path: '/songs/$songId/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SongsSharedUuidRoute = SongsSharedUuidRouteImport.update({
+  id: '/songs/shared/$uuid',
+  path: '/songs/shared/$uuid',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SongsSongIdEditRoute = SongsSongIdEditRouteImport.update({
   id: '/songs/$songId/edit',
   path: '/songs/$songId/edit',
@@ -320,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/song-library': typeof SettingsSongLibraryRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
@@ -340,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/shared/$uuid': typeof SongsSharedUuidRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
   '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -368,6 +382,7 @@ export interface FileRoutesByTo {
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/song-library': typeof SettingsSongLibraryRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
@@ -388,6 +403,7 @@ export interface FileRoutesByTo {
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/shared/$uuid': typeof SongsSharedUuidRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
   '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -418,6 +434,7 @@ export interface FileRoutesById {
   '/settings/screens': typeof SettingsScreensRoute
   '/settings/shortcuts': typeof SettingsShortcutsRoute
   '/settings/sidebar': typeof SettingsSidebarRoute
+  '/settings/song-library': typeof SettingsSongLibraryRoute
   '/settings/songs': typeof SettingsSongsRoute
   '/settings/themes': typeof SettingsThemesRoute
   '/settings/updates': typeof SettingsUpdatesRoute
@@ -438,6 +455,7 @@ export interface FileRoutesById {
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/shared/$uuid': typeof SongsSharedUuidRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
   '/schedules/$scheduleId_/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -469,6 +487,7 @@ export interface FileRouteTypes {
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
+    | '/settings/song-library'
     | '/settings/songs'
     | '/settings/themes'
     | '/settings/updates'
@@ -489,6 +508,7 @@ export interface FileRouteTypes {
     | '/auth/youtube/callback'
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
+    | '/songs/shared/$uuid'
     | '/songs/$songId/'
     | '/schedules/$scheduleId/slides/$itemId'
   fileRoutesByTo: FileRoutesByTo
@@ -517,6 +537,7 @@ export interface FileRouteTypes {
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
+    | '/settings/song-library'
     | '/settings/songs'
     | '/settings/themes'
     | '/settings/updates'
@@ -537,6 +558,7 @@ export interface FileRouteTypes {
     | '/auth/youtube/callback'
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
+    | '/songs/shared/$uuid'
     | '/songs/$songId'
     | '/schedules/$scheduleId/slides/$itemId'
   id:
@@ -566,6 +588,7 @@ export interface FileRouteTypes {
     | '/settings/screens'
     | '/settings/shortcuts'
     | '/settings/sidebar'
+    | '/settings/song-library'
     | '/settings/songs'
     | '/settings/themes'
     | '/settings/updates'
@@ -586,6 +609,7 @@ export interface FileRouteTypes {
     | '/auth/youtube/callback'
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
+    | '/songs/shared/$uuid'
     | '/songs/$songId/'
     | '/schedules/$scheduleId_/slides/$itemId'
   fileRoutesById: FileRoutesById
@@ -615,6 +639,7 @@ export interface RootRouteChildren {
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
   LivestreamScenesSceneIdRoute: typeof LivestreamScenesSceneIdRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
+  SongsSharedUuidRoute: typeof SongsSharedUuidRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
   SchedulesScheduleIdSlidesItemIdRoute: typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -752,6 +777,13 @@ declare module '@tanstack/react-router' {
       path: '/songs'
       fullPath: '/settings/songs'
       preLoaderRoute: typeof SettingsSongsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
+    '/settings/song-library': {
+      id: '/settings/song-library'
+      path: '/song-library'
+      fullPath: '/settings/song-library'
+      preLoaderRoute: typeof SettingsSongLibraryRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
     '/settings/sidebar': {
@@ -922,6 +954,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SongsSongIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/songs/shared/$uuid': {
+      id: '/songs/shared/$uuid'
+      path: '/songs/shared/$uuid'
+      fullPath: '/songs/shared/$uuid'
+      preLoaderRoute: typeof SongsSharedUuidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/songs/$songId/edit': {
       id: '/songs/$songId/edit'
       path: '/songs/$songId/edit'
@@ -970,6 +1009,7 @@ interface SettingsRouteRouteChildren {
   SettingsScreensRoute: typeof SettingsScreensRoute
   SettingsShortcutsRoute: typeof SettingsShortcutsRoute
   SettingsSidebarRoute: typeof SettingsSidebarRoute
+  SettingsSongLibraryRoute: typeof SettingsSongLibraryRoute
   SettingsSongsRoute: typeof SettingsSongsRoute
   SettingsThemesRoute: typeof SettingsThemesRoute
   SettingsUpdatesRoute: typeof SettingsUpdatesRoute
@@ -994,6 +1034,7 @@ const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsScreensRoute: SettingsScreensRoute,
   SettingsShortcutsRoute: SettingsShortcutsRoute,
   SettingsSidebarRoute: SettingsSidebarRoute,
+  SettingsSongLibraryRoute: SettingsSongLibraryRoute,
   SettingsSongsRoute: SettingsSongsRoute,
   SettingsThemesRoute: SettingsThemesRoute,
   SettingsUpdatesRoute: SettingsUpdatesRoute,
@@ -1030,6 +1071,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
   LivestreamScenesSceneIdRoute: LivestreamScenesSceneIdRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
+  SongsSharedUuidRoute: SongsSharedUuidRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
   SchedulesScheduleIdSlidesItemIdRoute: SchedulesScheduleIdSlidesItemIdRoute,
 }

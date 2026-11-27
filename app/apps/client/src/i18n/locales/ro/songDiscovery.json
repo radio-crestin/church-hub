@@ -143,13 +143,13 @@
     },
     "share": {
       "title": "Partajează cântările mele",
-      "description": "Publică cântările prin sincronizarea în cloud Church Hub, fără chei S3 proprii. Alte biserici le adaugă prin link sau din catalog, dacă le listezi. Se sincronizează la fiecare 5 minute.",
+      "description": "Publică grupuri de cântări prin sincronizarea în cloud Church Hub, fără chei S3 proprii: toată biblioteca sau categoriile și cântările alese. Fiecare partajare are linkul ei; alte biserici o adaugă prin link sau din catalog, dacă o listezi. Se sincronizează la fiecare 5 minute.",
       "needsCloudSync": "Pornește mai întâi sincronizarea în cloud: partajarea trece prin ea.",
       "name": "Nume",
       "namePlaceholder": "de ex. Cântările bisericii noastre",
       "scope": "Ce partajezi",
       "wholeLibrary": "Toată biblioteca",
-      "someCategories": "Categoriile alese",
+      "chosenSongs": "Categoriile și cântările alese",
       "listed": "Listează în catalogul public",
       "listedHint": "Nelistată, o găsesc doar cei care au linkul.",
       "button": "Partajează",
@@ -157,7 +157,11 @@
       "inCatalog": "în catalog",
       "unlisted": "nelistată",
       "stop": "Oprește partajarea",
-      "failed": "Partajarea a eșuat: {{error}}"
+      "edit": "Modifică",
+      "failed": "Partajarea a eșuat: {{error}}",
+      "newShare": "Partajare nouă",
+      "empty": "Nu partajezi încă nimic.",
+      "cancel": "Renunță"
     }
   },
   "page": {

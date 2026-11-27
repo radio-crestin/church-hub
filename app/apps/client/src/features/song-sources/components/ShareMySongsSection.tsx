@@ -1,46 +1,25 @@
-import { Loader2, Share2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useToast } from '~/ui/toast'
-import { primaryButton } from './buttonStyles'
+import { secondaryButton } from './buttonStyles'
 import { SectionHeading } from './SectionHeading'
-import { ShareScopePicker } from './ShareScopePicker'
+import { ShareForm } from './ShareForm'
 import { ShareStatus } from './ShareStatus'
-import { useLibraryShare, useSaveLibraryShare } from '../hooks/useLibraryShare'
+import { useLibraryShares } from '../hooks/useLibraryShares'
 
 /**
- * "Share my songs": the whole library or chosen categories, published
- * through Church Hub's cloud sync (no S3 keys needed), unlisted (link
- * only) by default or listed in the public catalog.
+ * "Share my songs": groups of songs (the whole library, or categories and
+ * songs picked), each published with its own link through Church Hub's
+ * cloud sync (no S3 keys needed), unlisted by default or listed in the
+ * public catalog.
  */
 export function ShareMySongsSection() {
   const { t } = useTranslation('songDiscovery')
-  const { showToast } = useToast()
-  const { data } = useLibraryShare()
-  const save = useSaveLibraryShare()
-  const share = data?.share ?? null
-  const [name, setName] = useState('')
-  const [categoryIds, setCategoryIds] = useState<number[] | null>(null)
-  const [listed, setListed] = useState(false)
-
-  useEffect(() => {
-    if (!share) return
-    setName(share.name)
-    setCategoryIds(share.categoryIds)
-    setListed(share.listed)
-  }, [share])
-
-  const handleSave = async () => {
-    try {
-      await save.mutateAsync({ name, categoryIds, listed })
-    } catch (error) {
-      showToast(
-        t('songSources.share.failed', { error: (error as Error).message }),
-        'error',
-      )
-    }
-  }
+  const { data } = useLibraryShares()
+  /** The share being changed, 'new' for a new one, null while none is. */
+  const [editing, setEditing] = useState<number | 'new' | null>(null)
+  const shares = data?.shares ?? []
 
   return (
     <section className="space-y-3" data-testid="share-my-songs">
@@ -54,51 +33,38 @@ export function ShareMySongsSection() {
         </p>
       ) : (
         <div className="space-y-3">
-          <label className="block space-y-1">
-            <span className="block text-sm text-fg-label">
-              {t('songSources.share.name')}
-            </span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('songSources.share.namePlaceholder')}
-              className="w-full rounded-lg border border-line bg-panel px-3 py-2 text-sm text-fg focus:border-focus focus:outline-none focus:ring-2 focus:ring-focus sm:w-80"
-            />
-          </label>
-          <ShareScopePicker
-            categoryIds={categoryIds}
-            onChange={setCategoryIds}
-          />
-          <label className="flex items-start gap-2 text-sm text-fg">
-            <input
-              type="checkbox"
-              checked={listed}
-              onChange={(e) => setListed(e.target.checked)}
-              className="mt-0.5 accent-primary"
-            />
-            <span>
-              {t('songSources.share.listed')}
-              <span className="block text-xs text-fg-hint">
-                {t('songSources.share.listedHint')}
-              </span>
-            </span>
-          </label>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={save.isPending || categoryIds?.length === 0}
-            className={primaryButton}
-          >
-            {save.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+          {shares.length === 0 && editing !== 'new' && (
+            <p className="text-sm text-fg-hint">
+              {t('songSources.share.empty')}
+            </p>
+          )}
+          {shares.map((share) =>
+            editing === share.id ? (
+              <ShareForm
+                key={share.id}
+                share={share}
+                onDone={() => setEditing(null)}
+              />
             ) : (
-              <Share2 className="h-4 w-4" />
-            )}
-            {share
-              ? t('songSources.share.update')
-              : t('songSources.share.button')}
-          </button>
-          {share && <ShareStatus share={share} />}
+              <ShareStatus
+                key={share.id}
+                share={share}
+                onEdit={() => setEditing(share.id)}
+              />
+            ),
+          )}
+          {editing === 'new' ? (
+            <ShareForm onDone={() => setEditing(null)} />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditing('new')}
+              className={secondaryButton}
+            >
+              <Plus className="h-4 w-4" />
+              {t('songSources.share.newShare')}
+            </button>
+          )}
         </div>
       )}
     </section>

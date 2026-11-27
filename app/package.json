@@ -20,7 +20,7 @@
     "tauri:build": "tauri build",
     "tauri:build:debug": "tauri build --debug",
     "tauri:build:release": "bun scripts/build-with-tag.ts",
-    "build:apps": "bun run --filter client build && bun run --filter server compile",
+    "build:apps": "bun run --filter client build && bun run --filter server compile && bun run --filter server bundle:song-libraries",
     "tsc:check": "tsc --noEmit --skipLibCheck",
     "postinstall": "node scripts/install-git-hooks.js && node scripts/ensure-audify-prebuild.js",
     "fixtures": "bun run apps/server/src/db/fixtures/dump-fixtures.ts",

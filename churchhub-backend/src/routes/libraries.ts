@@ -10,11 +10,14 @@ import { isSourceId } from '../library/isSourceId'
 import { libraryKeys } from '../library/libraryKeys'
 import { listSubmissions } from '../library/listSubmissions'
 import { parseDecision } from '../library/parseDecision'
+import { parseFeatured } from '../library/parseFeatured'
 import { parseSubmission } from '../library/parseSubmission'
 import { publishManifest } from '../library/publishManifest'
 import { putShard } from '../library/putShard'
 import { requireCurator } from '../library/requireCurator'
+import { requireManagedWriter } from '../library/requireManagedWriter'
 import { CURATED_SOURCE_ID } from '../library/types'
+import { writeFeatured } from '../library/writeFeatured'
 import { handleSyncError } from '../sync/handleSyncError'
 import { ticketFromHeader, verifyOwnerTicket } from '../sync/owner/ownerTicket'
 import { readJsonBody } from '../sync/readJsonBody'
@@ -25,8 +28,8 @@ import { clientIp } from '../utils/clientIp'
 
 type LibraryContext = Context<{ Bindings: Bindings }>
 
-/** One song's OpenSong file, with room for the JSON around it. */
-const SUBMISSION_MAX_BYTES = 256 * 1024
+/** Up to MAX_SONGS songs' OpenSong files (a few KB each, 200 KB at most). */
+const SUBMISSION_MAX_BYTES = 16 * 1024 * 1024
 /** A gzipped shard: up to about 500 songs. */
 const SHARD_MAX_BYTES = 4 * 1024 * 1024
 /** A whole manifest: about 250 bytes a song. */
@@ -64,7 +67,7 @@ const libraries = new Hono<{ Bindings: Bindings }>()
 
 libraries.onError(handleSyncError)
 
-/** POST /sync/libraries/church-hub/submissions: a church sends a song. */
+/** POST /sync/libraries/church-hub/submissions: a church sends songs. */
 libraries.post(
   `${CURATED}/submissions`,
   limit(SUBMISSION_MAX_BYTES),
@@ -79,8 +82,8 @@ libraries.post(
     }
     const input = parseSubmission(await readJsonBody(c))
     const { states } = createSyncStore(c.env)
-    const { id, submittedAt } = await createSubmission(states, input)
-    return c.json({ id, submittedAt }, 201)
+    const { batchId, submissions } = await createSubmission(states, input)
+    return c.json({ batchId, submitted: submissions.length }, 201)
   }
 )
 
@@ -125,7 +128,18 @@ libraries.post(`${CURATED}/submissions/:id/decision`, async (c) => {
 /** GET /sync/libraries: where the public catalog of listed libraries is read from. */
 libraries.get('/sync/libraries', (c) => {
   const { bucket } = createSyncStore(c.env)
-  return c.json({ catalogUrl: bucket.publicUrl(libraryKeys.catalog) })
+  return c.json({
+    catalogUrl: bucket.publicUrl(libraryKeys.catalog),
+    featuredUrl: bucket.publicUrl(libraryKeys.featured),
+  })
+})
+
+/** PUT /sync/featured-sources: the sources every app lists (curators, the build). */
+libraries.put('/sync/featured-sources', async (c) => {
+  const sources = parseFeatured(await readJsonBody(c))
+  const store = createSyncStore(c.env)
+  await requireManagedWriter(c, store)
+  return c.json(await writeFeatured(store.bucket, sources))
 })
 
 /** GET /sync/libraries/:sourceId: where the library is read from. */

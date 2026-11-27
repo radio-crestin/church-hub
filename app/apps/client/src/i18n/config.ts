@@ -22,6 +22,7 @@ import sidebarEN from './locales/en/sidebar.json'
 import songDiscoveryEN from './locales/en/songDiscovery.json'
 import songHistoryEN from './locales/en/songHistory.json'
 import songKeyEN from './locales/en/songKey.json'
+import songLibraryEN from './locales/en/songLibrary.json'
 import songsEN from './locales/en/songs.json'
 import usersEN from './locales/en/users.json'
 import bibleRO from './locales/ro/bible.json'
@@ -43,6 +44,7 @@ import sidebarRO from './locales/ro/sidebar.json'
 import songDiscoveryRO from './locales/ro/songDiscovery.json'
 import songHistoryRO from './locales/ro/songHistory.json'
 import songKeyRO from './locales/ro/songKey.json'
+import songLibraryRO from './locales/ro/songLibrary.json'
 import songsRO from './locales/ro/songs.json'
 import usersRO from './locales/ro/users.json'
 
@@ -66,6 +68,7 @@ export const resources = {
     settings: settingsEN,
     songDiscovery: songDiscoveryEN,
     songHistory: songHistoryEN,
+    songLibrary: songLibraryEN,
     songKey: songKeyEN,
     songs: songsEN,
     users: usersEN,
@@ -89,6 +92,7 @@ export const resources = {
     settings: settingsRO,
     songDiscovery: songDiscoveryRO,
     songHistory: songHistoryRO,
+    songLibrary: songLibraryRO,
     songKey: songKeyRO,
     songs: songsRO,
     users: usersRO,
@@ -122,6 +126,7 @@ i18n
       'settings',
       'songDiscovery',
       'songHistory',
+      'songLibrary',
       'songKey',
       'songs',
       'users',

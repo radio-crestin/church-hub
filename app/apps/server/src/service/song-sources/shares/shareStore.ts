@@ -7,6 +7,7 @@ interface ShareRow {
   name: string
   publisher: string
   category_ids: string | null
+  song_ids: string | null
   listed: number
   manifest_url: string | null
   published_checksum: string | null
@@ -16,12 +17,25 @@ interface ShareRow {
   last_error: string | null
 }
 
+/** The picked songs still in the library, with their titles, by title. */
+function pickedSongs(songIds: string | null): LibraryShare['songs'] {
+  if (!songIds) return []
+  return getRawDatabase()
+    .query<{ id: number; title: string }, [string]>(
+      `SELECT id, title FROM songs
+        WHERE id IN (SELECT value FROM json_each(?)) ORDER BY title, id`,
+    )
+    .all(songIds)
+}
+
 const toShare = (row: ShareRow): LibraryShare => ({
   id: row.id,
   sourceId: row.source_id,
   name: row.name,
   publisher: row.publisher,
   categoryIds: row.category_ids ? JSON.parse(row.category_ids) : null,
+  songIds: row.song_ids ? JSON.parse(row.song_ids) : [],
+  songs: pickedSongs(row.song_ids),
   listed: row.listed === 1,
   manifestUrl: row.manifest_url,
   publishedChecksum: row.published_checksum,
@@ -31,52 +45,55 @@ const toShare = (row: ShareRow): LibraryShare => ({
   lastError: row.last_error,
 })
 
-/** The church's share, or null while it shares nothing. One per church. */
-export function getShare(): LibraryShare | null {
+/** The church's shares, oldest first; empty while it shares nothing. */
+export function listShares(): LibraryShare[] {
+  return getRawDatabase()
+    .query<ShareRow, []>('SELECT * FROM song_library_shares ORDER BY id')
+    .all()
+    .map(toShare)
+}
+
+/** One share, or null when there is none with this id. */
+export function getShare(id: number): LibraryShare | null {
   const row = getRawDatabase()
-    .query<ShareRow, []>(
-      'SELECT * FROM song_library_shares ORDER BY id LIMIT 1',
-    )
-    .get()
+    .query<ShareRow, [number]>('SELECT * FROM song_library_shares WHERE id = ?')
+    .get(id)
   return row ? toShare(row) : null
 }
 
-/** Creates the share (with its folder) or changes what it shares. */
+/**
+ * Creates a share in a new folder (`sourceId`), or, given its `id`, changes
+ * what it shares. Returns its id.
+ */
 export function upsertShare(
   input: LibraryShareInput & { publisher: string },
-  newSourceId: () => string,
-): LibraryShare {
+  target: { id: number } | { sourceId: string },
+): number {
   const db = getRawDatabase()
-  const existing = getShare()
-  const categoryIds = input.categoryIds
-    ? JSON.stringify(input.categoryIds)
-    : null
-  if (existing) {
+  const values = [
+    input.name,
+    input.publisher,
+    input.categoryIds ? JSON.stringify(input.categoryIds) : null,
+    input.categoryIds ? JSON.stringify(input.songIds) : null,
+    input.listed ? 1 : 0,
+  ]
+  if ('id' in target) {
     db.query(
-      `UPDATE song_library_shares SET name = ?, publisher = ?, category_ids = ?, listed = ?
-       WHERE id = ?`,
-    ).run(
-      input.name,
-      input.publisher,
-      categoryIds,
-      input.listed ? 1 : 0,
-      existing.id,
-    )
-  } else {
-    db.query(
-      `INSERT INTO song_library_shares (source_id, name, publisher, category_ids, listed)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(
-      newSourceId(),
-      input.name,
-      input.publisher,
-      categoryIds,
-      input.listed ? 1 : 0,
-    )
+      `UPDATE song_library_shares
+          SET name = ?, publisher = ?, category_ids = ?, song_ids = ?, listed = ?
+        WHERE id = ?`,
+    ).run(...values, target.id)
+    return target.id
   }
-  const share = getShare()
-  if (!share) throw new Error('Could not save the share')
-  return share
+  const row = db
+    .query<{ id: number }, (string | number | null)[]>(
+      `INSERT INTO song_library_shares
+         (name, publisher, category_ids, song_ids, listed, source_id)
+       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+    )
+    .get(...values, target.sourceId)
+  if (!row) throw new Error('Could not save the share')
+  return row.id
 }
 
 /** What a publish did: the manifest now in the bucket, or why it failed. */

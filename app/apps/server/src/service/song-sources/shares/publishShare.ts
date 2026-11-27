@@ -17,18 +17,19 @@ export interface PublishResult {
 }
 
 /**
- * Publishes the church's share: builds the library from its songs, uploads
+ * Publishes one of the church's shares: builds the library from its songs, uploads
  * only the shards the bucket lacks (each named by its content, so an
  * unchanged shard is never sent again), then the manifest, from the one
  * last published. The service is the only writer; when the manifest
  * changed there meanwhile (another PC of the church), it is replaced from
  * the current one. Nothing is sent when no song changed, unless `force`
- * (the user changed what is shared: its name, listing or categories).
+ * (the user changed what is shared: its name, listing or songs).
  */
-export async function publishShare({
-  force = false,
-} = {}): Promise<PublishResult> {
-  const share = getShare()
+export async function publishShare(
+  id: number,
+  { force = false } = {},
+): Promise<PublishResult> {
+  const share = getShare(id)
   if (!share) throw new Error('Nothing is shared')
   const identity = await requireCloudIdentity()
   try {

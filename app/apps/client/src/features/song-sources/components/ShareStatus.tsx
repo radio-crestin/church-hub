@@ -1,4 +1,11 @@
-import { AlertTriangle, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  Copy,
+  Loader2,
+  Pencil,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
@@ -6,11 +13,16 @@ import { secondaryButton } from './buttonStyles'
 import {
   useStopLibraryShare,
   useSyncLibraryShare,
-} from '../hooks/useLibraryShare'
+} from '../hooks/useLibraryShares'
 import type { LibraryShare } from '../types'
 
-/** The shared library: its link to copy, its state, publish again or stop. */
-export function ShareStatus({ share }: { share: LibraryShare }) {
+interface ShareStatusProps {
+  share: LibraryShare
+  onEdit: () => void
+}
+
+/** A share: its link to copy, its state; change it, publish again or stop. */
+export function ShareStatus({ share, onEdit }: ShareStatusProps) {
   const { t, i18n } = useTranslation('songDiscovery')
   const { showToast } = useToast()
   const sync = useSyncLibraryShare()
@@ -27,7 +39,7 @@ export function ShareStatus({ share }: { share: LibraryShare }) {
 
   return (
     <div
-      className="space-y-2 rounded-lg border border-line px-3 py-3"
+      className="space-y-2 rounded-lg border border-line bg-panel px-3 py-3"
       data-testid="library-share"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
@@ -74,9 +86,13 @@ export function ShareStatus({ share }: { share: LibraryShare }) {
           <Copy className="h-4 w-4" />
           {t('songSources.publish.copyLink')}
         </button>
+        <button type="button" onClick={onEdit} className={secondaryButton}>
+          <Pencil className="h-4 w-4" />
+          {t('songSources.share.edit')}
+        </button>
         <button
           type="button"
-          onClick={() => sync.mutateAsync().catch(fail)}
+          onClick={() => sync.mutateAsync(share.id).catch(fail)}
           disabled={sync.isPending}
           className={secondaryButton}
         >
@@ -89,7 +105,7 @@ export function ShareStatus({ share }: { share: LibraryShare }) {
         </button>
         <button
           type="button"
-          onClick={() => stop.mutateAsync().catch(fail)}
+          onClick={() => stop.mutateAsync(share.id).catch(fail)}
           disabled={stop.isPending}
           className={secondaryButton}
         >

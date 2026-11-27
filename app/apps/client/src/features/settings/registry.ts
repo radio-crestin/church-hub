@@ -5,6 +5,7 @@ import {
   DownloadCloud,
   Info,
   Keyboard,
+  LibraryBig,
   Monitor,
   Music,
   Palette,
@@ -157,6 +158,15 @@ export const SETTINGS_GROUPS: SettingsNavGroupDef[] = [
           'settings:sections.synonyms.title',
           'settings:sections.aiSearch.title',
         ],
+      },
+      {
+        id: 'song-library',
+        labelKey: 'nav.items.songLibrary',
+        icon: LibraryBig,
+        to: '/settings/song-library',
+        // Curating signs in with Google like the church's owner: users.edit.
+        visible: (ctx) => ctx.hasPermission('users.edit'),
+        settings: ['songLibrary:curator.title'],
       },
       {
         id: 'bible',

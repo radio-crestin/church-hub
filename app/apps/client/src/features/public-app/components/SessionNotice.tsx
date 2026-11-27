@@ -10,6 +10,8 @@ interface SessionNoticeProps {
     | 'joinFailed.invalid'
     | 'joinFailed.refused'
     | 'joinFailed.offline'
+    | 'song.notFound'
+    | 'song.offline'
   onRetry?: () => void
   /** What else the user can do from here, under the notice. */
   children?: ReactNode

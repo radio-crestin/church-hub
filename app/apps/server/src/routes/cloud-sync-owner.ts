@@ -16,7 +16,7 @@ import { toErrorMessage } from '../utils/toErrorMessage'
 
 const logger = createLogger('sync')
 
-const INTENTS: OwnerSignInIntent[] = ['connect', 'claim', 'manage']
+const INTENTS: OwnerSignInIntent[] = ['connect', 'claim', 'manage', 'curate']
 const CHURCH_PATH =
   /^\/api\/sync\/cloud\/owner\/churches\/([A-Za-z0-9_-]{1,64})\/(recover|transfer|accept)$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
