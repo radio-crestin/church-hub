@@ -2,6 +2,7 @@ import { Loader2, MonitorUp, Plus } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ScreenLinkModal } from '~/features/screen-links'
 import { useSlideTemplate } from '~/features/slide-templates/hooks/useSlideTemplates'
 import { templateDisplayName } from '~/features/slide-templates/utils/templateDisplayName'
 import { Button } from '~/ui/button/Button'
@@ -87,6 +88,7 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
   >()
   const [deleteConfirm, setDeleteConfirm] = useState<Screen | null>(null)
   const [exportScreen, setExportScreen] = useState<Screen | null>(null)
+  const [linkScreen, setLinkScreen] = useState<Screen | null>(null)
 
   // Fetch full screen config when editing
   const { data: editingScreen } = useScreen(editingScreenId)
@@ -252,6 +254,7 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
             }}
             onExport={() => setExportScreen(selected)}
             onCopyUrl={() => handleCopyUrl(selected)}
+            onShowElsewhere={() => setLinkScreen(selected)}
             onDuplicate={() => handleDuplicate(selected)}
             onDelete={() => handleDelete(selected)}
             isDuplicating={duplicateScreen.isPending}
@@ -375,6 +378,14 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
           isOpen={!!exportScreen}
           onClose={() => setExportScreen(null)}
           screen={exportScreen}
+        />
+      )}
+
+      {linkScreen && (
+        <ScreenLinkModal
+          screenId={linkScreen.id}
+          screenName={linkScreen.name}
+          onClose={() => setLinkScreen(null)}
         />
       )}
     </div>

@@ -6,6 +6,7 @@ import {
   ExternalLink,
   Monitor,
   MonitorOff,
+  QrCode,
   Trash2,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -53,6 +54,8 @@ interface ScreenCardProps {
   onEdit: (contentType?: ContentType) => void
   onExport: () => void
   onCopyUrl: () => void
+  /** Shows it on another device by a link (T-214). */
+  onShowElsewhere: () => void
   onDuplicate: () => void
   onDelete: () => void
   isDuplicating: boolean
@@ -88,6 +91,7 @@ export function ScreenCard({
   onEdit,
   onExport,
   onCopyUrl,
+  onShowElsewhere,
   onDuplicate,
   onDelete,
   isDuplicating,
@@ -159,6 +163,13 @@ export function ScreenCard({
   const busy = upsertScreen.isPending
 
   const actions: ActionMenuItem[] = [
+    {
+      id: 'show-elsewhere',
+      label: t('sections.screens.link.action'),
+      icon: <QrCode size={16} strokeWidth={1.5} />,
+      onSelect: onShowElsewhere,
+      testId: 'screen-show-elsewhere',
+    },
     {
       id: 'export',
       label: t('sections.screens.export.title'),

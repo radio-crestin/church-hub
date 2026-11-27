@@ -1,4 +1,5 @@
 export { isSecretSettingKey } from './isSecretSettingKey'
+export { isServerOwnedSettingKey } from './isServerOwnedSettingKey'
 export { isServerSecretKey } from './isServerSecretKey'
 export { SETTING_SECRETS, withoutSettingSecrets } from './settingSecrets'
 export {

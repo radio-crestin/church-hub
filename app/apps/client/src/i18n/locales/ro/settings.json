@@ -1419,6 +1419,29 @@
       },
       "slides": {
         "description": "Fiecare tip de slide, cum îl arată acest ecran. Apasă pe unul ca să-l editezi."
+      },
+      "link": {
+        "title": "Afișează „{{name}}” pe alt dispozitiv",
+        "description": "Deschideți acest link pe un televizor, laptop sau tabletă ca să afișați ecranul acolo.",
+        "making": "Se creează linkul…",
+        "error": "Linkul nu a putut fi creat. Verificați conexiunea la internet și încercați din nou.",
+        "qrAlt": "Codul QR al linkului ecranului",
+        "urlLabel": "Linkul ecranului",
+        "copy": "Copiază",
+        "copied": "Link copiat",
+        "until": "Funcționează până {{time}}.",
+        "revoke": "Revocă linkul",
+        "revoked": "Link revocat: dispozitivul acela nu mai afișează ecranul",
+        "revokeError": "Linkul nu a putut fi revocat",
+        "action": "Afișează pe alt dispozitiv",
+        "phoneNote": "Cât timp calculatorul bisericii e oprit, telefonul acesta îi trimite ecranul, așa că lăsați Church Hub deschis aici.",
+        "advanced": "Avansat",
+        "internet": "Prin internet",
+        "internetHint": "Merge din orice rețea; dispozitivul se conectează prin serverele Church Hub.",
+        "network": "Doar în rețeaua aceasta",
+        "networkHint": "Recomandat. Dispozitivul deschide direct acest calculator; trebuie să fie în aceeași rețea Wi-Fi.",
+        "address": "Adresa acestui calculator",
+        "internetOff": "Accesul de la distanță e oprit. Porniți-l din Setări › Telefoane ca să trimiteți ecranul prin internet."
       }
     },
     "developer": {

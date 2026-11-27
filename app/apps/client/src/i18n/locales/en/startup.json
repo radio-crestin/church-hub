@@ -28,5 +28,10 @@
   "errorWebStart": "Church Hub could not start in this browser",
   "needsOnlineOnce": "Connect to the internet once to open your church on this device.",
   "otherTab": "Church Hub is already open in another tab of this browser.",
-  "otherTabHint": "Close that tab, then try again."
+  "otherTabHint": "Close that tab, then try again.",
+  "reachingScreen": "Connecting to the church's screen",
+  "screenLinkRevoked": "This screen link no longer works.",
+  "screenLinkRevokedHint": "It was revoked or it expired. Ask for a new link.",
+  "screenUnreachable": "The phone sharing this screen isn't reachable.",
+  "screenUnreachableHint": "Check that Church Hub is open on that phone. Trying again on its own…"
 }

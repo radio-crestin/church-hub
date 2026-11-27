@@ -16,6 +16,7 @@ const PC_ONLY_PREFIXES = [
   '/api/music',
   '/api/network',
   '/api/remote-access',
+  '/api/screen-links/endpoints',
   '/api/screen-share',
   '/api/song-sources',
 ]
