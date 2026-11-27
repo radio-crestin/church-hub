@@ -131,6 +131,10 @@ test.describe
         { timeout: 30_000 },
       )
       screenLink = await url.inputValue()
+      // A phone has no address on the network: the internet way only.
+      await expect(
+        phonePage.getByRole('button', { name: 'Advanced' }),
+      ).toHaveCount(0)
       // The link carries a token of its own, never the phone's session.
       const fragment = new URLSearchParams(screenLink.split('#')[1])
       expect(fragment.get('g')).toMatch(/^scr_/)

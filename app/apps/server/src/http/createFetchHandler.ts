@@ -40,6 +40,7 @@ import { handleRemoteAccessRoutes } from '../routes/remote-access'
 import { handleScheduleItemRoutes } from '../routes/schedule-items'
 import { handleScheduleMidiRoutes } from '../routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from '../routes/schedule-templates'
+import { handleScreenLinkSignIn } from '../routes/screen-link-sign-in'
 import { handleScreenLinkRoutes } from '../routes/screen-links'
 import { handleScreenShareRoutes } from '../routes/screen-share'
 import { handleSecretStoreRoutes } from '../routes/secret-store'
@@ -495,6 +496,11 @@ export function createFetchHandler(): (
           headers: { 'Content-Type': 'application/json' },
         }),
       )
+    }
+
+    // POST /api/screen-links/sign-in - a direct screen link's device (T-214)
+    if (req.method === 'POST' && url.pathname === '/api/screen-links/sign-in') {
+      return handleCors(req, await handleScreenLinkSignIn(req))
     }
 
     // POST /api/auth/device-login - a joined phone over WebRTC (T-174)

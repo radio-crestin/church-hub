@@ -6,6 +6,8 @@ import { useQRCode } from '~/features/users/hooks'
 import { Button } from '~/ui/button/Button'
 import { useToast } from '~/ui/toast'
 import { createLogger } from '~/utils/logger'
+import { type ScreenLinkWay, ScreenLinkWays } from './ScreenLinkWays'
+import { canHostScreens } from '../service/screenHost'
 import {
   type MadeScreenLink,
   makeScreenLink,
@@ -36,20 +38,36 @@ export function ScreenLinkModal({
   const [link, setLink] = useState<MadeScreenLink | null>(null)
   const [failed, setFailed] = useState(false)
   const [revoking, setRevoking] = useState(false)
-  const { qrDataUrl } = useQRCode(link?.url ?? null)
+  const [way, setWay] = useState<ScreenLinkWay>('internet')
+  const [address, setAddress] = useState('')
+  const url =
+    way === 'internet'
+      ? (link?.internet ?? null)
+      : (link?.network.find((choice) => choice.address === address)?.url ??
+        null)
+  const { qrDataUrl } = useQRCode(url)
+  const onPhone = canHostScreens()
 
   useEffect(() => {
     dialogRef.current?.showModal()
-    makeScreenLink(screenId).then(setLink, (error) => {
-      logger.error('Screen link not made', error)
-      setFailed(true)
-    })
+    makeScreenLink(screenId).then(
+      (made) => {
+        setLink(made)
+        // Over the internet unless the PC's remote access is off.
+        setWay(made.internet ? 'internet' : 'network')
+        setAddress(made.network[0]?.address ?? '')
+      },
+      (error) => {
+        logger.error('Screen link not made', error)
+        setFailed(true)
+      },
+    )
   }, [screenId])
 
   const copy = async () => {
-    if (!link) return
+    if (!url) return
     try {
-      await navigator.clipboard.writeText(link.url)
+      await navigator.clipboard.writeText(url)
       showToast(t('sections.screens.link.copied'), 'success')
     } catch (error) {
       logger.warn('Screen link not copied', error)
@@ -97,6 +115,7 @@ export function ScreenLinkModal({
           </h2>
           <p className="mt-1 text-sm text-fg-label">
             {t('sections.screens.link.description')}
+            {onPhone && ` ${t('sections.screens.link.phoneNote')}`}
           </p>
         </div>
 
@@ -111,30 +130,50 @@ export function ScreenLinkModal({
           </div>
         ) : (
           <>
-            {qrDataUrl && (
+            {!link.internet && (
+              <p
+                className="text-sm text-fg"
+                data-testid="screen-link-internet-off"
+              >
+                {t('sections.screens.link.internetOff')}
+              </p>
+            )}
+            {url && qrDataUrl && (
               <img
                 src={qrDataUrl}
                 alt={t('sections.screens.link.qrAlt')}
                 className="self-center w-48 h-48 rounded-lg bg-white"
               />
             )}
-            <div className="flex gap-2">
-              <input
-                readOnly
-                value={link.url}
-                aria-label={t('sections.screens.link.urlLabel')}
-                data-testid="screen-link-url"
-                onFocus={(event) => event.currentTarget.select()}
-                className="flex-1 min-w-0 h-9 px-3 rounded-lg bg-field text-sm text-fg border border-line"
-              />
-              <Button variant="secondary" onClick={copy}>
-                <Copy size={16} strokeWidth={1.5} />
-                {t('sections.screens.link.copy')}
-              </Button>
-            </div>
+            {url && (
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={url}
+                  aria-label={t('sections.screens.link.urlLabel')}
+                  data-testid="screen-link-url"
+                  onFocus={(event) => event.currentTarget.select()}
+                  className="flex-1 min-w-0 h-9 px-3 rounded-lg bg-field text-sm text-fg border border-line"
+                />
+                <Button variant="secondary" onClick={copy}>
+                  <Copy size={16} strokeWidth={1.5} />
+                  {t('sections.screens.link.copy')}
+                </Button>
+              </div>
+            )}
             <p className="text-xs text-fg-hint">
               {t('sections.screens.link.until', { time: until })}
             </p>
+            {link.network.length > 0 && (
+              <ScreenLinkWays
+                way={way}
+                onWay={setWay}
+                hasInternet={link.internet !== null}
+                addresses={link.network.map((choice) => choice.address)}
+                address={address}
+                onAddress={setAddress}
+              />
+            )}
           </>
         )}
 

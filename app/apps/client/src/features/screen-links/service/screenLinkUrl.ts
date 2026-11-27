@@ -41,3 +41,22 @@ export function parseScreenLinkUrl(url: URL): ScreenLinkTarget | null {
     screenId: Number(screen[1]),
   }
 }
+
+/**
+ * A direct link on the church network: the PC's own page by its LAN
+ * address, with the token the device signs in with (signInWithScreenLink).
+ */
+export function buildDirectScreenLinkUrl(
+  base: string,
+  screenId: number,
+  token: string,
+) {
+  return `${base}/screen/${screenId}#${new URLSearchParams({ g: token })}`
+}
+
+/** The token of a direct screen link this page was opened with, or null. */
+export function parseDirectScreenLinkToken(url: URL): string | null {
+  if (!/^\/screen\/\d+\/?$/.test(url.pathname)) return null
+  const fragment = new URLSearchParams(url.hash.slice(1))
+  return fragment.has('h') ? null : fragment.get('g')
+}

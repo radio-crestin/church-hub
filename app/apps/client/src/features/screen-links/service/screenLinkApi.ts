@@ -1,12 +1,18 @@
 import { fetchJsonWithStatus } from '~/utils/fetcher'
-import { disconnectScreens, hostScreens } from './screenHost'
-import { buildScreenLinkUrl } from './screenLinkUrl'
+import { canHostScreens, disconnectScreens, hostScreens } from './screenHost'
+import { buildDirectScreenLinkUrl, buildScreenLinkUrl } from './screenLinkUrl'
 
-/** A link just made: its URL (shown once) and when it stops working. */
+/** A link just made: its URLs (shown once) and when it stops working. */
 export interface MadeScreenLink {
   id: string
-  url: string
   expiresAt: number
+  /**
+   * Over the internet, through the public web app and WebRTC (the default);
+   * null when the PC's remote access is off.
+   */
+  internet: string | null
+  /** Directly on the church network, one per LAN address of the PC. */
+  network: Array<{ address: string; url: string }>
 }
 
 interface CreatedLink {
@@ -15,10 +21,58 @@ interface CreatedLink {
   expiresAt: number
 }
 
+interface Endpoints {
+  internet: { publicAppUrl: string; relay: string; room: string } | null
+  network: { addresses: string[]; port: number }
+}
+
+/** Where devices reach the church PC: its room, and its LAN addresses. */
+async function pcUrls(screenId: number, token: string) {
+  const { status, body } = await fetchJsonWithStatus<{ data?: Endpoints }>(
+    '/api/screen-links/endpoints',
+  )
+  if (status !== 200 || !body.data) {
+    throw new Error(`Screen link endpoints not read (HTTP ${status})`)
+  }
+  const { internet, network } = body.data
+  return {
+    internet: internet
+      ? buildScreenLinkUrl(internet.publicAppUrl, {
+          relay: internet.relay,
+          room: internet.room,
+          pcRoom: null,
+          token,
+          screenId,
+        })
+      : null,
+    network: network.addresses.map((address) => ({
+      address,
+      url: buildDirectScreenLinkUrl(
+        `http://${address}:${network.port}`,
+        screenId,
+        token,
+      ),
+    })),
+  }
+}
+
 /**
- * Makes a link another device shows `screenId` through (T-214), and opens
- * this phone's room for it.
+ * The phone running the church's server hosts the link itself, over the
+ * internet only: it has no address on the network to be opened at.
  */
+async function phoneUrls(screenId: number, token: string) {
+  const where = await hostScreens()
+  return {
+    internet: buildScreenLinkUrl(window.location.origin, {
+      ...where,
+      token,
+      screenId,
+    }),
+    network: [],
+  }
+}
+
+/** Makes a link another device shows `screenId` through (T-214). */
 export async function makeScreenLink(
   screenId: number,
 ): Promise<MadeScreenLink> {
@@ -34,22 +88,16 @@ export async function makeScreenLink(
     throw new Error(body.error ?? `Screen link not made (HTTP ${status})`)
   }
   const { id, token, expiresAt } = body.data
-  const where = await hostScreens()
-  return {
-    id,
-    expiresAt,
-    url: buildScreenLinkUrl(window.location.origin, {
-      ...where,
-      token,
-      screenId,
-    }),
-  }
+  const urls = canHostScreens()
+    ? await phoneUrls(screenId, token)
+    : await pcUrls(screenId, token)
+  return { id, expiresAt, ...urls }
 }
 
 /**
  * Revokes a link: every device showing a screen through this phone is cut
  * off; those whose link still stands connect again, the revoked one hears
- * it was revoked.
+ * it was revoked. A device of the PC's is refused at its next check.
  */
 export async function revokeScreenLink(id: string): Promise<void> {
   const { status } = await fetchJsonWithStatus(`/api/screen-links/${id}`, {

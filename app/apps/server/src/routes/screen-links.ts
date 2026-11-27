@@ -1,6 +1,7 @@
 import type { RequestContext } from '../middleware'
 import {
   createScreenLink,
+  describeScreenLinkEndpoints,
   readScreenLinks,
   revokeScreenLinks,
   type ScreenLink,
@@ -20,6 +21,7 @@ const info = ({ tokenHash: _, ...link }: ScreenLink): ScreenLinkInfo => link
  * DELETE /api/screen-links          → revokes every link (control_room.control)
  * DELETE /api/screen-links/:id      → revokes one (control_room.control)
  * GET    /api/screen-links/session  → the link the caller signed in with
+ * GET    /api/screen-links/endpoints → where devices reach this PC (control_room.control)
  */
 export async function handleScreenLinkRoutes(
   req: Request,
@@ -34,6 +36,13 @@ export async function handleScreenLinkRoutes(
       return Response.json({ error: 'Not a screen link' }, { status: 401 })
     }
     return Response.json({ data: info(link) })
+  }
+
+  if (pathname === '/api/screen-links/endpoints' && req.method === 'GET') {
+    return (
+      checkPermission('control_room.control') ??
+      Response.json({ data: describeScreenLinkEndpoints() })
+    )
   }
 
   if (pathname === '/api/screen-links' && req.method === 'POST') {

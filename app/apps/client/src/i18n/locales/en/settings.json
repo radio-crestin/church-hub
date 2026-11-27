@@ -1413,7 +1413,7 @@
       },
       "link": {
         "title": "Show “{{name}}” on another device",
-        "description": "Open this link on a TV, laptop or tablet. While the church computer is off, this phone sends it the screen, so keep Church Hub open here.",
+        "description": "Open this link on a TV, laptop or tablet to show this screen there.",
         "making": "Making the link…",
         "error": "The link couldn't be made. Check the internet connection and try again.",
         "qrAlt": "QR code of the screen link",
@@ -1424,7 +1424,15 @@
         "revoke": "Revoke link",
         "revoked": "Link revoked: that device no longer shows the screen",
         "revokeError": "The link couldn't be revoked",
-        "action": "Show on another device"
+        "action": "Show on another device",
+        "phoneNote": "While the church computer is off, this phone sends it the screen, so keep Church Hub open here.",
+        "advanced": "Advanced",
+        "internet": "Over the internet",
+        "internetHint": "Recommended. Works from any network; the device connects through Church Hub's servers.",
+        "network": "Only on this network",
+        "networkHint": "The device opens this computer directly. It must be on the same Wi-Fi or network.",
+        "address": "Address of this computer",
+        "internetOff": "Remote access is off, so this link works only on this network. Turn it on in Settings › Phones to share it over the internet."
       }
     },
     "developer": {

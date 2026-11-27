@@ -28,6 +28,7 @@ import {
   setLoadingError,
   updateLoadingMessage,
 } from './features/startup/loadingScreen'
+import { signInWithScreenLink } from './features/screen-links/service/signInWithScreenLink'
 import {
   pollServerHealth,
   type StartupResult,
@@ -340,9 +341,26 @@ if (typeof window !== 'undefined') {
       )
     })
   } else {
-    // Not in Tauri (web/dev) — the server is already up, mount immediately.
-    hideLoadingScreen()
-    mountReact()
+    // Not in Tauri (web/dev) — the server is already up: mount at once, once
+    // a direct screen link (T-214) has signed the device in.
+    signInWithScreenLink()
+      .then((signedIn) => {
+        if (!signedIn) return
+        hideLoadingScreen()
+        mountReact()
+      })
+      .catch((error) => {
+        captureError(error, { source: 'startup', component: 'screen-links' })
+        setLoadingError(
+          startupText('errorUnreachable'),
+          startupText('retryHint'),
+          {
+            label: startupText('retry'),
+            onClick: () => window.location.reload(),
+          },
+          error instanceof Error ? error.message : String(error),
+        )
+      })
   }
 }
 

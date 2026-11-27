@@ -54,8 +54,8 @@ interface ScreenCardProps {
   onEdit: (contentType?: ContentType) => void
   onExport: () => void
   onCopyUrl: () => void
-  /** Shows it on another device by a link (the web app, T-214). */
-  onShowElsewhere?: () => void
+  /** Shows it on another device by a link (T-214). */
+  onShowElsewhere: () => void
   onDuplicate: () => void
   onDelete: () => void
   isDuplicating: boolean
@@ -162,20 +162,14 @@ export function ScreenCard({
 
   const busy = upsertScreen.isPending
 
-  const showElsewhere: ActionMenuItem[] = onShowElsewhere
-    ? [
-        {
-          id: 'show-elsewhere',
-          label: t('sections.screens.link.action'),
-          icon: <QrCode size={16} strokeWidth={1.5} />,
-          onSelect: onShowElsewhere,
-          testId: 'screen-show-elsewhere',
-        },
-      ]
-    : []
-
   const actions: ActionMenuItem[] = [
-    ...showElsewhere,
+    {
+      id: 'show-elsewhere',
+      label: t('sections.screens.link.action'),
+      icon: <QrCode size={16} strokeWidth={1.5} />,
+      onSelect: onShowElsewhere,
+      testId: 'screen-show-elsewhere',
+    },
     {
       id: 'export',
       label: t('sections.screens.export.title'),

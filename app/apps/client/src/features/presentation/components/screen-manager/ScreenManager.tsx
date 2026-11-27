@@ -2,7 +2,7 @@ import { Loader2, MonitorUp, Plus } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { canHostScreens, ScreenLinkModal } from '~/features/screen-links'
+import { ScreenLinkModal } from '~/features/screen-links'
 import { useSlideTemplate } from '~/features/slide-templates/hooks/useSlideTemplates'
 import { templateDisplayName } from '~/features/slide-templates/utils/templateDisplayName'
 import { Button } from '~/ui/button/Button'
@@ -254,9 +254,7 @@ export function ScreenManager({ selectedId, onSelect }: ScreenManagerProps) {
             }}
             onExport={() => setExportScreen(selected)}
             onCopyUrl={() => handleCopyUrl(selected)}
-            onShowElsewhere={
-              canHostScreens() ? () => setLinkScreen(selected) : undefined
-            }
+            onShowElsewhere={() => setLinkScreen(selected)}
             onDuplicate={() => handleDuplicate(selected)}
             onDelete={() => handleDelete(selected)}
             isDuplicating={duplicateScreen.isPending}

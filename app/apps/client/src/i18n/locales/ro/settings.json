@@ -1422,7 +1422,7 @@
       },
       "link": {
         "title": "Afișează „{{name}}” pe alt dispozitiv",
-        "description": "Deschideți acest link pe un televizor, laptop sau tabletă. Cât timp calculatorul bisericii e oprit, telefonul acesta îi trimite ecranul, așa că lăsați Church Hub deschis aici.",
+        "description": "Deschideți acest link pe un televizor, laptop sau tabletă ca să afișați ecranul acolo.",
         "making": "Se creează linkul…",
         "error": "Linkul nu a putut fi creat. Verificați conexiunea la internet și încercați din nou.",
         "qrAlt": "Codul QR al linkului ecranului",
@@ -1433,7 +1433,15 @@
         "revoke": "Revocă linkul",
         "revoked": "Link revocat: dispozitivul acela nu mai afișează ecranul",
         "revokeError": "Linkul nu a putut fi revocat",
-        "action": "Afișează pe alt dispozitiv"
+        "action": "Afișează pe alt dispozitiv",
+        "phoneNote": "Cât timp calculatorul bisericii e oprit, telefonul acesta îi trimite ecranul, așa că lăsați Church Hub deschis aici.",
+        "advanced": "Avansat",
+        "internet": "Prin internet",
+        "internetHint": "Recomandat. Merge din orice rețea; dispozitivul se conectează prin serverele Church Hub.",
+        "network": "Doar în rețeaua aceasta",
+        "networkHint": "Dispozitivul deschide direct acest calculator. Trebuie să fie în aceeași rețea Wi-Fi.",
+        "address": "Adresa acestui calculator",
+        "internetOff": "Accesul de la distanță e oprit, așa că linkul merge doar în rețeaua aceasta. Porniți-l din Setări › Telefoane ca să-l trimiteți prin internet."
       }
     },
     "developer": {

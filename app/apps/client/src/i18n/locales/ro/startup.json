@@ -31,7 +31,7 @@
   "otherTabHint": "Închide fila aceea, apoi încearcă din nou.",
   "reachingScreen": "Se conectează la ecranul bisericii",
   "screenLinkRevoked": "Linkul acestui ecran nu mai funcționează.",
-  "screenLinkRevokedHint": "A fost revocat sau a expirat. Cereți un link nou de pe telefonul care afișează ecranul.",
+  "screenLinkRevokedHint": "A fost revocat sau a expirat. Cereți un link nou.",
   "screenUnreachable": "Telefonul care afișează acest ecran nu poate fi găsit.",
   "screenUnreachableHint": "Verificați că Church Hub e deschis pe acel telefon. Se reîncearcă automat…"
 }

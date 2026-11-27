@@ -125,6 +125,72 @@ export const screenLinkPaths = {
       },
     },
   },
+  '/api/screen-links/endpoints': {
+    get: {
+      tags: ['Screen Links'],
+      summary: 'Where devices reach this PC by a screen link',
+      description:
+        "The church PC only (the web app's own server answers 503). `internet`: the public web app, the signaling relay and this PC's remote access room, for a link that connects over WebRTC (null while remote access is off). `network`: this PC's LAN addresses and port, for a link opened directly on the church network. Needs control_room.control.",
+      security,
+      responses: {
+        '200': json('The endpoints', {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'object',
+              properties: {
+                internet: {
+                  type: 'object',
+                  nullable: true,
+                  properties: {
+                    publicAppUrl: { type: 'string' },
+                    relay: { type: 'string' },
+                    room: { type: 'string' },
+                  },
+                },
+                network: {
+                  type: 'object',
+                  properties: {
+                    addresses: { type: 'array', items: { type: 'string' } },
+                    port: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        }),
+        '403': errorResponse('Missing control_room.control'),
+        '503': errorResponse('Not the church PC (the web app’s own server)'),
+      },
+    },
+  },
+  '/api/screen-links/sign-in': {
+    post: {
+      tags: ['Screen Links'],
+      summary: 'Sign in with a direct screen link',
+      description:
+        'A browser on the church network that opened a direct screen link (/screen/<id>#g=<token>) trades its token for the `user_auth` cookie, which lasts as long as the link. A revoked or expired link answers 401.',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              required: ['token'],
+              properties: { token: { type: 'string' } },
+            },
+          },
+        },
+      },
+      responses: {
+        '200': json('Signed in: the link, its token set as the cookie', {
+          type: 'object',
+          properties: { data: link },
+        }),
+        '401': errorResponse('Not a standing screen link'),
+      },
+    },
+  },
   '/api/screen-links/session': {
     get: {
       tags: ['Screen Links'],
