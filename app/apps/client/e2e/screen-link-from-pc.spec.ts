@@ -10,10 +10,10 @@ import { lanBaseUrl } from './helpers/lan-address'
 import { PUBLIC_APP_URL } from '../playwright.config'
 
 /**
- * Screen links from the church PC (T-214): by default a link goes over the
- * internet, through the public web app and WebRTC to the PC's remote access
- * room; under Advanced it can open the PC directly on the church network
- * instead, where the device signs in with the link alone. Revoking it ends
+ * Screen links from the church PC (T-214): by default a link opens the PC
+ * directly on the church network, where the device signs in with the link
+ * alone; under Advanced it can go over the internet instead, through the
+ * public web app and WebRTC to the PC's remote access room. Revoking it ends
  * that device's session.
  */
 
@@ -42,7 +42,7 @@ async function openScreenLink(page: Page, screenId: number) {
 
 test.describe
   .serial('A screen link from the PC', () => {
-    test('goes over the internet by default; Advanced opens the PC on the network', async ({
+    test('opens the PC on the network by default; Advanced goes over the internet', async ({
       page,
       request,
     }) => {
@@ -50,6 +50,15 @@ test.describe
       try {
         const screenId = await firstScreenId(request)
         const url = await openScreenLink(page, screenId)
+        await expect(url).toHaveValue(
+          new RegExp(`^http://[\\d.]+:\\d+/screen/${screenId}#g=scr_`),
+        )
+        const token = new URLSearchParams(
+          (await url.inputValue()).split('#')[1],
+        ).get('g')
+
+        await page.getByRole('button', { name: 'Advanced' }).click()
+        await page.getByTestId('screen-link-way-internet').check()
         // The public web app's address, never this computer's.
         await expect(url).toHaveValue(
           new RegExp(`^${escape(PUBLIC_APP_URL)}/screen/${screenId}#`),
@@ -59,15 +68,7 @@ test.describe
         )
         expect(fragment.get('h')).toBe(secret)
         expect(fragment.get('r')).toBe(relay)
-        expect(fragment.get('g')).toMatch(/^scr_/)
-
-        await page.getByRole('button', { name: 'Advanced' }).click()
-        await page.getByTestId('screen-link-way-network').check()
-        await expect(url).toHaveValue(
-          new RegExp(
-            `^http://[\\d.]+:\\d+/screen/${screenId}#g=${escape(fragment.get('g') ?? '')}$`,
-          ),
-        )
+        expect(fragment.get('g')).toBe(token)
       } finally {
         await setRemoteAccess(request, false)
       }
@@ -80,10 +81,15 @@ test.describe
     }) => {
       const screenId = await firstScreenId(request)
       const url = await openScreenLink(page, screenId)
-      await expect(page.getByTestId('screen-link-internet-off')).toBeVisible()
       await expect(url).toHaveValue(
         new RegExp(`^http://[\\d.]+:\\d+/screen/${screenId}#g=scr_`),
       )
+      // The internet way needs remote access: it says so, and can't be chosen.
+      await page.getByRole('button', { name: 'Advanced' }).click()
+      await expect(page.getByTestId('screen-link-way-internet')).toBeDisabled()
+      await expect(
+        page.getByTestId('screen-link-way-internet-hint'),
+      ).toContainText('Remote access is off')
       const token = new URLSearchParams(
         (await url.inputValue()).split('#')[1],
       ).get('g')

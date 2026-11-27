@@ -1428,11 +1428,11 @@
         "phoneNote": "While the church computer is off, this phone sends it the screen, so keep Church Hub open here.",
         "advanced": "Advanced",
         "internet": "Over the internet",
-        "internetHint": "Recommended. Works from any network; the device connects through Church Hub's servers.",
+        "internetHint": "Works from any network; the device connects through Church Hub's servers.",
         "network": "Only on this network",
-        "networkHint": "The device opens this computer directly. It must be on the same Wi-Fi or network.",
+        "networkHint": "Recommended. The device opens this computer directly; it must be on the same Wi-Fi or network.",
         "address": "Address of this computer",
-        "internetOff": "Remote access is off, so this link works only on this network. Turn it on in Settings › Phones to share it over the internet."
+        "internetOff": "Remote access is off. Turn it on in Settings › Phones to share the screen over the internet."
       }
     },
     "developer": {

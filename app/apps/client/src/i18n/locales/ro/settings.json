@@ -1437,11 +1437,11 @@
         "phoneNote": "Cât timp calculatorul bisericii e oprit, telefonul acesta îi trimite ecranul, așa că lăsați Church Hub deschis aici.",
         "advanced": "Avansat",
         "internet": "Prin internet",
-        "internetHint": "Recomandat. Merge din orice rețea; dispozitivul se conectează prin serverele Church Hub.",
+        "internetHint": "Merge din orice rețea; dispozitivul se conectează prin serverele Church Hub.",
         "network": "Doar în rețeaua aceasta",
-        "networkHint": "Dispozitivul deschide direct acest calculator. Trebuie să fie în aceeași rețea Wi-Fi.",
+        "networkHint": "Recomandat. Dispozitivul deschide direct acest calculator; trebuie să fie în aceeași rețea Wi-Fi.",
         "address": "Adresa acestui calculator",
-        "internetOff": "Accesul de la distanță e oprit, așa că linkul merge doar în rețeaua aceasta. Porniți-l din Setări › Telefoane ca să-l trimiteți prin internet."
+        "internetOff": "Accesul de la distanță e oprit. Porniți-l din Setări › Telefoane ca să trimiteți ecranul prin internet."
       }
     },
     "developer": {

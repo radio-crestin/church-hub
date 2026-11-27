@@ -38,7 +38,7 @@ export function ScreenLinkModal({
   const [link, setLink] = useState<MadeScreenLink | null>(null)
   const [failed, setFailed] = useState(false)
   const [revoking, setRevoking] = useState(false)
-  const [way, setWay] = useState<ScreenLinkWay>('internet')
+  const [way, setWay] = useState<ScreenLinkWay>('network')
   const [address, setAddress] = useState('')
   const url =
     way === 'internet'
@@ -53,8 +53,8 @@ export function ScreenLinkModal({
     makeScreenLink(screenId).then(
       (made) => {
         setLink(made)
-        // Over the internet unless the PC's remote access is off.
-        setWay(made.internet ? 'internet' : 'network')
+        // Directly on the church network, unless there is none (a phone).
+        setWay(made.network.length > 0 ? 'network' : 'internet')
         setAddress(made.network[0]?.address ?? '')
       },
       (error) => {
@@ -130,7 +130,7 @@ export function ScreenLinkModal({
           </div>
         ) : (
           <>
-            {!link.internet && (
+            {!link.internet && link.network.length === 0 && (
               <p
                 className="text-sm text-fg"
                 data-testid="screen-link-internet-off"

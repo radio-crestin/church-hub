@@ -18,9 +18,9 @@ interface ScreenLinkWaysProps {
 }
 
 /**
- * The advanced choice of a screen link (T-214): over the internet, the
- * default, or directly on the church network, by one of the PC's addresses.
- * Folded away unless the internet way is off.
+ * The advanced choice of a screen link (T-214): directly on the church
+ * network, the default, by one of the PC's addresses, or over the internet
+ * (WebRTC), which needs the PC's remote access on. Folded away at first.
  */
 export function ScreenLinkWays({
   way,
@@ -31,20 +31,24 @@ export function ScreenLinkWays({
   onAddress,
 }: ScreenLinkWaysProps) {
   const { t } = useTranslation('settings')
-  const [open, setOpen] = useState(!hasInternet)
+  const [open, setOpen] = useState(false)
   const id = useId()
   const options = [
-    {
-      value: 'internet' as const,
-      title: t('sections.screens.link.internet'),
-      hint: t('sections.screens.link.internetHint'),
-      disabled: !hasInternet,
-    },
     {
       value: 'network' as const,
       title: t('sections.screens.link.network'),
       hint: t('sections.screens.link.networkHint'),
       disabled: false,
+    },
+    {
+      value: 'internet' as const,
+      title: t('sections.screens.link.internet'),
+      hint: t(
+        hasInternet
+          ? 'sections.screens.link.internetHint'
+          : 'sections.screens.link.internetOff',
+      ),
+      disabled: !hasInternet,
     },
   ]
 
@@ -92,7 +96,10 @@ export function ScreenLinkWays({
                 <span className="block text-sm font-medium text-fg">
                   {option.title}
                 </span>
-                <span className="block text-xs text-fg-hint mt-0.5">
+                <span
+                  className="block text-xs text-fg-hint mt-0.5"
+                  data-testid={`screen-link-way-${option.value}-hint`}
+                >
                   {option.hint}
                 </span>
               </span>
