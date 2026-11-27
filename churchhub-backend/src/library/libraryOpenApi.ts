@@ -67,7 +67,53 @@ export const libraryOpenApiPaths = {
       description:
         'The public URL of libraries/catalog.json: {format: church-hub-library-catalog, version: 1, libraries: [{sourceId, name, publisher, songCount, updatedAt}]}, the libraries their publishers listed. A library’s manifest is at <sourceId>/manifest.json next to it.',
       responses: {
-        '200': ok('Its URL', { catalogUrl: { type: 'string' } }),
+        '200': ok('Their URLs', {
+          catalogUrl: { type: 'string' },
+          featuredUrl: {
+            type: 'string',
+            description:
+              'libraries/featured.json: {format: church-hub-featured-sources, version: 1, updatedAt, sources: [{sourceId, name, categoryName, description, homepage, license}]}, the sources every app lists',
+          },
+        }),
+      },
+    },
+  },
+  '/sync/featured-sources': {
+    put: {
+      summary: 'Publish the sources every app lists',
+      description:
+        'The libraries Church Hub manages (no church’s: the curated one, Resurse Creștine…) every app offers, in order. Each must be published already. A curator ticket or the build’s LIBRARY_PUBLISH_TOKEN.',
+      security: [{ ownerTicket: [] }, { publishToken: [] }],
+      requestBody: json(
+        {
+          sources: {
+            type: 'array',
+            maxItems: 100,
+            items: {
+              type: 'object',
+              properties: {
+                sourceId: { type: 'string' },
+                name: { type: 'string' },
+                categoryName: { type: 'string' },
+                description: { type: 'string' },
+                homepage: { type: 'string' },
+                license: { type: 'string' },
+              },
+              required: ['sourceId', 'name', 'categoryName'],
+            },
+          },
+        },
+        ['sources']
+      ),
+      responses: {
+        '200': ok('Published', {
+          format: { type: 'string' },
+          version: { type: 'integer' },
+          updatedAt: { type: 'string' },
+          sources: { type: 'array', items: { type: 'object' } },
+        }),
+        ...writeErrors,
+        '400': error('Not a list, a church’s library, or one not published yet (invalid_request, not_published)'),
       },
     },
   },

@@ -55,6 +55,12 @@ export const syncOpenApi = {
         description:
           'A device token (chs_…): the church server’s from registration, or a device’s from POST devices.',
       },
+      publishToken: {
+        type: 'http',
+        scheme: 'bearer',
+        description:
+          'LIBRARY_PUBLISH_TOKEN: the build that publishes the libraries Church Hub manages.',
+      },
       ownerTicket: {
         type: 'http',
         scheme: 'bearer',

@@ -2,6 +2,8 @@
 export const libraryKeys = {
   /** Public: the listed libraries (updateCatalog). */
   catalog: 'libraries/catalog.json',
+  /** Public: the sources Church Hub offers every app (writeFeatured). */
+  featured: 'libraries/featured.json',
   /** Public, unlisted: `libraries/<sourceId>/`. */
   prefix: (sourceId: string) => `libraries/${sourceId}/`,
   manifest: (sourceId: string) => `libraries/${sourceId}/manifest.json`,

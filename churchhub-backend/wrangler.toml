@@ -102,6 +102,8 @@ COOKIE_MAX_AGE = 600
 #   S3_STATE_BUCKET, SYNC_COMPACT_AFTER). Unset = /sync/* answers 503.
 #   The curated Church Hub Library's curators: LIBRARY_CURATORS (Google
 #   emails or subs, comma-separated). Unset = nobody curates.
+#   LIBRARY_PUBLISH_TOKEN: the build that publishes the libraries Church
+#   Hub manages (Resurse Creștine…) writes them with it (openssl rand -hex 32).
 # - Cloud backup (free, Google sign-in; a PRIVATE bucket of its own, never
 #   the public sync bucket): BACKUP_SECRET, BACKUP_KEY_SECRET (never rotate:
 #   it derives every account key), BACKUP_S3_ENDPOINT, BACKUP_S3_BUCKET,
