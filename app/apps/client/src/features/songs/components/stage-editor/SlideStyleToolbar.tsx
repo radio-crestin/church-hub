@@ -335,8 +335,8 @@ export function SlideStyleToolbar({
     () => (active: boolean) =>
       `flex items-center justify-center rounded-md border p-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
         active
-          ? 'border-transparent bg-selected text-fg'
-          : 'border-line text-fg-label hover:bg-hover'
+          ? 'border-focus bg-selected text-fg'
+          : 'border-line-strong text-fg-label hover:bg-hover'
       }`,
     [],
   )
@@ -344,7 +344,7 @@ export function SlideStyleToolbar({
   return (
     <div
       data-testid="slide-style-toolbar"
-      className="mb-2 flex flex-wrap items-center gap-1 rounded-lg border border-line bg-panel px-2 py-1.5"
+      className="flex flex-wrap items-center gap-1 rounded-lg border border-line bg-panel px-2 py-1.5"
     >
       <button
         type="button"

@@ -1,7 +1,6 @@
 import type { ParsedSong } from '~/features/song-import'
 import type { SongMetadata } from '~/features/songs/components/SongDetailsSection'
-import type { LocalSlide } from '~/features/songs/components/SongSlideList'
-import type { SongVersionSuggestion } from '~/features/songs/types'
+import type { LocalSlide, SongVersionSuggestion } from '~/features/songs/types'
 
 /**
  * One external song parsed from a source provider's catalog, before any

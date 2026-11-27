@@ -3,14 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useToast } from '~/ui/toast'
-import {
-  defaultSongMetadata,
-  SongDetailsSection,
-  type SongMetadata,
-} from './SongDetailsSection'
-import { type LocalSlide } from './SongSlideList'
-import { SongSlidesSection } from './SongSlidesSection'
-import { useSong, useUpsertSong } from '../hooks'
+import { SongEditorBody } from './song-editor/SongEditorBody'
+import type { SongEditorMode } from './song-editor/SongEditorModeSwitch'
+import { useSongDraft } from '../hooks/useSongDraft'
 
 interface SongEditorModalProps {
   isOpen: boolean
@@ -19,211 +14,64 @@ interface SongEditorModalProps {
   onSaved?: () => void
 }
 
+/**
+ * The song editor in a dialog, for the pencils in Marcaje and Programe: the
+ * same editor as the song page's, so a song is edited the same way wherever
+ * it is opened from. Saves with its button or Ctrl/Cmd+S, then closes.
+ */
 export function SongEditorModal({
   isOpen,
   onClose,
   songId,
   onSaved,
 }: SongEditorModalProps) {
+  return isOpen ? (
+    <OpenSongEditorModal songId={songId} onClose={onClose} onSaved={onSaved} />
+  ) : null
+}
+
+function OpenSongEditorModal({
+  songId,
+  onClose,
+  onSaved,
+}: Omit<SongEditorModalProps, 'isOpen'>) {
   const { t } = useTranslation(['songs', 'common'])
   const { showToast } = useToast()
   const dialogRef = useRef<HTMLDialogElement>(null)
   // The dropdowns inside this dialog must portal INTO it: `showModal()` puts
   // the dialog in the browser's top layer, above every z-index in the body.
-  // State rather than the ref alone, so the first render with a real node
-  // re-renders the children that need it.
   const [dialogEl, setDialogEl] = useState<HTMLDialogElement | null>(null)
   const mouseDownTargetRef = useRef<EventTarget | null>(null)
+  const [mode, setMode] = useState<SongEditorMode>('slides')
+  const { song, draft, update, isLoading, isDirty, save, isSaving } =
+    useSongDraft(songId)
 
-  const { data: song, isLoading } = useSong(songId)
-  const upsertMutation = useUpsertSong()
-
-  // Local state for editing
-  // NOTE: When adding new fields to song editing, ensure they are:
-  // 1. Added to the local state here
-  // 2. Initialized from loaded song data in useEffect
-  // 3. Included in handleSave mutation call
-  const [title, setTitle] = useState('')
-  const [categoryId, setCategoryId] = useState<number | null>(null)
-  const [tagIds, setTagIds] = useState<number[]>([])
-  const [slides, setSlides] = useState<LocalSlide[]>([])
-  const [metadata, setMetadata] = useState<SongMetadata>(defaultSongMetadata)
-  const [isInitialized, setIsInitialized] = useState(false)
-
-  // Initialize local state when song is loaded
   useEffect(() => {
-    if (song && isOpen) {
-      setTitle(song.title)
-      setCategoryId(song.categoryId)
-      setTagIds(song.tags.map((tag) => tag.id))
-      // Notes and styling are edited on the stage, not here, but they ride
-      // along: a save rewrites every slide it sends, and one sent without them
-      // is stored without them.
-      setSlides(
-        song.slides.map((s) => ({
-          id: s.id,
-          content: s.content,
-          chords: s.chords,
-          sortOrder: s.sortOrder,
-          label: s.label,
-          notes: s.notes,
-          styleOverrides: s.styleOverrides,
-        })),
-      )
-      setMetadata({
-        author: song.author,
-        copyright: song.copyright,
-        ccli: song.ccli,
-        tempo: song.tempo,
-        timeSignature: song.timeSignature,
-        theme: song.theme,
-        altTheme: song.altTheme,
-        hymnNumber: song.hymnNumber,
-        keyLine: song.keyLine,
-        presentationOrder: song.presentationOrder,
-        sourceFilename: song.sourceFilename,
-      })
-      setIsInitialized(true)
-    }
-  }, [song, isOpen])
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setIsInitialized(false)
-    }
-  }, [isOpen])
-
-  // Dialog open/close handling
-  useEffect(() => {
-    if (isOpen) {
-      dialogRef.current?.showModal()
-    } else {
-      dialogRef.current?.close()
-    }
-  }, [isOpen])
+    const dialog = dialogRef.current
+    if (dialog && !dialog.open) dialog.showModal()
+  }, [])
 
   const handleSave = useCallback(async () => {
-    if (!title.trim()) return
+    if (isSaving || !isDirty) return
+    if (!(await save())) return
+    showToast(t('songs:messages.saved'), 'success')
+    onSaved?.()
+    onClose()
+  }, [isSaving, isDirty, save, showToast, t, onSaved, onClose])
 
-    const result = await upsertMutation.mutateAsync({
-      id: songId,
-      title: title.trim(),
-      categoryId,
-      tagIds,
-      slides: slides.map((s, idx) => ({
-        id: typeof s.id === 'number' ? s.id : undefined,
-        content: s.content,
-        chords: s.chords,
-        sortOrder: idx,
-        label: s.label,
-        notes: s.notes,
-        styleOverrides: s.styleOverrides,
-      })),
-      // Include all metadata fields to preserve them during save
-      author: metadata.author,
-      copyright: metadata.copyright,
-      ccli: metadata.ccli,
-      tempo: metadata.tempo,
-      timeSignature: metadata.timeSignature,
-      theme: metadata.theme,
-      altTheme: metadata.altTheme,
-      hymnNumber: metadata.hymnNumber,
-      keyLine: metadata.keyLine,
-      presentationOrder: metadata.presentationOrder,
-    })
-
-    if (result.success && result.data) {
-      showToast(t('songs:messages.saved'), 'success')
-      // Update local state with saved data
-      setTagIds(result.data.tags.map((tag) => tag.id))
-      setSlides(
-        result.data.slides.map((s) => ({
-          id: s.id,
-          content: s.content,
-          chords: s.chords,
-          sortOrder: s.sortOrder,
-          label: s.label,
-          notes: s.notes,
-          styleOverrides: s.styleOverrides,
-        })),
-      )
-      setMetadata({
-        author: result.data.author,
-        copyright: result.data.copyright,
-        ccli: result.data.ccli,
-        tempo: result.data.tempo,
-        timeSignature: result.data.timeSignature,
-        theme: result.data.theme,
-        altTheme: result.data.altTheme,
-        hymnNumber: result.data.hymnNumber,
-        keyLine: result.data.keyLine,
-        presentationOrder: result.data.presentationOrder,
-        sourceFilename: result.data.sourceFilename,
-      })
-      onSaved?.()
-      onClose()
-    } else {
-      showToast(t('songs:messages.error'), 'error')
-    }
-  }, [
-    title,
-    categoryId,
-    tagIds,
-    slides,
-    metadata,
-    songId,
-    upsertMutation,
-    showToast,
-    t,
-    onSaved,
-    onClose,
-  ])
-
-  // CMD+S / Ctrl+S keyboard shortcut to save
   useEffect(() => {
-    if (!isOpen) return
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        if (!upsertMutation.isPending) {
-          handleSave()
-        }
+        void handleSave()
       }
     }
-
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, handleSave, upsertMutation.isPending])
+  }, [handleSave])
 
   const handleClose = () => {
-    if (!upsertMutation.isPending) {
-      onClose()
-    }
-  }
-
-  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDialogElement>) => {
-    mouseDownTargetRef.current = e.target
-  }
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-    // Only close if both mousedown and mouseup happened on the backdrop
-    if (
-      e.target === dialogRef.current &&
-      mouseDownTargetRef.current === dialogRef.current
-    ) {
-      handleClose()
-    }
-  }
-
-  const showLoading = isLoading || !isInitialized
-
-  const handleMetadataChange = (
-    field: keyof SongMetadata,
-    value: string | null,
-  ) => {
-    setMetadata((prev) => ({ ...prev, [field]: value }))
+    if (!isSaving) onClose()
   }
 
   return (
@@ -232,75 +80,82 @@ export function SongEditorModal({
         dialogRef.current = node
         setDialogEl(node)
       }}
-      onCancel={handleClose}
-      onMouseDown={handleBackdropMouseDown}
-      onClick={handleBackdropClick}
+      onCancel={(e) => {
+        e.preventDefault()
+        handleClose()
+      }}
+      onMouseDown={(e) => {
+        mouseDownTargetRef.current = e.target
+      }}
+      onClick={(e) => {
+        // Only a press that starts and ends on the backdrop closes it.
+        if (
+          e.target === dialogRef.current &&
+          mouseDownTargetRef.current === dialogRef.current
+        ) {
+          handleClose()
+        }
+      }}
       data-testid="song-editor-modal"
-      className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-7xl h-[calc(100dvh-2rem)] max-h-none p-0 rounded-lg bg-panel backdrop:bg-black/50 z-50"
+      className="fixed inset-0 z-50 m-auto h-[calc(100dvh-2rem)] max-h-none w-[calc(100vw-2rem)] max-w-[110rem] rounded-lg bg-panel p-0 backdrop:bg-black/50"
     >
-      <div className="flex flex-col h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-line">
-          <h2 className="text-base font-semibold text-fg">
-            {showLoading ? (
-              <span className="inline-block w-48 h-6 bg-field rounded animate-pulse" />
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b border-line p-4">
+          <h2 className="truncate text-lg font-semibold text-fg">
+            {isLoading ? (
+              <span className="inline-block h-6 w-48 animate-pulse rounded bg-field" />
             ) : (
-              title || t('songs:editor.titlePlaceholder')
+              draft.title || t('songs:editor.titlePlaceholder')
             )}
           </h2>
           <button
             type="button"
             onClick={handleClose}
-            disabled={upsertMutation.isPending}
-            className="p-1 rounded hover:bg-hover disabled:opacity-50"
+            disabled={isSaving}
+            aria-label={t('common:buttons.close')}
+            className="rounded p-1 hover:bg-hover disabled:opacity-50"
           >
             <X size={20} className="text-fg-hint" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Song Details */}
-          <SongDetailsSection
-            title={title}
-            categoryId={categoryId}
-            tagIds={tagIds}
-            metadata={metadata}
-            isLoading={showLoading}
-            onTitleChange={setTitle}
-            onCategoryChange={setCategoryId}
-            onTagsChange={setTagIds}
-            onMetadataChange={handleMetadataChange}
-            idPrefix="modal-"
-            portalContainer={dialogEl}
-          />
-
-          {/* Slides Section */}
-          <SongSlidesSection
-            slides={slides}
-            onSlidesChange={setSlides}
-            isLoading={showLoading}
-          />
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4 lg:overflow-hidden">
+          {isLoading ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-fg" />
+            </div>
+          ) : (
+            <SongEditorBody
+              songId={songId}
+              draft={draft}
+              onChange={update}
+              mode={mode}
+              onModeChange={setMode}
+              presentationCount={song?.presentationCount}
+              lastManualEdit={song?.lastManualEdit}
+              portalContainer={dialogEl}
+              idPrefix="modal-"
+            />
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-line">
+        <div className="flex items-center justify-end gap-3 border-t border-line p-4">
           <button
             type="button"
             onClick={handleClose}
-            disabled={upsertMutation.isPending}
-            className="h-9 px-3.5 text-sm font-medium bg-field text-fg hover:bg-hover rounded-lg disabled:opacity-50"
+            disabled={isSaving}
+            className="rounded-lg px-4 py-2 text-fg-body hover:bg-hover disabled:opacity-50"
           >
             {t('common:buttons.cancel')}
           </button>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={upsertMutation.isPending || showLoading || !title.trim()}
+            onClick={() => void handleSave()}
+            disabled={isSaving || isLoading || !draft.title.trim() || !isDirty}
             data-testid="song-editor-modal-save"
-            className="inline-flex items-center gap-2 h-9 px-3.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {upsertMutation.isPending ? (
+            {isSaving ? (
               <Loader2 size={18} className="animate-spin" />
             ) : (
               <Save size={18} />

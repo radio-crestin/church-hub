@@ -10,7 +10,8 @@ import type {
   TemporaryContent,
 } from '~/features/presentation'
 import { ScreenPreview, usePresentationContent } from '~/features/presentation'
-import type { LocalSlide } from '../SongSlideList'
+import { useIsNearView } from '~/hooks/useIsNearView'
+import type { LocalSlide } from '../../types'
 
 interface SlideThumbnailProps {
   screen: ScreenWithConfigs
@@ -65,29 +66,9 @@ export function SlideThumbnail({
     isDragging,
   } = useSortable({ id: slide.id })
 
-  const previewContent = useMemo<TemporaryContent>(
-    () => ({
-      type: 'song',
-      data: {
-        songId,
-        title,
-        keyLine,
-        slides: slides.map((s) => ({
-          id: typeof s.id === 'number' ? s.id : 0,
-          content: s.content,
-          chords: s.chords ?? null,
-          sortOrder: s.sortOrder,
-          styleOverrides: s.styleOverrides ?? null,
-        })),
-        currentSlideIndex: index,
-        background,
-      },
-    }),
-    [songId, title, keyLine, slides, index, background],
-  )
-
-  const { contentType, contentData, contentKey, isVisible } =
-    usePresentationContent({ screen, includeNextSlide: false, previewContent })
+  // The mini preview renders once the thumbnail comes near the filmstrip's
+  // view: drawing every slide of a long song up front held up the stage.
+  const [previewRef, isNearView] = useIsNearView<HTMLButtonElement>()
 
   const label = slide.label?.trim()
 
@@ -124,6 +105,7 @@ export function SlideThumbnail({
 
       {/* Mini preview */}
       <button
+        ref={previewRef}
         type="button"
         data-testid="stage-thumbnail"
         onClick={onSelect}
@@ -134,15 +116,20 @@ export function SlideThumbnail({
         }`}
         aria-current={isActive}
       >
-        <ScreenPreview
-          screen={screen}
-          contentType={contentType}
-          contentData={contentData}
-          contentKey={contentKey}
-          isVisible={isVisible}
-          playVideo={false}
-          hideBackground={hideBackground}
-        />
+        {isNearView ? (
+          <ThumbnailPreview
+            screen={screen}
+            songId={songId}
+            title={title}
+            keyLine={keyLine}
+            background={background}
+            hideBackground={hideBackground}
+            slides={slides}
+            index={index}
+          />
+        ) : (
+          <span className="absolute inset-0 bg-black" />
+        )}
         {label && (
           <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/60 text-white">
             {label}
@@ -202,5 +189,65 @@ export function SlideThumbnail({
         </span>
       </button>
     </div>
+  )
+}
+
+type ThumbnailPreviewProps = Pick<
+  SlideThumbnailProps,
+  | 'screen'
+  | 'songId'
+  | 'title'
+  | 'keyLine'
+  | 'background'
+  | 'hideBackground'
+  | 'slides'
+  | 'index'
+>
+
+/** The slide drawn as the screen would show it. */
+function ThumbnailPreview({
+  screen,
+  songId,
+  title,
+  keyLine,
+  background,
+  hideBackground = false,
+  slides,
+  index,
+}: ThumbnailPreviewProps) {
+  const previewContent = useMemo<TemporaryContent>(
+    () => ({
+      type: 'song',
+      data: {
+        songId,
+        title,
+        keyLine,
+        slides: slides.map((s) => ({
+          id: typeof s.id === 'number' ? s.id : 0,
+          content: s.content,
+          chords: s.chords ?? null,
+          sortOrder: s.sortOrder,
+          styleOverrides: s.styleOverrides ?? null,
+        })),
+        currentSlideIndex: index,
+        background,
+      },
+    }),
+    [songId, title, keyLine, slides, index, background],
+  )
+
+  const { contentType, contentData, contentKey, isVisible } =
+    usePresentationContent({ screen, includeNextSlide: false, previewContent })
+
+  return (
+    <ScreenPreview
+      screen={screen}
+      contentType={contentType}
+      contentData={contentData}
+      contentKey={contentKey}
+      isVisible={isVisible}
+      playVideo={false}
+      hideBackground={hideBackground}
+    />
   )
 }

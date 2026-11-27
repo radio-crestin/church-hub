@@ -14,8 +14,8 @@ import { ConfirmModal } from '~/ui/modal'
 import { isTypingTarget } from '~/utils/isTypingTarget'
 import { SlideFilmstrip } from './SlideFilmstrip'
 import { StageCanvas } from './StageCanvas'
+import type { LocalSlide } from '../../types'
 import { plainTextToSlideHtml } from '../../utils/plainTextToSlideHtml'
-import { type LocalSlide } from '../SongSlideList'
 
 /** How many slides after the active one the filmstrip keeps in view. */
 const FILMSTRIP_LOOKAHEAD = 2
@@ -47,12 +47,6 @@ interface SongStageEditorProps {
    * program page, another device. The canvas follows it unless a slide is
    * being edited. */
   followSeq?: number
-  /** When false the canvas is read-only (presentation/navigation mode). */
-  editable?: boolean
-  /** PowerPoint-style implicit editing: click the stage to edit, and leave edit
-   * mode automatically on any slide change. Off = the canvas is always editable
-   * (the classic /edit form). */
-  clickToEdit?: boolean
   /** Project a slide to the screen by its index, without moving the editor. */
   onProjectSlide?: (index: number) => void
   /** Notifies the parent which slide is currently selected on the canvas, so it
@@ -74,9 +68,6 @@ interface SongStageEditorProps {
   /** Rendered at the very bottom of the canvas column, below the stage/nav
    * zone (e.g. the speaker-notes panel pinned to the column footer). */
   columnFooter?: React.ReactNode
-  /** Fill the parent's height (filmstrip runs to the bottom). Needs a bounded
-   * parent — used on the song page, not on the scrolling /edit form. */
-  fillHeight?: boolean
   onSlidesChange: (slides: LocalSlide[]) => void
 }
 
@@ -87,7 +78,9 @@ function reindex(slides: LocalSlide[]): LocalSlide[] {
 /**
  * PowerPoint-style song editor: a filmstrip of slide thumbnails plus a large
  * canvas that renders the current slide exactly as it will be projected and
- * lets the operator edit the lyrics directly on it.
+ * lets the operator edit the lyrics directly on it (click the stage to edit;
+ * changing slide leaves editing). It fills its parent's height on a large
+ * screen, so the parent must be bounded.
  */
 export function SongStageEditor({
   slides,
@@ -102,15 +95,12 @@ export function SongStageEditor({
   navDir = 1,
   isPresenting = false,
   followSeq = 0,
-  editable = true,
-  clickToEdit = false,
   onProjectSlide,
   onActiveSlideChange,
   canvasToolbar,
   textVersion,
   canvasFooter,
   columnFooter,
-  fillHeight = false,
   onSlidesChange,
 }: SongStageEditorProps) {
   const { t } = useTranslation('songs')
@@ -418,17 +408,13 @@ export function SongStageEditor({
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col lg:flex-row gap-3 lg:gap-1 ${
-        fillHeight ? 'lg:h-full lg:min-h-0' : ''
-      }`}
+      className="flex flex-col lg:flex-row gap-3 lg:gap-1 lg:h-full lg:min-h-0"
     >
       {/* Filmstrip (column 1, resizable) */}
       <div
         ref={filmstripScrollRef}
         data-testid="stage-filmstrip-scroll"
-        className={`order-2 lg:order-1 lg:overflow-y-auto lg:pr-1 ${
-          fillHeight ? 'lg:h-full lg:min-h-0' : 'lg:max-h-[70vh]'
-        }`}
+        className="order-2 lg:order-1 lg:overflow-y-auto lg:pr-1 lg:h-full lg:min-h-0"
         style={isLargeScreen ? { width: `${dividerPosition}%` } : undefined}
       >
         <SlideFilmstrip
@@ -452,9 +438,7 @@ export function SongStageEditor({
 
       {/* Draggable divider */}
       <div
-        className={`hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-hover rounded transition-colors group shrink-0 ${
-          fillHeight ? 'lg:h-full' : ''
-        }`}
+        className="hidden lg:flex lg:order-2 items-center justify-center w-2 cursor-col-resize hover:bg-hover rounded transition-colors group shrink-0 lg:h-full"
         onMouseDown={handleDividerMouseDown}
       >
         <GripVertical
@@ -463,7 +447,7 @@ export function SongStageEditor({
         />
       </div>
 
-      {/* Canvas column. In fillHeight mode a size-container "stage zone" fills
+      {/* Canvas column. A size-container "stage zone" fills
           the space above the column footer: the stage fits (letterboxed) and is
           top-aligned with the nav hugging its bottom, so collapsing the notes
           leaves the stage put (it just grows) rather than re-centring. The
@@ -476,45 +460,20 @@ export function SongStageEditor({
           width: its height is the stage's at that width, and with no container
           for the block axis `cqh` falls back to the viewport's height, so a
           phone held sideways still gets a stage that fits on screen. */}
-      <div
-        className={`order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col ${
-          fillHeight ? 'lg:min-h-0' : ''
-        }`}
-      >
-        {fillHeight ? (
-          <div className="flex flex-col items-center [container-type:inline-size] lg:min-h-0 lg:flex-1 lg:[container-type:size]">
-            <StageCanvas
-              screen={screen}
-              previewContent={previewContent}
-              hideBackground={hideBackground}
-              canEdit={editable && activeIndex >= 0}
-              clickToEdit={clickToEdit}
-              fitHeight
-              editingToolbar={canvasToolbar}
-              onEditText={handleEditText}
-              textVersion={textVersion}
-              onEditingChange={handleEditingChange}
-            />
-            {canvasFooter}
-          </div>
-        ) : (
-          <>
-            <div className="shrink-0">
-              <StageCanvas
-                screen={screen}
-                previewContent={previewContent}
-                hideBackground={hideBackground}
-                canEdit={editable && activeIndex >= 0}
-                clickToEdit={clickToEdit}
-                editingToolbar={canvasToolbar}
-                onEditText={handleEditText}
-                textVersion={textVersion}
-                onEditingChange={handleEditingChange}
-              />
-            </div>
-            {canvasFooter}
-          </>
-        )}
+      <div className="order-1 lg:order-3 lg:flex-1 lg:min-w-0 flex flex-col lg:min-h-0">
+        <div className="flex flex-col items-center [container-type:inline-size] lg:min-h-0 lg:flex-1 lg:[container-type:size]">
+          <StageCanvas
+            screen={screen}
+            previewContent={previewContent}
+            hideBackground={hideBackground}
+            canEdit={activeIndex >= 0}
+            editingToolbar={canvasToolbar}
+            onEditText={handleEditText}
+            textVersion={textVersion}
+            onEditingChange={handleEditingChange}
+          />
+          {canvasFooter}
+        </div>
         {columnFooter}
       </div>
 

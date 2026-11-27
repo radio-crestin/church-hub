@@ -93,7 +93,7 @@ test.describe('Song partial update preserves metadata', () => {
     }
   })
 
-  test('editing verses in slides edit mode keeps the keyLine (UI)', async ({
+  test('editing verses as text in the song editor keeps the keyLine (UI)', async ({
     page,
     request,
   }) => {
@@ -120,20 +120,19 @@ test.describe('Song partial update preserves metadata', () => {
         timeout: 10000,
       })
 
-      // Enter slides edit mode and change only the verses. Target the
-      // slides editor by its placeholder, not a generic `textarea` locator.
-      await page.getByTestId('toggle-slides-edit-mode').click()
-      const textarea = page.getByPlaceholder(
-        /first slide lyrics|versurile primului slide/i,
-      )
+      // Open the editor, switch to text and change only the verses.
+      await page.getByTestId('song-edit').click()
+      await page.getByTestId('song-editor-mode-text').click()
+      const textarea = page.getByTestId('song-text-input')
       await expect(textarea).toBeVisible()
       await textarea.fill('Verse one edited\n\nVerse two edited')
 
-      // Save and wait for edit mode to exit
-      await page.getByTestId('save-slides-edit-mode').click()
-      await expect(page.getByTestId('save-slides-edit-mode')).toBeHidden({
+      // Save, then go back to the song page
+      await page.getByTestId('song-editor-save').click()
+      await expect(page.getByTestId('song-editor-save')).toBeDisabled({
         timeout: 10000,
       })
+      await page.getByTestId('song-editor-done').click()
 
       // The keyLine chip must still be there
       await expect(page.getByText('Do Major').first()).toBeVisible()

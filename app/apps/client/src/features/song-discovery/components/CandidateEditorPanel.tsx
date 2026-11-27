@@ -5,8 +5,7 @@ import {
   SongDetailsSection,
   type SongMetadata,
 } from '~/features/songs/components/SongDetailsSection'
-import type { LocalSlide } from '~/features/songs/components/SongSlideList'
-import { SongSlidesSection } from '~/features/songs/components/SongSlidesSection'
+import { SongTextEditor } from '~/features/songs/components/song-editor/SongTextEditor'
 import { SimilarInLibraryPanel } from './SimilarInLibraryPanel'
 import type { CandidateDraft, StagingItem } from '../types'
 import { slidesToLines } from '../utils/lyricsDiff'
@@ -18,7 +17,7 @@ interface CandidateEditorPanelProps {
 
 /**
  * Edits a not-yet-imported candidate using the SAME building blocks as the
- * real song editor (`SongDetailsSection` + `SongSlidesSection`), driven purely
+ * real song editor (`SongDetailsSection` + `SongTextEditor`), driven purely
  * by the staging item's in-memory draft. Nothing touches the DB until the user
  * imports the approved set. The "similar in library" panel sits on top so the
  * operator sees potential duplicates while editing.
@@ -64,10 +63,14 @@ export function CandidateEditorPanel({
         }
       />
 
-      <SongSlidesSection
-        slides={draft.slides}
-        onSlidesChange={(slides: LocalSlide[]) => patch({ slides })}
-      />
+      <div className="h-[60vh]">
+        <SongTextEditor
+          // Each candidate's text is its own.
+          key={item.tempId}
+          slides={draft.slides}
+          onSlidesChange={(slides) => patch({ slides })}
+        />
+      </div>
 
       <p className="text-xs text-fg-hint">{t('editorHint')}</p>
     </div>

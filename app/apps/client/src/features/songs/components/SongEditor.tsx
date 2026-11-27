@@ -1,609 +1,203 @@
-import { useNavigate } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  CalendarPlus,
-  Loader2,
-  Play,
-  Save,
-  Trash2,
-  X,
-} from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, Check, Loader2, Save, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import {
-  type ScreenBackgroundConfig,
-  useNavigateTemporary,
-  usePresentationState,
-  usePresentTemporarySong,
-} from '~/features/presentation'
-import {
-  AddSongToScheduleModal,
-  liveProgramItemForSong,
-  ScheduleLiveItemPanel,
-  useScheduleFlatNavigation,
-  useSelectedScheduleId,
-} from '~/features/schedules'
-import {
-  useEditLayoutAction,
-  Workspace,
-  type WorkspaceLayout,
-  type WorkspacePanel,
-} from '~/features/workspace'
-import { ActionMenu } from '~/ui/menu'
+import { ConfirmModal } from '~/ui/modal'
 import { useToast } from '~/ui/toast'
-import {
-  defaultSongMetadata,
-  SongDetailsSection,
-  type SongMetadata,
-} from './SongDetailsSection'
-import { SongEditorSlideRail } from './SongEditorSlideRail'
-import { type LocalSlide } from './SongSlideList'
-import { SongSlidesSection } from './SongSlidesSection'
-import { useIsLargeScreen } from '../hooks/useIsLargeScreen'
-import type { SongSlide } from '../types'
-import { expandSongSlidesWithChoruses } from '../utils/expandSongSlides'
-
-/**
- * Where the editor's panels start out: the form (details and slide cards) on
- * the left and the verse rail on the right. Operators drag and resize them
- * from there, like the song page's panels.
- */
-const SONG_EDITOR_WORKSPACE_LAYOUT: WorkspaceLayout = {
-  columns: [
-    { id: 'col-1', panelIds: ['form'] },
-    { id: 'col-2', panelIds: ['rail'] },
-  ],
-}
-
-type PendingAction = 'present' | 'addToSchedule' | null
+import { SongEditorBody } from './song-editor/SongEditorBody'
+import type { SongEditorMode } from './song-editor/SongEditorModeSwitch'
+import { UnsavedChangesModal } from './UnsavedChangesModal'
+import { useDeleteSong } from '../hooks/useDeleteSong'
+import { useSongDraft } from '../hooks/useSongDraft'
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard'
 
 interface SongEditorProps {
-  isNew: boolean
-  isLoading?: boolean
-  isSaving: boolean
-  isDeleting?: boolean
-  isDirty?: boolean
+  /** The song to edit, or null for a new one. */
   songId: number | null
-  title: string
-  categoryId: number | null
-  tagIds: number[]
-  slides: LocalSlide[]
-  metadata?: SongMetadata
-  /** The song's own background; null = the screens' own ones apply */
-  background: ScreenBackgroundConfig | null
-  // Read-only tracking fields
-  presentationCount?: number
-  lastManualEdit?: number | null
-  onTitleChange: (title: string) => void
-  onCategoryChange: (categoryId: number | null) => void
-  onTagsChange: (tagIds: number[]) => void
-  onSlidesChange: (slides: LocalSlide[]) => void
-  onMetadataChange?: (field: keyof SongMetadata, value: string | null) => void
-  onBackgroundChange: (background: ScreenBackgroundConfig | null) => void
-  onSave: () => Promise<boolean>
-  onDelete?: () => void
-  onBack: () => void
+  initialMode: SongEditorMode
+  /** Leave the editor (Done): the song page, or the list for a new song. */
+  onClose: () => void
+  /** A new song was stored for the first time. */
+  onCreated: (songId: number) => void
+  /** The song was deleted. */
+  onDeleted: () => void
 }
 
+/**
+ * The song editor as a page, opened by the song page's Edit button: the
+ * editor (`SongEditorBody`) under a bar with Done, Delete and Save. Nothing is
+ * stored until Save (or Ctrl/Cmd+S); leaving with unsaved changes asks first.
+ */
 export function SongEditor({
-  isNew,
-  isLoading,
-  isSaving,
-  isDeleting,
-  isDirty = true,
   songId,
-  title,
-  categoryId,
-  tagIds,
-  slides,
-  metadata = defaultSongMetadata,
-  background,
-  presentationCount = 0,
-  lastManualEdit,
-  onTitleChange,
-  onCategoryChange,
-  onTagsChange,
-  onSlidesChange,
-  onMetadataChange,
-  onBackgroundChange,
-  onSave,
-  onDelete,
-  onBack,
+  initialMode,
+  onClose,
+  onCreated,
+  onDeleted,
 }: SongEditorProps) {
-  const { t } = useTranslation(['songs', 'queue'])
-  const navigate = useNavigate()
+  const { t } = useTranslation(['songs', 'common'])
   const { showToast } = useToast()
-  const isLargeScreen = useIsLargeScreen()
-  const editLayoutAction = useEditLayoutAction('song-editor')
-  const [showAddToScheduleModal, setShowAddToScheduleModal] = useState(false)
-  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
-  const [pendingAction, setPendingAction] = useState<PendingAction>(null)
-  const [isSavingBeforeAction, setIsSavingBeforeAction] = useState(false)
-  const unsavedChangesDialogRef = useRef<HTMLDialogElement>(null)
-  const presentTemporarySong = usePresentTemporarySong()
-  const { data: presentationState } = usePresentationState()
-  const navigateTemporary = useNavigateTemporary()
-  // The selected program is shared app-wide; while a step of that
-  // program is live, the rail's arrows walk the program instead of this song.
-  const selectedScheduleId = useSelectedScheduleId()
-  const scheduleNav = useScheduleFlatNavigation({
-    scheduleId: selectedScheduleId,
-  })
-  const isScheduleLive = scheduleNav.isScheduleLive
+  const { song, draft, update, isLoading, isDirty, save, isSaving } =
+    useSongDraft(songId)
+  const deleteSong = useDeleteSong()
+  const [mode, setMode] = useState<SongEditorMode>(initialMode)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  // A new song moves to its own address once the save has cleared the
+  // unsaved state, or the move itself would be stopped as leaving unsaved.
+  const [createdId, setCreatedId] = useState<number | null>(null)
 
-  // Build expanded slides locally to map a saved slide id → its first
-  // displayIndex (the server expands the same way from its saved data).
-  const displayIndexBySlideId = useMemo(() => {
-    const expandable: SongSlide[] = slides
-      .filter((s) => typeof s.id === 'number')
-      .map((s) => ({
-        id: s.id as number,
-        songId: songId ?? 0,
-        content: s.content,
-        chords: s.chords ?? null,
-        sortOrder: s.sortOrder,
-        label: s.label ?? null,
-        notes: s.notes ?? null,
-        styleOverrides: s.styleOverrides ?? null,
-        createdAt: 0,
-        updatedAt: 0,
-      }))
-    const expanded = expandSongSlidesWithChoruses(expandable)
-    const map = new Map<number, number>()
-    for (const es of expanded) {
-      if (!map.has(es.id)) map.set(es.id, es.displayIndex)
-    }
-    return map
-  }, [slides, songId])
+  const handleSave = useCallback(async () => {
+    if (isSaving) return
+    const stored = await save()
+    if (!stored) return
+    showToast(t('songs:messages.saved'), 'success')
+    if (songId === null) setCreatedId(stored.id)
+  }, [isSaving, save, showToast, t, songId])
 
-  const presentedSlideId = useMemo(() => {
-    if (!songId) return null
-    const temp = presentationState?.temporaryContent
-    if (temp?.type !== 'song' || temp.data.songId !== songId) return null
-    const presentedExpandedIdx = temp.data.currentSlideIndex
-    const presented = temp.data.slides?.[presentedExpandedIdx]
-    return presented?.id ?? null
-  }, [presentationState, songId])
-
-  const handlePresentSlide = useMemo(() => {
-    if (!songId) return undefined
-    return (slideId: number) => {
-      const slideIndex = displayIndexBySlideId.get(slideId) ?? 0
-      void presentTemporarySong.mutateAsync({ songId, slideIndex })
-    }
-  }, [songId, displayIndexBySlideId, presentTemporarySong])
-
-  /** Which slide of THIS song is on the projector, after chorus expansion. */
-  const presentedSlideIndex = useMemo(() => {
-    if (!songId) return null
-    const temp = presentationState?.temporaryContent
-    if (temp?.type !== 'song' || temp.data.songId !== songId) return null
-    return temp.data.currentSlideIndex
-  }, [presentationState, songId])
-
-  /**
-   * Projects one verse from the rail — as a step of the selected program while
-   * that program is on the projector and holds this song, on its own otherwise.
-   */
-  const handlePresentRailSlide = useCallback(
-    async (index: number) => {
-      if (!songId) return
-      const programItem = liveProgramItemForSong(scheduleNav, songId)
-      if (programItem) {
-        await scheduleNav.presentSongSlide(programItem, index)
-        return
-      }
-      await presentTemporarySong.mutateAsync({ songId, slideIndex: index })
-    },
-    [songId, scheduleNav, presentTemporarySong],
-  )
-
-  const handleRailPrev = useCallback(async () => {
-    if (isScheduleLive) {
-      await scheduleNav.goPrev()
-      return
-    }
-    if (presentedSlideIndex !== null) {
-      await navigateTemporary.mutateAsync({ direction: 'prev' })
-    }
-  }, [isScheduleLive, scheduleNav, presentedSlideIndex, navigateTemporary])
-
-  const handleRailNext = useCallback(async () => {
-    if (isScheduleLive) {
-      await scheduleNav.goNext()
-      return
-    }
-    if (presentedSlideIndex !== null) {
-      await navigateTemporary.mutateAsync({ direction: 'next' })
-    }
-  }, [isScheduleLive, scheduleNav, presentedSlideIndex, navigateTemporary])
-
-  const canRailNavigatePrev = isScheduleLive
-    ? scheduleNav.canNavigatePrev
-    : presentedSlideIndex !== null && presentedSlideIndex > 0
-  const canRailNavigateNext = isScheduleLive
-    ? scheduleNav.canNavigateNext
-    : presentedSlideIndex !== null
-
-  /**
-   * While a program step is live the rail follows the projector rather than the
-   * draft — except when the live step IS a slide of this song, where the draft
-   * list already shows it (and shows the unsaved edits with it).
-   */
-  const liveProgramItem = isScheduleLive
-    ? scheduleNav.flatItems[scheduleNav.currentFlatIndex]?.item
-    : undefined
-  const showsLiveProgramItem =
-    !!liveProgramItem &&
-    !(liveProgramItem.itemType === 'song' && liveProgramItem.songId === songId)
-
-  // Handle unsaved changes dialog open/close
   useEffect(() => {
-    if (showUnsavedChangesModal) {
-      unsavedChangesDialogRef.current?.showModal()
-    } else {
-      unsavedChangesDialogRef.current?.close()
-    }
-  }, [showUnsavedChangesModal])
+    if (createdId === null || isDirty) return
+    onCreated(createdId)
+    setCreatedId(null)
+  }, [createdId, isDirty, onCreated])
 
-  const executePresentNow = async () => {
-    if (!songId) return
-
-    try {
-      await presentTemporarySong.mutateAsync({ songId, slideIndex: 0 })
-      showToast(t('queue:messages.presenting'), 'success')
-      navigate({ to: '/songs/$songId', params: { songId: String(songId) } })
-    } catch {
-      showToast(t('queue:messages.error'), 'error')
-    }
-  }
-
-  const handlePresentNow = () => {
-    if (!songId) return
-
-    if (isDirty) {
-      setPendingAction('present')
-      setShowUnsavedChangesModal(true)
-    } else {
-      executePresentNow()
-    }
-  }
-
-  const handleAddToScheduleClick = () => {
-    if (!songId) return
-
-    if (isDirty) {
-      setPendingAction('addToSchedule')
-      setShowUnsavedChangesModal(true)
-    } else {
-      setShowAddToScheduleModal(true)
-    }
-  }
-
-  const handleSaveAndContinue = async () => {
-    setIsSavingBeforeAction(true)
-    const saveSuccess = await onSave()
-    setIsSavingBeforeAction(false)
-    setShowUnsavedChangesModal(false)
-
-    if (saveSuccess) {
-      if (pendingAction === 'present') {
-        executePresentNow()
-      } else if (pendingAction === 'addToSchedule') {
-        setShowAddToScheduleModal(true)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        void handleSave()
       }
     }
-    setPendingAction(null)
-  }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [handleSave])
 
-  const handleContinueWithoutSaving = () => {
-    setShowUnsavedChangesModal(false)
-    if (pendingAction === 'present') {
-      executePresentNow()
-    } else if (pendingAction === 'addToSchedule') {
-      setShowAddToScheduleModal(true)
-    }
-    setPendingAction(null)
-  }
+  const guard = useUnsavedChangesGuard({
+    isDirty: isDirty && !isLoading && createdId === null,
+  })
 
-  const handleCancelAction = () => {
-    setShowUnsavedChangesModal(false)
-    setPendingAction(null)
-  }
-
-  const handleSongAddedToSchedule = (scheduleId: number) => {
-    navigate({
-      to: '/schedules/$scheduleId',
-      params: { scheduleId: String(scheduleId) },
-    })
-  }
-
-  const handleMetadataChange = (
-    field: keyof SongMetadata,
-    value: string | null,
-  ) => {
-    if (onMetadataChange) {
-      onMetadataChange(field, value)
+  const handleDelete = async () => {
+    if (songId === null) return
+    setConfirmDelete(false)
+    if (await deleteSong.mutateAsync(songId)) {
+      showToast(t('songs:messages.deleted'), 'success')
+      onDeleted()
+    } else {
+      showToast(t('songs:messages.error'), 'error')
     }
   }
 
-  const panels: WorkspacePanel[] = [
-    {
-      id: 'form',
-      title: t('songs:editor.formPanel'),
-      render: () => (
-        <div
-          className={`min-w-0 space-y-6 ${isLargeScreen ? 'h-full overflow-y-auto scrollbar-thin pr-1' : ''}`}
-        >
-          {/* Song Details */}
-          <SongDetailsSection
-            title={title}
-            categoryId={categoryId}
-            tagIds={tagIds}
-            metadata={metadata}
-            isLoading={isLoading}
-            isNew={isNew}
-            presentationCount={presentationCount}
-            lastManualEdit={lastManualEdit}
-            onTitleChange={onTitleChange}
-            onCategoryChange={onCategoryChange}
-            onTagsChange={onTagsChange}
-            onMetadataChange={handleMetadataChange}
-            background={background}
-            onBackgroundChange={onBackgroundChange}
-          />
-
-          {/* Slides Section */}
-          <SongSlidesSection
-            slides={slides}
-            presentedSlideId={presentedSlideId}
-            onSlidesChange={onSlidesChange}
-            onPresentSlide={handlePresentSlide}
-            isLoading={isLoading}
-          />
-        </div>
-      ),
-    },
-    {
-      id: 'rail',
-      title: t('songs:editor.slides'),
-      available: isLargeScreen,
-      render: () => (
-        <div className="h-full">
-          {showsLiveProgramItem ? (
-            <div className="h-full overflow-hidden rounded-lg border border-line bg-panel p-3">
-              <ScheduleLiveItemPanel nav={scheduleNav} />
-            </div>
-          ) : (
-            <SongEditorSlideRail
-              slides={slides}
-              presentedIndex={presentedSlideIndex}
-              onPresentSlide={handlePresentRailSlide}
-              onPrevSlide={handleRailPrev}
-              onNextSlide={handleRailNext}
-              canNavigatePrev={canRailNavigatePrev}
-              canNavigateNext={canRailNavigateNext}
-            />
-          )}
-        </div>
-      ),
-    },
-  ]
+  const isNew = songId === null
+  const canSave = !isSaving && !isLoading && !!draft.title.trim() && isDirty
 
   return (
-    <div className="flex flex-col gap-4 lg:h-full lg:overflow-hidden">
-      {/* Header, always in view: on a large screen the page itself does not
-          scroll (the panels below do), on a phone the page scrolls and the
-          header sticks to the top. The bleed (negative margin + matching
-          padding) covers the page padding, so nothing shows above it. The
-          verse rail takes a share of the width, so the room the row gets has
-          nothing to do with the viewport width. It is therefore a query
-          container: the action labels (and the extra button padding they need)
-          only appear once the row itself is wide enough for them AND a
-          readable title. Below that the buttons stay as icons with their
-          `title` tooltips, which keeps the <h1> from being squeezed to zero
-          width. */}
-      <div
-        data-testid="song-editor-sticky-header"
-        className="sticky top-0 z-20 -mx-3 -mt-2 shrink-0 bg-app px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0"
+    <div
+      data-testid="song-editor"
+      className="flex h-full flex-col gap-3 lg:h-[calc(100vh-3rem)] lg:overflow-hidden"
+    >
+      <header
+        data-testid="song-editor-header"
+        className="sticky top-0 z-20 -mx-3 -mt-2 flex shrink-0 items-center gap-2 bg-app px-3 pb-2 pt-2 sm:-mx-4 sm:px-4 md:-mx-6 md:-mt-3 md:px-6 md:pt-3 lg:static lg:m-0 lg:p-0"
       >
-        <div
-          data-testid="song-editor-header"
-          className="@container flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        <button
+          type="button"
+          onClick={onClose}
+          data-testid="song-editor-done"
+          title={t('songEditor.done')}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg p-2 text-sm font-medium text-fg-body hover:bg-hover"
         >
-          <div className="flex items-center gap-4 min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={onBack}
-              data-testid="song-editor-back"
-              className="p-2 rounded-lg hover:bg-hover shrink-0"
-            >
-              <ArrowLeft size={20} className="text-fg-label" />
-            </button>
-            <h1
-              data-testid="song-editor-title"
-              className="text-2xl font-bold text-fg truncate"
-            >
-              {isLoading ? (
-                <span className="inline-block w-48 h-8 bg-field rounded animate-pulse" />
-              ) : isNew ? (
-                t('actions.create')
-              ) : (
-                title || t('editor.titlePlaceholder')
-              )}
-            </h1>
-          </div>
-          <div
-            data-testid="song-editor-header-actions"
-            className="flex items-center gap-2 justify-end shrink-0"
+          <ArrowLeft size={20} />
+          <span className="hidden sm:inline">{t('songEditor.done')}</span>
+        </button>
+        <h1
+          data-testid="song-editor-title"
+          className="min-w-0 flex-1 truncate text-xl font-bold text-fg lg:text-2xl"
+        >
+          {isLoading ? (
+            <span className="inline-block h-7 w-48 animate-pulse rounded bg-field" />
+          ) : (
+            draft.title ||
+            t(isNew ? 'actions.create' : 'editor.titlePlaceholder')
+          )}
+        </h1>
+        <span
+          data-testid="song-editor-status"
+          className="hidden shrink-0 items-center gap-1 text-xs text-fg-hint sm:inline-flex"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 size={13} className="animate-spin" />
+              {t('stageEditor.saving')}
+            </>
+          ) : isDirty ? (
+            t('stageEditor.unsaved')
+          ) : (
+            <>
+              <Check size={13} className="text-green-500" />
+              {t('stageEditor.saved')}
+            </>
+          )}
+        </span>
+        {!isNew && (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            disabled={deleteSong.isPending || isLoading}
+            data-testid="song-editor-delete"
+            title={t('songs:actions.delete')}
+            className="shrink-0 rounded-lg p-2 text-fg-hint hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-900/20"
           >
-            {!isNew && songId && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleAddToScheduleClick}
-                  disabled={isLoading}
-                  className="h-8 px-2 @3xl:px-3 text-sm font-medium bg-raised text-fg shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-hover rounded-lg disabled:opacity-50 transition-colors inline-flex items-center gap-2"
-                  title={t('songs:actions.addToSchedule')}
-                >
-                  <CalendarPlus size={20} />
-                  <span className="hidden @3xl:inline">
-                    {t('songs:actions.addToSchedule')}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePresentNow}
-                  disabled={isLoading || presentTemporarySong.isPending}
-                  className="h-8 px-2 @3xl:px-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
-                  title={t('queue:actions.presentNow')}
-                >
-                  <Play size={20} />
-                  <span className="hidden @3xl:inline">
-                    {t('queue:actions.presentNow')}
-                  </span>
-                </button>
-              </>
-            )}
-            {!isNew && onDelete && (
-              <button
-                type="button"
-                onClick={onDelete}
-                disabled={isDeleting || isLoading}
-                className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                title={t('songs:actions.delete')}
-              >
-                {isDeleting ? (
-                  <Loader2 size={20} className="animate-spin" />
-                ) : (
-                  <Trash2 size={20} />
-                )}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onSave()}
-              data-testid="song-editor-save"
-              disabled={isSaving || isLoading || !title.trim() || !isDirty}
-              className="h-8 px-2 @3xl:px-3 text-sm font-medium bg-primary text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
-              title={t('songs:actions.save')}
-            >
-              {isSaving ? (
-                <Loader2 size={20} className="animate-spin" />
-              ) : (
-                <Save size={20} />
-              )}
-              <span className="hidden @3xl:inline">
-                {t('songs:actions.save')}
-              </span>
-            </button>
-            {/* Panels only form movable columns on a large screen; on a phone
-                they are a plain stack, so there is nothing to rearrange. */}
-            {isLargeScreen && (
-              <ActionMenu
-                items={[editLayoutAction]}
-                label={t('songs:actionsMenu.trigger')}
-                testId="song-editor-actions-menu"
-              />
-            )}
-          </div>
+            <Trash2 size={18} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={!canSave}
+          data-testid="song-editor-save"
+          title={`${t('songs:actions.save')} (Ctrl+S)`}
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        >
+          {isSaving ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <Save size={18} />
+          )}
+          {t('songs:actions.save')}
+        </button>
+      </header>
+
+      {isLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-fg" />
         </div>
-      </div>
-
-      <Workspace
-        id="song-editor"
-        panels={panels}
-        defaultLayout={SONG_EDITOR_WORKSPACE_LAYOUT}
-        defaultColumnSizes={['72%', '28%']}
-        stacked={!isLargeScreen}
-        className="flex-1 lg:min-h-0"
-      />
-
-      {songId && (
-        <AddSongToScheduleModal
-          isOpen={showAddToScheduleModal}
+      ) : (
+        <SongEditorBody
           songId={songId}
-          onClose={() => setShowAddToScheduleModal(false)}
-          onAdded={handleSongAddedToSchedule}
+          draft={draft}
+          onChange={update}
+          mode={mode}
+          onModeChange={setMode}
+          isNew={isNew}
+          presentationCount={song?.presentationCount}
+          lastManualEdit={song?.lastManualEdit}
         />
       )}
 
-      {/* Unsaved Changes Confirmation Modal */}
-      <dialog
-        ref={unsavedChangesDialogRef}
-        className="fixed inset-0 m-auto w-full max-w-md p-0 bg-panel rounded-xl shadow-popover backdrop:bg-black/50"
-        onClick={(e) => {
-          if (
-            e.target === unsavedChangesDialogRef.current &&
-            !isSavingBeforeAction
-          )
-            handleCancelAction()
-        }}
-      >
-        <div className="flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-line">
-            <h2 className="text-base font-semibold text-fg">
-              {isSavingBeforeAction
-                ? t('songs:actions.save')
-                : t('songs:modal.unsavedChangesTitle')}
-            </h2>
-            {!isSavingBeforeAction && (
-              <button
-                type="button"
-                onClick={handleCancelAction}
-                className="p-1 rounded hover:bg-hover"
-              >
-                <X size={20} className="text-fg-hint" />
-              </button>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="p-4">
-            {isSavingBeforeAction ? (
-              <div className="flex flex-col items-center justify-center py-4 gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-fg-hint" />
-                <p className="text-sm text-fg-hint">
-                  {t('songs:messages.saving')}
-                </p>
-              </div>
-            ) : (
-              <p className="text-fg-label">
-                {t('songs:modal.unsavedBeforeActionMessage')}
-              </p>
-            )}
-          </div>
-
-          {/* Footer */}
-          {!isSavingBeforeAction && (
-            <div className="flex flex-col gap-2 p-4 border-t border-line">
-              <button
-                type="button"
-                onClick={handleSaveAndContinue}
-                className="w-full h-9 px-3.5 text-sm font-medium text-white bg-primary hover:bg-indigo-700 rounded-lg transition-colors"
-              >
-                {t('songs:modal.saveAndContinue')}
-              </button>
-              <button
-                type="button"
-                onClick={handleContinueWithoutSaving}
-                className="w-full px-4 py-2 text-sm font-medium text-fg-body bg-field hover:bg-hover rounded-lg transition-colors"
-              >
-                {t('songs:modal.continueWithoutSaving')}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelAction}
-                className="w-full px-4 py-2 text-sm font-medium text-fg-hint hover:text-fg transition-colors"
-              >
-                {t('songs:modal.cancel')}
-              </button>
-            </div>
-          )}
-        </div>
-      </dialog>
+      <ConfirmModal
+        isOpen={confirmDelete}
+        title={t('songs:modal.deleteTitle')}
+        message={t('songs:modal.deleteMessage')}
+        confirmLabel={t('songs:actions.delete')}
+        cancelLabel={t('common:buttons.cancel')}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmDelete(false)}
+        variant="danger"
+      />
+      <UnsavedChangesModal
+        isOpen={guard.showModal}
+        onDiscard={guard.handleDiscard}
+        onCancel={guard.handleCancel}
+      />
     </div>
   )
 }

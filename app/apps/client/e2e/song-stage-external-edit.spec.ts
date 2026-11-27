@@ -1,11 +1,10 @@
 import {
   type APIRequestContext,
   expect,
+  type Locator,
   type Page,
   test,
 } from '@playwright/test'
-
-import { selectAction } from './helpers/actions-menu'
 
 /**
  * The PowerPoint stage holds its own copy of the song's slides so it can
@@ -96,11 +95,7 @@ async function saveFirstSlideFromModal(
 
   const modal = page.getByTestId('song-editor-modal')
   await expect(modal).toBeVisible({ timeout: 10000 })
-  const firstSlide = modal.locator('.ProseMirror').first()
-  await expect(firstSlide).toBeVisible({ timeout: 10000 })
-  await firstSlide.click()
-  await page.keyboard.press('ControlOrMeta+a')
-  await page.keyboard.type(text)
+  await replaceFirstSlideText(modal, text)
 
   const refetched = page.waitForResponse(
     (response) =>
@@ -110,6 +105,15 @@ async function saveFirstSlideFromModal(
   await modal.getByTestId('song-editor-modal-save').click()
   await expect(modal).toBeHidden({ timeout: 10000 })
   await refetched
+}
+
+/** Rewrites the first slide's lyrics in the song editor's text mode. */
+async function replaceFirstSlideText(editor: Locator, text: string) {
+  await editor.getByTestId('song-editor-mode-text').click()
+  const input = editor.getByTestId('song-text-input')
+  await expect(input).toBeVisible({ timeout: 10000 })
+  const [, ...rest] = (await input.inputValue()).split('\n\n')
+  await input.fill([text, ...rest].join('\n\n'))
 }
 
 test.describe('PowerPoint stage and saves made elsewhere', () => {
@@ -217,7 +221,7 @@ test.describe('PowerPoint stage and saves made elsewhere', () => {
     }
   })
 
-  test('a save from the Edit page shows on the stage when it returns', async ({
+  test('a save from the song editor shows on the stage when it returns', async ({
     page,
     request,
   }) => {
@@ -237,24 +241,26 @@ test.describe('PowerPoint stage and saves made elsewhere', () => {
     try {
       await openStage(page, song.id, 2)
 
-      await selectAction(page, 'song-actions-menu', 'song-edit')
-      await page.waitForURL(/\/edit$/)
-      const firstSlide = page.locator('.ProseMirror').first()
-      await expect(firstSlide).toBeVisible({ timeout: 10000 })
-      await firstSlide.click()
-      await page.keyboard.press('ControlOrMeta+a')
-      await page.keyboard.type('Alpha from edit page')
+      await page.getByTestId('song-edit').click()
+      await page.waitForURL(/edit=slides/)
+      await replaceFirstSlideText(
+        page.getByTestId('song-editor'),
+        'Alpha from edit page',
+      )
       await page.getByTestId('song-editor-save').click()
-
-      await page.waitForURL((url) => !url.pathname.endsWith('/edit'))
+      await expect(page.getByTestId('song-editor-save')).toBeDisabled({
+        timeout: 10000,
+      })
+      await page.getByTestId('song-editor-done').click()
+      await page.waitForURL((url) => !url.search.includes('edit='))
       const thumbs = page.getByTestId('stage-thumbnail')
       await expect(thumbs).toHaveCount(2, { timeout: 10000 })
       await expect(thumbs.nth(0)).toContainText('Alpha from edit page', {
         timeout: 10000,
       })
 
-      // The Edit page never shows notes or styling, so saving it must leave
-      // them as they were.
+      // Notes and styling are not in the text, so saving it must leave them
+      // as they were.
       const slides = await readSlides(request, song.id)
       expect(slides[1].notes).toBe('Beta speaker note')
       expect(slides[1].styleOverrides).toEqual({ fontScale: 1.25 })
