@@ -222,6 +222,11 @@
         "uploadFailed": "Încărcarea a eșuat. Încearcă din nou.",
         "deleteFailed": "Fișierul nu a putut fi șters. Încearcă din nou.",
         "loadFailed": "Lista fișierelor încărcate nu a putut fi citită."
+      },
+      "unavailable": {
+        "image": "Imagine indisponibilă",
+        "video": "Videoclip indisponibil",
+        "hint": "Se află pe calculatorul bisericii"
       }
     },
     "general": {

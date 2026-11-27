@@ -79,6 +79,8 @@ The owner (a Google account, through better-auth) comes with T-172. The lyrics a
 churches/<churchId>-<pathSecret>/head.json          tiny pointer: { seq, snapshot, segments[] }
 churches/<churchId>-<pathSecret>/snap/<seq>-<nonce>.json.gz full library at seq (the LibraryFile format the Drive sync already writes, plus every row's version)
 churches/<churchId>-<pathSecret>/log/<seq>-<nonce>.json.gz  one accepted write: its changes, versions and author
+churches/<churchId>-<pathSecret>/media/index.json        the church's media: { media: { <mediaId>: { hash, size, type } } } (T-215)
+churches/<churchId>-<pathSecret>/media/<sha256>          one media file, named by its content, cached forever
 libraries/<sourceId>/manifest.json     shared and curated libraries (T-120 format), public
 libraries/<sourceId>/shards/<hash>.json.gz   about 500 songs each, named by content hash, cached forever
 ```
@@ -162,6 +164,16 @@ The user (Q-5): «allow the user to login using Google and keep in our backend t
   - The wasm engine is about 0.4 MB compressed and cached by the service worker.
   - FTS5 and `normalizeForIndex` give the same search results as the desktop, in milliseconds, offline.
 - **Presenting**: a phone can run a presentation and show it on its own screen (a display window it opens), or on any display that opens the phone's presenter page (that last part over WebRTC: a follow-up task). Displays and OBS physically wired to the PC need the PC on.
+- **Media** (T-215): the pictures and videos the church's synced data shows (song backgrounds, which sync since T-215; slides decks and video items in programs) live on the PC.
+  - **PC on**: the phone loads them over the WebRTC tunnel. A file travels whole, as base64, so bodies over 64 MiB are refused (413).
+  - **PC off**: after each cloud sync, the PC publishes what its data references (`service/cloud-media`, `POST /sync/churches/:id/media`, the server token only).
+    - The service lists `media/index.json` and hands out presigned PUTs for missing files, so the bytes go straight to the bucket, around the 8 MiB body cap. It deletes files no longer referenced.
+    - Limits: `SYNC_MEDIA_MAX_FILE_BYTES` per file (512 MiB) and `SYNC_MEDIA_MAX_BYTES` per church (2 GiB). Images go first, smallest first.
+    - Videos go only when the PC's *Background videos on phones* setting (`cloud_media_videos`) is on; it is off by default.
+    - No gzip: every accepted format is already compressed.
+    - The phone's server answers a media request with a 307 to the bucket copy, which the public app's service worker keeps (cache-first, range requests) for offline use.
+    - Everything sits under the secret prefix: a path rotation leaves the files behind with the old prefix, and the PC, seeing a new read URL, uploads them again.
+  - **Unavailable**: a file neither the PC nor the bucket has (a video kept on the PC, the PC unreachable) shows a placeholder: an icon and *Image/Video not available*.
 - **As built (T-175)**:
   - **One API**: the server's whole router is one importable fetch handler (`server/src/http/createFetchHandler.ts`). `Bun.serve` runs it on the PC; the browser server (`client/src/features/browser-server/`) runs the same handler in a module Web Worker. `client/browserServerBuild.ts` builds the server's own modules for it: `bun:sqlite`, `node:crypto`, `node:async_hooks` and `node:path` get browser versions, `db/connection.ts` opens sqlite-wasm on OPFS (`opfs-sahpool`), and the rest of Node and the PC-only packages (OBS, MIDI, audio, Google, AI, WebRTC answerer, telemetry) are stand-ins. The worker is 385 KB gzipped (the server's code), plus 407 KB of wasm.
   - **What needs the PC**: its hardware, files and network (OBS, mixer, MIDI, music, screen share, backups, the database file, logs, PowerPoint conversion, remote access, live translation, song sources' checks) answer `503 needs_church_pc` in the browser (`worker/pcOnlyRoutes.ts`), and the web app hides them.

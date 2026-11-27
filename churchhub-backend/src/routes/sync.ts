@@ -5,6 +5,8 @@ import { checkInstallation } from '../sync/checkInstallation'
 import { churchPrefix } from '../sync/churchPrefix'
 import { commitChanges } from '../sync/commitChanges'
 import { compact } from '../sync/compact'
+import { parseMediaItems } from '../sync/media/parseMediaItems'
+import { publishMedia } from '../sync/media/publishMedia'
 import { handleSyncError } from '../sync/handleSyncError'
 import { listDevices } from '../sync/listDevices'
 import { claimChurch } from '../sync/owner/claimChurch'
@@ -26,6 +28,8 @@ import type { Bindings } from '../types'
 import { clientIp } from '../utils/clientIp'
 
 const DEFAULT_COMPACT_AFTER = 40
+const DEFAULT_MEDIA_MAX_BYTES = 2 * 1024 ** 3
+const DEFAULT_MEDIA_MAX_FILE_BYTES = 512 * 1024 ** 2
 /** Pinned, so the docs page runs only the Scalar build it was checked with. */
 const SCALAR_VERSION = '1.76.4'
 /** Managing devices and access needs the app's user management permission. */
@@ -185,6 +189,27 @@ sync.delete('/sync/churches/:churchId/devices/:deviceId', async (c) => {
   requirePermission(church.state, who, MANAGE_PERMISSION)
   const state = await revokeDevice(store, who.churchId, c.req.param('deviceId'))
   return c.json({ revoked: true, ...readLocation(store, state) })
+})
+
+/**
+ * POST /sync/churches/:churchId/media: the media the church's synced data
+ * references, from its PC (the only device holding the files). Lists what
+ * is in the bucket for readers and hands out uploads for the rest.
+ */
+sync.post('/sync/churches/:churchId/media', async (c) => {
+  const items = parseMediaItems(await readJsonBody(c))
+  const store = createSyncStore(c.env)
+  const { who, church } = await caller(c, store)
+  if (!who.isServer) {
+    throw new SyncError(403, 'forbidden', 'Only the church server publishes media')
+  }
+  return c.json(
+    await publishMedia(store, church.state, items, {
+      maxBytes: Number(c.env.SYNC_MEDIA_MAX_BYTES) || DEFAULT_MEDIA_MAX_BYTES,
+      maxFileBytes:
+        Number(c.env.SYNC_MEDIA_MAX_FILE_BYTES) || DEFAULT_MEDIA_MAX_FILE_BYTES,
+    })
+  )
 })
 
 /** POST /sync/churches/:churchId/changes: one checked, versioned write. */

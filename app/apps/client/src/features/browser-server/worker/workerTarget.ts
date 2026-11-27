@@ -1,3 +1,4 @@
+import { cloudMediaId, cloudMediaResponse } from './cloudMediaResponse'
 import { needsChurchPc, needsChurchPcResponse } from './pcOnlyRoutes'
 import { runAsRequest } from '../../../../../server/src/db/actingUser'
 import type { FetchServer } from '../../../../../server/src/http/fetchServer'
@@ -97,7 +98,8 @@ class WorkerSocket implements TunnelSocket {
 /**
  * Where the page's tunnel replays in this worker: the server's own fetch
  * handler, each request as the server runs it (its own acting user), and
- * the routes only the church PC has refused first.
+ * the routes only the church PC has refused first. Gallery files are read
+ * from the church's bucket: the PC holds them, not this browser.
  */
 export function workerTarget(handleRequest: HandleRequest): TunnelTarget {
   const server = {
@@ -109,6 +111,8 @@ export function workerTarget(handleRequest: HandleRequest): TunnelTarget {
     origin: ORIGIN,
     fetch: async (url, init) => {
       if (needsChurchPc(url.pathname)) return needsChurchPcResponse()
+      const mediaId = cloudMediaId(url, init?.method ?? 'GET')
+      if (mediaId) return cloudMediaResponse(mediaId)
       return runAsRequest(() =>
         handleRequest(toServerRequest(url, init), server),
       )

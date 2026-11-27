@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+import { MediaUnavailable } from '~/features/background-media/components/MediaUnavailable'
 import { useMediaUrl } from '~/features/background-media/hooks/useMediaUrl'
 import { createLogger } from '~/utils/logger'
 
@@ -19,7 +20,8 @@ interface ScreenVideoProps {
  * start, once (the presentation moves on when it ends) or looping.
  */
 export function ScreenVideo({ url, withSound, loop }: ScreenVideoProps) {
-  const src = useMediaUrl(url)
+  const { src, unavailable } = useMediaUrl(url)
+  const [failed, setFailed] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -34,10 +36,14 @@ export function ScreenVideo({ url, withSound, loop }: ScreenVideoProps) {
     })
   }, [src, withSound])
 
+  if (unavailable || (src && failed === src)) {
+    return <MediaUnavailable kind="video" />
+  }
   if (!src) return null
   return (
     <video
       key={src}
+      onError={() => setFailed(src)}
       ref={videoRef}
       data-testid="screen-video"
       src={src}

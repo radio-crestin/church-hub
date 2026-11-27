@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import { MediaUnavailable } from '~/features/background-media/components/MediaUnavailable'
 import { useDeckMedia } from '../hooks/useDeckMedia'
 
 interface DeckImageProps {
@@ -9,7 +12,15 @@ interface DeckImageProps {
 
 /** A picture on a deck slide, cropped like PowerPoint's crop. */
 export function DeckImage({ mediaId, fit, crop }: DeckImageProps) {
-  const src = useDeckMedia(mediaId)
+  const { src, unavailable } = useDeckMedia(mediaId)
+  const [failed, setFailed] = useState<string | null>(null)
+  if (unavailable || (src && failed === src)) {
+    return (
+      <div className="relative h-full w-full">
+        <MediaUnavailable kind="image" />
+      </div>
+    )
+  }
   if (!src) return null
   if (!crop) {
     return (
@@ -17,6 +28,7 @@ export function DeckImage({ mediaId, fit, crop }: DeckImageProps) {
         src={src}
         alt=""
         draggable={false}
+        onError={() => setFailed(src)}
         className="block h-full w-full"
         style={{ objectFit: fit }}
       />
@@ -30,6 +42,7 @@ export function DeckImage({ mediaId, fit, crop }: DeckImageProps) {
         src={src}
         alt=""
         draggable={false}
+        onError={() => setFailed(src)}
         className="absolute block max-w-none"
         style={{
           left: `${(-crop.l / width) * 100}%`,

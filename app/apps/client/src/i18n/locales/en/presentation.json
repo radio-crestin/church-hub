@@ -219,6 +219,11 @@
         "uploadFailed": "The upload failed. Please try again.",
         "deleteFailed": "The file could not be deleted. Please try again.",
         "loadFailed": "The list of uploaded files could not be loaded."
+      },
+      "unavailable": {
+        "image": "Image not available",
+        "video": "Video not available",
+        "hint": "It is on the church computer"
       }
     },
     "general": {

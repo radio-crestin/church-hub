@@ -6,6 +6,7 @@ import { Button } from '~/ui/button'
 import { useToast } from '~/ui/toast'
 import { AddCloudDevice } from './AddCloudDevice'
 import { CloudDeviceList } from './CloudDeviceList'
+import { CloudMediaVideosSwitch } from './CloudMediaVideosSwitch'
 import { useCloudDevices, useConnectCloud } from '../hooks/useCloudDevices'
 
 /**
@@ -57,6 +58,7 @@ export function CloudDevicesSection() {
     <div className="flex flex-col gap-6">
       <AddCloudDevice add={add} />
       <CloudDeviceList devices={devices} revoke={revoke} />
+      <CloudMediaVideosSwitch />
     </div>
   )
 }

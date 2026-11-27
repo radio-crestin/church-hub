@@ -96,6 +96,7 @@ export function serializeLibrary(
         key_line: string | null
         presentation_order: string | null
         alternate_titles: string | null
+        background: string | null
         presentation_count: number
         last_presented_at: number | null
         last_manual_edit: number | null
@@ -107,7 +108,8 @@ export function serializeLibrary(
       `SELECT s.id, s.uuid, s.title, c.uuid AS category_uuid, g.uuid AS group_uuid,
               s.source_filename, s.author, s.copyright, s.ccli, s.tempo,
               s.time_signature, s.theme, s.alt_theme, s.hymn_number, s.key_line,
-              s.presentation_order, s.alternate_titles, s.presentation_count, s.last_presented_at,
+              s.presentation_order, s.alternate_titles, s.background,
+              s.presentation_count, s.last_presented_at,
               s.last_manual_edit, s.created_at, s.updated_at
          FROM songs s
          LEFT JOIN song_categories c ON c.id = s.category_id
@@ -180,6 +182,7 @@ export function serializeLibrary(
     keyLine: row.key_line,
     presentationOrder: row.presentation_order,
     alternateTitles: row.alternate_titles,
+    background: row.background,
     tagUuids: tagsBySongId.get(row.id) ?? [],
     presentationCount: row.presentation_count,
     lastPresentedAt: row.last_presented_at,
