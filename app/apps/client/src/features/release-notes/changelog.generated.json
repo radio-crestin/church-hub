@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.107",
-    "date": "2026-11-26T23:59:16+02:00",
+    "date": "2026-11-27T00:57:28+02:00",
     "features": [
       {
         "scope": "presentation",
@@ -33,15 +33,39 @@
     "changes": [
       {
         "scope": null,
-        "message": "security-check.sh is executable, so release.sh can run it"
+        "message": "song-sources: publish Resurse Creștine only to the song-sources release"
       },
       {
         "scope": null,
-        "message": "release notes: v0.1.107 includes the full app in the browser"
+        "message": "Remove \"Request a feature\" (Feedback) end to end, and the backend's GITHUB_TOKEN"
       },
       {
         "scope": null,
-        "message": "release notes: v0.1.107 in English and Romanian"
+        "message": "SINGLE_INSTANCE=true runs production without Redis"
+      },
+      {
+        "scope": null,
+        "message": "T-217 Review builds: keep them in the task's worktree (main checkout is read-only)"
+      },
+      {
+        "scope": null,
+        "message": "T-176 Shared song libraries on S3: hash-named shards, lyrics fingerprint + source_hash, \"Share my songs\""
+      },
+      {
+        "scope": null,
+        "message": "Release v0.1.107"
+      },
+      {
+        "scope": null,
+        "message": "T-174 Phones reach the church PC over WebRTC when it's online"
+      },
+      {
+        "scope": null,
+        "message": "rustls 0.23.46 and i18next 26"
+      },
+      {
+        "scope": null,
+        "message": "install-git-hooks: write core.hooksPath only when it differs (CH-216)"
       },
       {
         "scope": null,
@@ -431,12 +455,12 @@
           "The Control Room has a queue: add a song, Bible verses, music, a gallery video or a whole program, and Next walks through them, programs inside programs included.",
           "Join a church from a phone by QR code or link and use the whole app in the browser: it connects to the church computer when it's on, and keeps working on its own copy of the library when it's off.",
           "Cloud sync keeps every part of the church's library in step across devices: sign in with Google as the owner, or start as a guest and claim it later.",
+          "\"Share my songs\" in Settings > Songs shares your church's songs with other churches, and other churches' shared libraries appear under \"Download songs\". Songs you edited are never overwritten; a newer version waits for you to choose.",
           "Bible verses by topic: browse topics, present their verses, and each topic keeps its own template, live on screen.",
           "Bible slideshows have clear icon buttons, an adjustable reading speed and a progress ring for each verse.",
           "On the Bible page, double-click a verse to show it, use \"Show on screen\", or turn on showing a verse as soon as you pick it.",
           "Present an image or video straight from the gallery.",
-          "A typewriter text animation and two typewriter templates for slides.",
-          "Slide changes are calmer: only the lines, words and verse numbers that change move, a slide fades out when it leaves, and a new kind of slide comes in with its own theme and background.",
+          "Slide changes are calmer: only the lines, words and verse numbers that change move, a slide fades out when it leaves, a new kind of slide comes in with its own theme and background, and text can type out like a typewriter, with two new templates.",
           "Music: seeking is seamless, the page is split into clear sections, and \"Add to playlist\" opens a searchable list.",
           "A fresh, quieter design across the app, with a grouped sidebar, easier-to-read text and new app icons."
         ],
@@ -445,7 +469,6 @@
           "Phone remote control and live-translation links are better protected: after updating, pair your phones again and share the listener link again.",
           "When a user is removed or turned off, their phones are signed out right away.",
           "Seeking in a song no longer makes a strange sound.",
-          "Sending a feature request works even when screenshots can't be stored.",
           "The Linux AppImage starts correctly again."
         ]
       },
@@ -455,12 +478,12 @@
           "Camera de control are o coadă: adaugi o cântare, versete, muzică, un video din galerie sau un program întreg, iar „Următorul” le parcurge pe rând, inclusiv programele din alte programe.",
           "Te poți alătura bisericii de pe telefon, cu un cod QR sau un link, și poți folosi toată aplicația în browser: se conectează la calculatorul bisericii când e pornit și merge mai departe pe propria copie a bibliotecii când e oprit.",
           "Sincronizarea în cloud ține toată biblioteca bisericii la zi pe toate dispozitivele: intri cu Google ca proprietar sau începi ca invitat și o revendici mai târziu.",
+          "Cu „Partajează cântările mele” din Setări > Cântări, biserica își poate împărtăși cântările cu alte biserici, iar bibliotecile partajate de alții apar la „Descarcă cântări”. Cântările modificate de tine nu sunt suprascrise niciodată; o versiune nouă așteaptă să alegi tu.",
           "Versete biblice pe teme: răsfoiești temele, prezinți versetele lor, iar fiecare temă își păstrează șablonul, direct pe ecran.",
           "Prezentările automate din Biblie au butoane cu iconițe clare, viteză de citire reglabilă și un cerc care arată cât mai rămâne din fiecare verset.",
           "Pe pagina Biblie, dublu clic pe un verset îl afișează; poți folosi și „Afișează pe ecran” sau poți alege ca versetul să apară pe ecran imediat ce îl selectezi.",
           "Poți prezenta o imagine sau un video direct din galerie.",
-          "O animație de text ca la mașina de scris și două șabloane „Mașină de scris” pentru diapozitive.",
-          "Trecerea între diapozitive e mai liniștită: se mișcă doar rândurile, cuvintele și numerele de verset care se schimbă, diapozitivul dispare treptat când iese, iar un alt tip de conținut intră cu tema și fundalul lui.",
+          "Trecerea între diapozitive e mai liniștită: se mișcă doar rândurile, cuvintele și numerele de verset care se schimbă, diapozitivul dispare treptat când iese, un alt tip de conținut intră cu tema și fundalul lui, iar textul poate apărea ca la mașina de scris, cu două șabloane noi.",
           "Muzică: derularea în piesă e fără întreruperi, pagina e împărțită în secțiuni clare, iar „Adaugă în playlist” deschide o listă în care poți căuta.",
           "Un aspect nou, mai aerisit, în toată aplicația: meniul lateral pe grupuri, text mai ușor de citit și iconițe noi."
         ],
@@ -469,7 +492,6 @@
           "Controlul de pe telefon și linkurile pentru traducerea live sunt mai bine protejate: după actualizare, asociază din nou telefoanele și trimite din nou linkul pentru ascultători.",
           "Când un utilizator e șters sau dezactivat, telefoanele lui sunt deconectate imediat.",
           "Derularea într-o piesă nu mai produce un sunet ciudat.",
-          "Trimiterea unei sugestii merge și când capturile de ecran nu pot fi salvate.",
           "Varianta AppImage pentru Linux pornește din nou corect."
         ]
       }

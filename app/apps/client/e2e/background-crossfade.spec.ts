@@ -201,14 +201,16 @@ test.describe('Background changes go with the text', () => {
       }
       // In together: the screen's background and the verse start and settle
       // within three frames (a loaded machine delays the text by a frame).
+      // The text starts a React render after the background's two frames, so
+      // on a runner whose frames swing the gap between them is a timing budget.
       if (checksTimingBudgets) {
         expect(Math.abs(verseStarts.ms - backgroundStarts.ms)).toBeLessThan(50)
         expect(Math.abs(verseDone.ms - backgroundDone.ms)).toBeLessThan(50)
-      }
-      for (const frame of frames.filter(
-        (f) => f.verse > 0.02 && f.verse < 0.98,
-      )) {
-        expect(Math.abs(frame.newBackground - frame.verse)).toBeLessThan(0.35)
+        for (const frame of frames.filter(
+          (f) => f.verse > 0.02 && f.verse < 0.98,
+        )) {
+          expect(Math.abs(frame.newBackground - frame.verse)).toBeLessThan(0.35)
+        }
       }
     })
   }
