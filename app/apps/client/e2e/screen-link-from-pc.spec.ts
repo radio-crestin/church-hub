@@ -132,5 +132,15 @@ test.describe
       ).toBeVisible({ timeout: 30_000 })
       await request.post('/api/presentation/clear-temporary')
       await tv.close()
+
+      // The links' store is the server's own: the settings API neither
+      // lists it nor hands it out.
+      expect(
+        (await request.get('/api/settings/app_settings/screen_links')).status(),
+      ).toBe(403)
+      const settings = (
+        await (await request.get('/api/settings/app_settings')).json()
+      ).data as { key: string }[]
+      expect(settings.map(({ key }) => key)).not.toContain('screen_links')
     })
   })
