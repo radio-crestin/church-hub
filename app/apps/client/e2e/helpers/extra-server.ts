@@ -5,6 +5,7 @@ import {
   type APIRequestContext,
   expect,
   request as playwrightRequest,
+  test,
 } from '@playwright/test'
 
 import { makeTempDir, removeTempDir } from './temp-dir'
@@ -41,6 +42,7 @@ export class ExtraServer {
   /** `env`: more environment for the server, e.g. a stand-in API's address. */
   async start(env: Record<string, string> = {}): Promise<void> {
     if (this.port === 3000) throw new Error('port 3000 is the user dev server')
+    extendTimeoutForBoot()
     const child = spawn(
       process.platform === 'win32' ? 'bun.exe' : 'bun',
       ['run', 'apps/server/src/index.ts'],
@@ -137,4 +139,15 @@ export class ExtraServer {
     await this.stop()
     removeTempDir(this.dataDir)
   }
+}
+
+/**
+ * A boot runs every start-up migration, which takes over 30 s on a loaded
+ * Windows runner: the test or hook (a beforeAll's own 30 s) starting the
+ * server gets the boot's budget on top of the test's timeout, so no default
+ * timeout cuts a boot short.
+ */
+function extendTimeoutForBoot() {
+  const { timeout } = test.info()
+  if (timeout > 0) test.setTimeout(timeout + BOOT_TIMEOUT_MS)
 }

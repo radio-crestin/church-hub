@@ -82,6 +82,7 @@ function BackgroundLayer({
   onShown: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const exitAnimation = useRef<Animation | undefined>(undefined)
   const onShownRef = useRef(onShown)
   onShownRef.current = onShown
 
@@ -131,8 +132,16 @@ function BackgroundLayer({
       easing,
       fill: 'forwards',
     })
+    exitAnimation.current = animation
     return () => animation.cancel()
   }, [layer.exit])
+
+  // The next background comes when this one's exit is due (the hand-off's
+  // timer); on a machine whose frames came late the fade is not done yet, so
+  // it ends now and the two never show together.
+  useLayoutEffect(() => {
+    if (covered) exitAnimation.current?.finish()
+  }, [covered])
 
   return (
     <div
