@@ -1,4 +1,5 @@
 import { FIT_STEPS_PER_PX } from './calculateFontSize'
+import { largestFittingStep } from './largestFittingStep'
 import { measureTextHeight } from './measureTextHeight'
 
 /**
@@ -56,27 +57,24 @@ export function fitFontSizeToBounds(
     element.innerHTML = html
   }
 
-  const fits = (size: number): boolean => {
+  const heightAt = (size: number): number => {
     element.style.fontSize = `${size}px`
-    return measureTextHeight(element) <= maxHeight
+    return measureTextHeight(element)
   }
 
   let bestFit = desired
-  if (!fits(desired)) {
-    // Binary search the same way the plain-text fit does, so a bounded size and
-    // a fitted one are always the same kind of number.
-    let low = Math.ceil(minFontSize * FIT_STEPS_PER_PX)
-    let high = Math.floor(desired * FIT_STEPS_PER_PX)
-    bestFit = minFontSize
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2)
-      if (fits(mid / FIT_STEPS_PER_PX)) {
-        bestFit = mid / FIT_STEPS_PER_PX
-        low = mid + 1
-      } else {
-        high = mid - 1
-      }
-    }
+  const desiredHeight = heightAt(desired)
+  if (desiredHeight > maxHeight) {
+    // Searched in the plain-text fit's steps, so a bounded size and a fitted
+    // one are always the same kind of number.
+    const low = Math.ceil(minFontSize * FIT_STEPS_PER_PX)
+    const step = largestFittingStep(
+      low,
+      Math.floor(desired * FIT_STEPS_PER_PX),
+      (desired * FIT_STEPS_PER_PX * maxHeight) / desiredHeight,
+      (candidate) => heightAt(candidate / FIT_STEPS_PER_PX) <= maxHeight,
+    )
+    bestFit = step < low ? minFontSize : step / FIT_STEPS_PER_PX
   }
 
   element.style.fontSize = originalStyles.fontSize

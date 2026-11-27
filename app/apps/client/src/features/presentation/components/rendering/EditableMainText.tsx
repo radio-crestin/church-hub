@@ -110,7 +110,7 @@ export function EditableMainText({
 }: EditableMainTextProps) {
   const editRef = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLDivElement>(null)
-  const fontsLoadedVersion = useFontsLoadedVersion()
+  const fontsLoadedVersion = useFontsLoadedVersion(style.fontFamily)
   const seededKeyRef = useRef<string | null>(null)
   // The text the editor is showing right now, so an outside rewrite can be told
   // apart from the round-trip of the operator's own typing.
