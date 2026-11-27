@@ -26,6 +26,7 @@ export {
   getShare,
   type LibraryShare,
   type LibraryShareInput,
+  listShares,
   publishShare,
   readCatalog,
   saveShare,
@@ -63,3 +64,4 @@ export type {
   SongUpdatesState,
   SourceUpdate,
 } from './updates/types'
+export { startFeaturedSourcesRefresh } from './featured'
