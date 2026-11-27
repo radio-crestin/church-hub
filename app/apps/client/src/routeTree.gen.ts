@@ -53,6 +53,7 @@ import { Route as LivestreamObsRouteImport } from './routes/livestream/obs'
 import { Route as LivestreamMixerRouteImport } from './routes/livestream/mixer'
 import { Route as CustomPagePageIdRouteImport } from './routes/custom-page/$pageId'
 import { Route as SongsSongIdIndexRouteImport } from './routes/songs/$songId/index'
+import { Route as SongsSharedUuidRouteImport } from './routes/songs/shared/$uuid'
 import { Route as SongsSongIdEditRouteImport } from './routes/songs/$songId/edit'
 import { Route as LivestreamScenesSceneIdRouteImport } from './routes/livestream/scenes/$sceneId'
 import { Route as AuthYoutubeCallbackRouteImport } from './routes/auth/youtube/callback'
@@ -278,6 +279,11 @@ const SongsSongIdIndexRoute = SongsSongIdIndexRouteImport.update({
   path: '/songs/$songId/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SongsSharedUuidRoute = SongsSharedUuidRouteImport.update({
+  id: '/songs/shared/$uuid',
+  path: '/songs/shared/$uuid',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SongsSongIdEditRoute = SongsSongIdEditRouteImport.update({
   id: '/songs/$songId/edit',
   path: '/songs/$songId/edit',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/shared/$uuid': typeof SongsSharedUuidRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
   '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -396,6 +403,7 @@ export interface FileRoutesByTo {
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/shared/$uuid': typeof SongsSharedUuidRoute
   '/songs/$songId': typeof SongsSongIdIndexRoute
   '/schedules/$scheduleId/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -447,6 +455,7 @@ export interface FileRoutesById {
   '/auth/youtube/callback': typeof AuthYoutubeCallbackRoute
   '/livestream/scenes/$sceneId': typeof LivestreamScenesSceneIdRoute
   '/songs/$songId/edit': typeof SongsSongIdEditRoute
+  '/songs/shared/$uuid': typeof SongsSharedUuidRoute
   '/songs/$songId/': typeof SongsSongIdIndexRoute
   '/schedules/$scheduleId_/slides/$itemId': typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -499,6 +508,7 @@ export interface FileRouteTypes {
     | '/auth/youtube/callback'
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
+    | '/songs/shared/$uuid'
     | '/songs/$songId/'
     | '/schedules/$scheduleId/slides/$itemId'
   fileRoutesByTo: FileRoutesByTo
@@ -548,6 +558,7 @@ export interface FileRouteTypes {
     | '/auth/youtube/callback'
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
+    | '/songs/shared/$uuid'
     | '/songs/$songId'
     | '/schedules/$scheduleId/slides/$itemId'
   id:
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/auth/youtube/callback'
     | '/livestream/scenes/$sceneId'
     | '/songs/$songId/edit'
+    | '/songs/shared/$uuid'
     | '/songs/$songId/'
     | '/schedules/$scheduleId_/slides/$itemId'
   fileRoutesById: FileRoutesById
@@ -627,6 +639,7 @@ export interface RootRouteChildren {
   AuthYoutubeCallbackRoute: typeof AuthYoutubeCallbackRoute
   LivestreamScenesSceneIdRoute: typeof LivestreamScenesSceneIdRoute
   SongsSongIdEditRoute: typeof SongsSongIdEditRoute
+  SongsSharedUuidRoute: typeof SongsSharedUuidRoute
   SongsSongIdIndexRoute: typeof SongsSongIdIndexRoute
   SchedulesScheduleIdSlidesItemIdRoute: typeof SchedulesScheduleIdSlidesItemIdRoute
 }
@@ -941,6 +954,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SongsSongIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/songs/shared/$uuid': {
+      id: '/songs/shared/$uuid'
+      path: '/songs/shared/$uuid'
+      fullPath: '/songs/shared/$uuid'
+      preLoaderRoute: typeof SongsSharedUuidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/songs/$songId/edit': {
       id: '/songs/$songId/edit'
       path: '/songs/$songId/edit'
@@ -1051,6 +1071,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthYoutubeCallbackRoute: AuthYoutubeCallbackRoute,
   LivestreamScenesSceneIdRoute: LivestreamScenesSceneIdRoute,
   SongsSongIdEditRoute: SongsSongIdEditRoute,
+  SongsSharedUuidRoute: SongsSharedUuidRoute,
   SongsSongIdIndexRoute: SongsSongIdIndexRoute,
   SchedulesScheduleIdSlidesItemIdRoute: SchedulesScheduleIdSlidesItemIdRoute,
 }

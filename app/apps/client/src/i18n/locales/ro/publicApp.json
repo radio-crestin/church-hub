@@ -21,5 +21,18 @@
   },
   "guest": {
     "button": "Folosește Church Hub ca invitat"
+  },
+  "song": {
+    "chords": "Acorduri",
+    "key": "Tonalitate {{key}}",
+    "sharedWith": "Partajată cu Church Hub",
+    "notFound": {
+      "title": "Această cântare nu mai este partajată",
+      "body": "Biserica a oprit partajarea ei sau linkul nu este complet."
+    },
+    "offline": {
+      "title": "Cântarea nu a putut fi încărcată",
+      "body": "Verifică conexiunea la internet și încearcă din nou."
+    }
   }
 }

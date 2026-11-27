@@ -3,6 +3,7 @@
  * /sync/openapi.json, rendered by Scalar at /sync/docs).
  */
 import { libraryOpenApiPaths } from '../library/libraryOpenApi'
+import { songLinksOpenApiPaths } from '../songLinks/songLinksOpenApi'
 import { installationHeaders, ownerOpenApiPaths } from './owner/ownerOpenApi'
 import { ENTITY_TYPES } from './types'
 
@@ -547,6 +548,7 @@ export const syncOpenApi = {
     },
     ...ownerOpenApiPaths,
     ...libraryOpenApiPaths,
+    ...songLinksOpenApiPaths,
     '/sync/openapi.json': {
       get: {
         summary: 'This document',

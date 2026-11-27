@@ -45,6 +45,7 @@ import { handleSecretStoreRoutes } from '../routes/secret-store'
 import { handleSlideTemplateRoutes } from '../routes/slide-templates'
 import { handleSongHistoryRoutes } from '../routes/song-history'
 import { handleSongLibraryRoutes } from '../routes/song-library'
+import { handleSongLinkRoutes } from '../routes/song-links'
 import { handleSongSourceRoutes } from '../routes/song-sources'
 import { handleThemeBackgroundRoutes } from '../routes/theme-backgrounds'
 import {
@@ -2112,6 +2113,14 @@ export function createFetchHandler(): (
       checkPermission,
     )
     if (songLibraryResponse) return handleCors(req, songLibraryResponse)
+
+    // Songs shared by a link: their public page (T-177)
+    const songLinkResponse = await handleSongLinkRoutes(
+      req,
+      url,
+      checkPermission,
+    )
+    if (songLinkResponse) return handleCors(req, songLinkResponse)
 
     // Cloud sync: this server's church on the sync service (T-171)
     if (url.pathname.startsWith('/api/sync/cloud')) {

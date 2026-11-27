@@ -59,5 +59,23 @@
     "up": "Move {{name}} up",
     "down": "Move {{name}} down",
     "remove": "Remove {{name}}"
+  },
+  "link": {
+    "menuLabel": "Share link",
+    "menuDescription": "A web page with this song that anyone can open",
+    "title": "Share this song",
+    "message": "Anyone with the link sees the words and chords on a web page. People of your church who use Church Hub on that phone or browser open it straight in the app.",
+    "creating": "Creating the link…",
+    "copy": "Copy link",
+    "copied": "Link copied.",
+    "close": "Close",
+    "open": "Open",
+    "stop": "Stop sharing",
+    "stopped": "The link no longer opens this song.",
+    "retry": "Try again",
+    "failed": "The link could not be created. Check the internet connection and try again.",
+    "cloudSyncOff": "Links go through Church Hub Cloud. Turn on cloud sync in Settings > Backup first.",
+    "opening": "Opening the song…",
+    "notOnDevice": "This song is not on this device yet. It will be after the next sync."
   }
 }

@@ -21,5 +21,18 @@
   },
   "guest": {
     "button": "Use Church Hub as a guest"
+  },
+  "song": {
+    "chords": "Chords",
+    "key": "Key {{key}}",
+    "sharedWith": "Shared with Church Hub",
+    "notFound": {
+      "title": "This song is no longer shared",
+      "body": "The church stopped sharing it, or the link is incomplete."
+    },
+    "offline": {
+      "title": "Could not load the song",
+      "body": "Check the internet connection and try again."
+    }
   }
 }

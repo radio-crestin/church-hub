@@ -61,5 +61,23 @@
     "up": "Mută {{name}} mai sus",
     "down": "Mută {{name}} mai jos",
     "remove": "Scoate {{name}}"
+  },
+  "link": {
+    "menuLabel": "Partajează prin link",
+    "menuDescription": "O pagină web cu această cântare, pe care o poate deschide oricine",
+    "title": "Partajează această cântare",
+    "message": "Oricine are linkul vede versurile și acordurile pe o pagină web. Cei din biserica ta care folosesc Church Hub pe acel telefon sau browser o deschid direct în aplicație.",
+    "creating": "Se creează linkul…",
+    "copy": "Copiază linkul",
+    "copied": "Linkul a fost copiat.",
+    "close": "Închide",
+    "open": "Deschide",
+    "stop": "Oprește partajarea",
+    "stopped": "Linkul nu mai deschide această cântare.",
+    "retry": "Încearcă din nou",
+    "failed": "Linkul nu a putut fi creat. Verifică conexiunea la internet și încearcă din nou.",
+    "cloudSyncOff": "Linkurile trec prin Church Hub Cloud. Pornește întâi sincronizarea în cloud din Setări > Backup.",
+    "opening": "Se deschide cântarea…",
+    "notOnDevice": "Cântarea nu este încă pe acest dispozitiv. Va fi după următoarea sincronizare."
   }
 }
