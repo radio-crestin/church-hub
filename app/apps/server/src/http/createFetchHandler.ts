@@ -7805,6 +7805,14 @@ export function createFetchHandler(): (
     )
     if (analyticsResponse) return analyticsResponse
 
+    // An API path no route answered: a 404, never the client app's page
+    if (url.pathname.startsWith('/api/')) {
+      return handleCors(
+        req,
+        Response.json({ error: 'Not found' }, { status: 404 }),
+      )
+    }
+
     // Serve client app (static files in production, proxy to Vite in development)
     if (canServeStaticFiles && clientDistPath) {
       // Production: serve from bundled static files
