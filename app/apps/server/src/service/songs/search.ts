@@ -11,6 +11,7 @@ import { SONG_INDEX_ROWS_SQL } from './songIndexRowsSql'
 import { getRawDatabase } from '../../db'
 import { createLogger } from '../../utils/logger'
 import { decodeHtmlEntities } from '../text-search/text/decodeHtmlEntities'
+import { joinedTokens } from '../text-search/text/joinedTokens'
 import { joinedWordVariants } from '../text-search/text/joinedWordVariants'
 import {
   addVocabularyWords,
@@ -57,45 +58,36 @@ export function normalizeForIndex(text: string): string {
     decodeHtmlEntities(text.replace(/<[^>]+>/g, ' ')),
   )
 
+  // Whole-text passes rather than a loop over every token: a fresh
+  // install indexes ~26k songs (24 MB of lyrics) before it answers, and
+  // the per-token version took ~5 s of that.
+  // Replace ALL punctuation (commas, hyphens, periods, etc.) with spaces,
+  // then expand Romanian n- contractions: a word starting with "n" followed
+  // by a consonant is often "în" + word ("nfaptuiesc" = "infaptuiesc"), so
+  // "faptuiesc" is indexed after it too.
+  const words = plain
+    .replace(NON_WORD_RE, ' ')
+    .trim()
+    .replace(CONTRACTED_N_RE, '$1 $2')
+  const parts = words.length > 0 ? [words] : []
+
   // Joined spellings are appended after the text rather than inserted next
   // to their word, so the phrase order of the original stays intact for
   // phrase queries and phrase scoring.
-  const words: string[] = []
-  const joined: string[] = []
-  for (const token of plain.split(/\s+/)) {
-    // Replace ALL punctuation (commas, hyphens, periods, etc.) with spaces
-    const pieces = token
-      .replace(/[^\p{L}\p{N}]+/gu, ' ')
-      .trim()
-      .split(' ')
-      .filter((piece) => piece.length > 0)
-    words.push(...pieces)
-    if (pieces.length > 1) {
-      joined.push(...joinedWordVariants(token.toLowerCase()))
-    }
-  }
-
-  // Expand Romanian n- contractions: words starting with "n" followed by consonant
-  // are often contractions of "în" + word (e.g., "nfaptuiesc" = "infaptuiesc" → also index "faptuiesc")
-  const expandedWords: string[] = []
-
-  for (const word of words) {
-    expandedWords.push(word)
-    if (
-      word.length > 2 &&
-      word[0]?.toLowerCase() === 'n' &&
-      !/^n[aeiou]/i.test(word)
-    ) {
-      expandedWords.push(word.substring(1))
-    }
+  for (const token of joinedTokens(plain)) {
+    parts.push(...joinedWordVariants(token.toLowerCase()))
   }
 
   // Single-character tokens stay in the index. They are linguistically
   // meaningful — the Romanian clitic contractions split into them at
   // tokenization ("m-a" → "m a") and a user typing the exact title needs
   // those tokens to land an exact phrase match in FTS.
-  return [...expandedWords, ...joined].join(' ')
+  return parts.join(' ')
 }
+
+const NON_WORD_RE = /[^\p{L}\p{N}]+/gu
+/** A word of three or more letters starting with "n" and then no vowel. */
+const CONTRACTED_N_RE = /(?<=^| )([nN]([^ aeiouAEIOU][^ ]+))/g
 
 /** Updates the FTS index for a specific song. */
 export function updateSearchIndex(songId: number): void {
