@@ -23,7 +23,10 @@ function log(level: 'debug' | 'info' | 'warning' | 'error', message: string) {
 // v4: a song's alternate titles are indexed alongside its own title, so a
 //     library filed under each song's first verse is findable by the name the
 //     song is actually known by.
-const MIGRATION_KEY = 'rebuild_fts_word_spellings_v4'
+// v5: each song's row is keyed by its rowid (= song id), so updating one
+//     song deletes it by rowid instead of scanning the whole index on the
+//     UNINDEXED song_id column: ~2 s per save on a phone's sqlite-wasm (T-218).
+const MIGRATION_KEY = 'rebuild_fts_word_spellings_v5'
 
 /**
  * Re-runs rebuildSearchIndex once with the current normalizeForIndex so the

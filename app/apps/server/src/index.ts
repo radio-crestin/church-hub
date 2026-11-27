@@ -37,6 +37,7 @@ import {
   warmupSearchIndex as warmupBibleSearchIndex,
 } from './service/bible'
 import { clearHistory } from './service/bible-history'
+import { publishCloudMedia } from './service/cloud-media/publishCloudMedia'
 import {
   initializeOBSAutoConnect,
   initializeOBSCallbacks,
@@ -90,6 +91,7 @@ import {
 } from './service/song-sources'
 import { warmupSearchIndex as warmupSongsSearchIndex } from './service/songs'
 import { startSyncScheduler } from './service/sync'
+import { setCloudSyncFollowUp } from './service/sync/cloud/runCloudSyncCycle'
 import { startBootServer } from './utils/bootServer'
 import {
   type BootPhase,
@@ -330,6 +332,9 @@ async function main() {
 
   // Start the Drive library sync scheduler (no-op unless sync is enabled).
   // Also performs the on-startup "import changes made elsewhere" sync.
+  // After each cloud sync, phones find the media the church's data shows
+  // in its bucket.
+  setCloudSyncFollowUp(publishCloudMedia)
   startSyncScheduler()
 
   // Keep the categories published to the user's S3 bucket up to date

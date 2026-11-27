@@ -18,9 +18,5 @@ export const TOMBSTONE_RETENTION_DAYS = 90
 /** Cap on rows kept in the sync_updates feed (older seen rows are pruned). */
 export const MAX_SYNC_UPDATES = 200
 
-/**
- * Songs re-indexed per FTS batch after a sync. `songs_fts.song_id` is
- * UNINDEXED, so each DELETE scans the whole index: per song, a first sync of
- * 3,000 songs took 12 s; per batch, one scan for every 500 songs.
- */
+/** Songs re-indexed per FTS batch (one transaction each) after a sync. */
 export const SEARCH_INDEX_BATCH = 500

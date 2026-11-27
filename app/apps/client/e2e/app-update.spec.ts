@@ -167,18 +167,15 @@ test.describe('App update - page', () => {
 
   test('the old sidecar update API is gone', async ({ request }) => {
     // Downloads and installs go through the Tauri updater in the shell now;
-    // nothing should still answer on the sidecar. In development an unknown
-    // path falls through to Vite's HTML, in production to a plain 404 —
-    // either way, no JSON.
+    // nothing should still answer on the sidecar: an /api path no route
+    // answers is a 404.
     for (const path of [
       '/api/app-update/status',
       '/api/app-update/config',
       '/api/app-update/download',
     ]) {
       const res = await request.get(path)
-      expect(res.headers()['content-type'] ?? '', path).not.toContain(
-        'application/json',
-      )
+      expect(res.status(), path).toBe(404)
     }
   })
 

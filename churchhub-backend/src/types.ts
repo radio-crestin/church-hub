@@ -43,6 +43,12 @@ export interface Bindings {
   S3_STATE_BUCKET?: string
   /** Log segments after which the service writes a snapshot (default 40). */
   SYNC_COMPACT_AFTER?: string
+  /** The bucket's address in presigned upload URLs, if not S3_ENDPOINT. */
+  S3_PRESIGN_ENDPOINT?: string
+  /** The most media a church keeps in the bucket, in bytes (default 2 GiB). */
+  SYNC_MEDIA_MAX_BYTES?: string
+  /** The largest media file a church may upload, in bytes (default 512 MiB). */
+  SYNC_MEDIA_MAX_FILE_BYTES?: string
   /**
    * Owner sign-in (T-172) through the same Google client (YOUTUBE_CLIENT_*):
    * the callback URI registered on it (default: <this service>/sync/owner/callback).

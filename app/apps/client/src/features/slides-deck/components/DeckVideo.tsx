@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
+import { MediaUnavailable } from '~/features/background-media/components/MediaUnavailable'
 import { createLogger } from '~/utils/logger'
 import { useDeckMedia } from '../hooks/useDeckMedia'
 
@@ -30,8 +31,9 @@ export function DeckVideo({
   volume,
   fit,
 }: DeckVideoProps) {
-  const src = useDeckMedia(mediaId)
-  const poster = useDeckMedia(posterMediaId)
+  const { src, unavailable } = useDeckMedia(mediaId)
+  const poster = useDeckMedia(posterMediaId).src
+  const [failed, setFailed] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -48,10 +50,18 @@ export function DeckVideo({
     })
   }, [src, play, withSound, volume])
 
+  if (unavailable || (src && failed === src)) {
+    return (
+      <div className="relative h-full w-full">
+        <MediaUnavailable kind="video" />
+      </div>
+    )
+  }
   if (!src) return null
   return (
     <video
       ref={videoRef}
+      onError={() => setFailed(src)}
       data-testid="deck-video"
       src={src}
       poster={poster ?? undefined}

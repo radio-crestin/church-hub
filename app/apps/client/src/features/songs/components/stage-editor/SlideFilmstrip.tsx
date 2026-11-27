@@ -20,7 +20,7 @@ import type {
   ScreenWithConfigs,
 } from '~/features/presentation'
 import { SlideThumbnail } from './SlideThumbnail'
-import type { LocalSlide } from '../SongSlideList'
+import type { LocalSlide } from '../../types'
 
 interface SlideFilmstripProps {
   screen: ScreenWithConfigs

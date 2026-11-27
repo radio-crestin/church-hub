@@ -32,24 +32,6 @@ export function dirtyKey(entityType: string, uuid: string): string {
   return `${entityType}:${uuid}`
 }
 
-/** Canonical, order-independent serialization used to detect real file changes. */
-function canonicalize(file: LibraryFile): string {
-  const sortByUuid = (a: { uuid: string }, b: { uuid: string }) =>
-    a.uuid < b.uuid ? -1 : a.uuid > b.uuid ? 1 : 0
-  return JSON.stringify({
-    schemaVersion: file.schemaVersion,
-    ...Object.fromEntries(
-      LIBRARY_COLLECTIONS.map(({ key }) => [
-        key,
-        [...collectionOf(file, key)].sort(sortByUuid),
-      ]),
-    ),
-    tombstones: [...file.tombstones].sort((a, b) =>
-      dirtyKey(a.entityType, a.uuid) < dirtyKey(b.entityType, b.uuid) ? -1 : 1,
-    ),
-  })
-}
-
 /**
  * Merges the local library snapshot with the remote shared file.
  *
@@ -204,8 +186,5 @@ export function mergeLibraries(
     (tomb) => tomb.deletedAt > tombstoneCutoff,
   )
 
-  const uploadNeeded =
-    remote === null || canonicalize(merged) !== canonicalize(remote)
-
-  return { merged, applyOps: [...applyOps, ...deleteOps], uploadNeeded }
+  return { merged, applyOps: [...applyOps, ...deleteOps] }
 }

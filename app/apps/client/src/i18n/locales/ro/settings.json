@@ -1603,7 +1603,9 @@
       "revokeConfirm": {
         "title": "Revoci acest dispozitiv?",
         "message": "{{name}} nu mai poate citi sau modifica datele bisericii. Celelalte dispozitive merg mai departe."
-      }
+      },
+      "mediaVideos": "Videoclipuri de fundal pe telefoane",
+      "mediaVideosDescription": "Imaginile ajung mereu pe telefoanele conectate, chiar și cu acest calculator oprit. Activează opțiunea ca să trimiți și videoclipurile de fundal: ocupă mai mult spațiu și consumă mai multe date."
     },
     "themes": {
       "title": "Teme"

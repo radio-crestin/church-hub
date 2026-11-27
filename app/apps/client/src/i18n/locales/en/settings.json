@@ -1594,7 +1594,9 @@
       "revokeConfirm": {
         "title": "Revoke this device?",
         "message": "{{name}} can no longer read or change the church's data. Other devices keep working."
-      }
+      },
+      "mediaVideos": "Background videos on phones",
+      "mediaVideosDescription": "Pictures always reach joined phones, even with this computer off. Turn this on to send background videos too: they take more space and data."
     },
     "themes": {
       "title": "Themes"

@@ -7,6 +7,13 @@ const logger = {
     log('remote-access', 'warn', msg, data),
 }
 
+/**
+ * The largest body a tunnel carries: it travels whole, as base64 JSON, so
+ * a bigger file (a long video) is refused (413) and the phone shows it as
+ * unavailable rather than stalling the channel.
+ */
+export const TUNNEL_MAX_BODY_BYTES = 64 * 1024 * 1024
+
 /** Headers the tunnel sets itself, never the phone's. */
 const DROPPED_HEADERS = new Set(['host', 'connection', 'content-length'])
 
@@ -76,6 +83,12 @@ export function createTunnelSession(
       body: message.body ? fromBase64(message.body) : undefined,
       redirect: 'manual',
     })
+    const length = Number(response.headers.get('Content-Length'))
+    if (length > TUNNEL_MAX_BODY_BYTES) {
+      await response.body?.cancel()
+      send({ type: 'http', id: message.id, status: 413, headers: [], body: '' })
+      return
+    }
     const responseHeaders: Array<[string, string]> = []
     response.headers.forEach((value, name) =>
       responseHeaders.push([name, value]),

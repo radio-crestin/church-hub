@@ -12,12 +12,6 @@
     "save": "Save",
     "delete": "Delete",
     "back": "Back to Songs",
-    "import": "Import",
-    "importFromText": "Import from Text",
-    "editAsText": "Edit as Text",
-    "editAsSlides": "Edit as Slides",
-    "addSlide": "Add Slide",
-    "cloneSlide": "Clone Slide",
     "addToSchedule": "Add to Presentation",
     "saveToFile": "Save to File",
     "exportPdf": "Export as PDF",
@@ -27,23 +21,12 @@
   "editor": {
     "titlePlaceholder": "Enter song title...",
     "categoryPlaceholder": "Select category...",
-    "slides": "Slides",
-    "slideNumber": "Slide {{number}}",
-    "emptySlide": "Empty slide - click to edit",
-    "noSlides": "No slides yet",
-    "formPanel": "Song form",
-    "saveFirst": "Save the song to add slides",
-    "undo": "Undo",
-    "redo": "Redo",
-    "viewForm": "Form",
-    "viewStage": "Slides",
     "background": {
       "title": "Background",
       "helper": "Shown behind this song's lyrics on audience and kiosk screens. Stage monitors and the live stream keep their own background."
     }
   },
   "stageEditor": {
-    "editHint": "Click the lyrics to edit them directly on the slide",
     "emptySlidePlaceholder": "Click to add lyrics",
     "dragToReorder": "Drag to reorder",
     "cloneSlide": "Duplicate slide",
@@ -134,13 +117,6 @@
     "preview": "Preview: {{count}} slides",
     "confirm": "Import",
     "cancel": "Cancel"
-  },
-  "editAsText": {
-    "placeholder": "First slide lyrics here\nSecond line of first slide\n\n---\n\nSecond slide starts here\nAnother line",
-    "formatHelp": "Use **bold**, *italic*, __underline__. Empty lines or --- separate slides.",
-    "preview": "{{count}} slides",
-    "preview_one": "{{count}} slide",
-    "preview_other": "{{count}} slides"
   },
   "category": {
     "none": "No Category",
@@ -280,18 +256,7 @@
     "noSlides": "No slides",
     "slideNumber": "Slide {{number}}",
     "slideCounter": "Slide {{current}} of {{total}}",
-    "editMode": "Edit",
-    "exitEditMode": "Save",
-    "saving": "Saving...",
-    "discardChanges": "Discard",
-    "addSlide": "Add Slide",
-    "deleteSlide": "Delete",
-    "moveUp": "Move Up",
-    "moveDown": "Move Down",
     "chorusRepeat": "Auto-inserted chorus",
-    "editAsText": "Edit as Text",
-    "slideAdded": "Slide added",
-    "presentSlide": "Present this slide",
     "previewMode": "Preview",
     "previewModeHint": "Preview: stage the verse here, for the singers, before showing it",
     "project": "Project",
@@ -350,9 +315,7 @@
     "saving": "Saving..."
   },
   "chords": {
-    "editChords": "Edit Chords",
     "setLabel": "Set slide type",
-    "removeLabel": "Remove label",
     "searchChord": "Search chord...",
     "removeChord": "Click to remove chord",
     "clearAll": "Clear all chords",
@@ -440,5 +403,30 @@
     "search": "Search songs to add",
     "noResults": "No song found.",
     "remove": "Remove {{title}}"
+  },
+  "songEditor": {
+    "done": "Done",
+    "details": "Song details",
+    "noLabel": "No label",
+    "mode": {
+      "label": "Edit the song as",
+      "slides": "Slides",
+      "text": "Text"
+    },
+    "chords": {
+      "title": "Chords",
+      "empty": "Write the lyrics first, then put chords on their words."
+    }
+  },
+  "textEditor": {
+    "placeholder": "#V1\n[G]First line of the first slide\nSecond line\n\n#C1\nThe chorus starts here",
+    "slideCount_one": "{{count}} slide",
+    "slideCount_other": "{{count}} slides",
+    "help": {
+      "newSlide": "Blank line: new slide",
+      "chord": "chord before a word",
+      "label": "slide label",
+      "bold": "bold"
+    }
   }
 }

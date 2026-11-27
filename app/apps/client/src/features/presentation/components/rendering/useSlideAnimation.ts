@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
+import { flushSync } from 'react-dom'
 
 import { getAnimationStyles } from './utils/getAnimationStyles'
 import { type LayerTypewriter, layerTypewriter } from './utils/layerTypewriter'
@@ -211,9 +218,14 @@ export function useSlideAnimation<T>({
       } else {
         setPhase('mounting')
 
+        // Two frames on the start styles, then the end styles committed inside
+        // the frame (flushSync), so the transition starts on that frame: the
+        // background coming in with the text (CrossfadeScreenBackground) starts
+        // on the same one. Left to React's scheduler, the commit would land a
+        // frame or two later on a busy machine.
         rafRef.current = requestAnimationFrame(() => {
           rafRef.current = requestAnimationFrame(() => {
-            setPhase('entering')
+            flushSync(() => setPhase('entering'))
             timeoutRef.current = setTimeout(() => {
               setPhase('visible')
             }, enterDuration)
@@ -265,8 +277,11 @@ export function useSlideAnimation<T>({
     crossfade(from)
   }, [showMorph, crossfade])
 
-  // Handle visibility and content changes
-  useEffect(() => {
+  // Handle visibility and content changes. A layout effect, like the
+  // background's (CrossfadeScreenBackground): the exit starts, or the entrance
+  // is scheduled, in the commit that made the change, before the browser
+  // paints, so text and background stay on the same frames.
+  useLayoutEffect(() => {
     const wasVisible = prevVisibleRef.current
     const becameVisible = isVisible && !wasVisible
     const becameHidden = !isVisible && wasVisible

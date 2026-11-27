@@ -350,6 +350,85 @@ export const syncOpenApi = {
         },
       },
     },
+    '/sync/churches/{churchId}/media': {
+      post: {
+        summary: 'Publish the church’s media',
+        description:
+          'The church server only: every media file its synced data references (song backgrounds, slides, videos), each time in full and in priority order. Files are content-addressed under the church’s secret prefix (media/<sha256>); those already there are listed in media/index.json ({ media: { <id>: { hash, size, type } } }), which readers fetch with the rest of the church; each missing one gets a presigned PUT (valid 15 minutes, its headers signed), after which the server publishes again; files no longer referenced are deleted. Limits: SYNC_MEDIA_MAX_FILE_BYTES per file (default 512 MiB) and SYNC_MEDIA_MAX_BYTES per church (default 2 GiB); what doesn’t fit is skipped with its reason. A path rotation leaves the media behind with the old prefix, and the server publishes it again.',
+        security: [{ deviceToken: [] }],
+        parameters: [churchId],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['items'],
+                properties: {
+                  items: {
+                    type: 'array',
+                    maxItems: 10000,
+                    items: {
+                      type: 'object',
+                      required: ['id', 'hash', 'size', 'type'],
+                      properties: {
+                        id: { type: 'string', description: 'The media id synced rows use (<uuid>.<ext>)' },
+                        hash: { type: 'string', description: 'sha256 of the file, hex' },
+                        size: { type: 'integer', minimum: 1 },
+                        type: {
+                          type: 'string',
+                          enum: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'What readers find, and what to upload',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    available: { type: 'integer' },
+                    uploads: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          hash: { type: 'string' },
+                          url: { type: 'string', description: 'Presigned PUT URL' },
+                          headers: { type: 'object', additionalProperties: { type: 'string' } },
+                        },
+                      },
+                    },
+                    skipped: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          reason: { type: 'string', enum: ['file_too_large', 'church_limit'] },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '400': error('An invalid item (code invalid_request)'),
+          '401': unauthorized,
+          '403': error('Not the church server’s token (code forbidden)'),
+          '503': notConfigured,
+        },
+      },
+    },
     '/sync/churches/{churchId}/changes': {
       post: {
         summary: 'Write changes',

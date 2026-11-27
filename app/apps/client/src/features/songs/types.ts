@@ -118,6 +118,17 @@ export interface SongWithSlides extends Song {
   tags: SongTag[]
 }
 
+/** A slide as an editor holds it: `id` is a string until the slide is saved. */
+export interface LocalSlide {
+  id: string | number
+  content: string
+  chords?: ChordMapping[] | null
+  sortOrder: number
+  label?: string | null
+  notes?: string | null
+  styleOverrides?: SlideStyleOverride | null
+}
+
 export interface SlideInput {
   id?: number | string
   content: string

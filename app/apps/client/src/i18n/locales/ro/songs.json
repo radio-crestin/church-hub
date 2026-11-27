@@ -12,12 +12,6 @@
     "save": "Salvează",
     "delete": "Șterge",
     "back": "Înapoi la cântări",
-    "import": "Importă",
-    "importFromText": "Importă din text",
-    "editAsText": "Editează ca text",
-    "editAsSlides": "Editează ca slide-uri",
-    "addSlide": "Adaugă slide",
-    "cloneSlide": "Duplică slide-ul",
     "addToSchedule": "Adaugă în prezentare",
     "saveToFile": "Salvează în fișier",
     "exportPdf": "Exportă ca PDF",
@@ -27,23 +21,12 @@
   "editor": {
     "titlePlaceholder": "Introdu titlul cântării...",
     "categoryPlaceholder": "Selectează categoria...",
-    "slides": "Slide-uri",
-    "slideNumber": "Slide {{number}}",
-    "emptySlide": "Slide gol – apasă ca să-l editezi",
-    "noSlides": "Încă nu ai niciun slide",
-    "formPanel": "Formular cântare",
-    "saveFirst": "Salvează cântarea pentru a adăuga slide-uri",
-    "undo": "Anulează",
-    "redo": "Refă",
-    "viewForm": "Formular",
-    "viewStage": "Slide-uri",
     "background": {
       "title": "Fundal",
       "helper": "Apare în spatele versurilor acestei cântări pe ecranele din sală și pe Kiosk. Monitoarele de scenă și transmisiunea live își păstrează fundalul lor."
     }
   },
   "stageEditor": {
-    "editHint": "Apasă pe versuri pentru a le edita direct pe slide",
     "emptySlidePlaceholder": "Apasă pentru a adăuga versuri",
     "dragToReorder": "Trage pentru a reordona",
     "cloneSlide": "Duplică slide-ul",
@@ -135,14 +118,6 @@
     "preview": "Slide-uri în previzualizare: {{count}}",
     "confirm": "Importă",
     "cancel": "Anulează"
-  },
-  "editAsText": {
-    "placeholder": "Versurile primului slide\nA doua linie din primul slide\n\n---\n\nAl doilea slide începe aici\nAltă linie",
-    "formatHelp": "Folosește **îngroșat**, *cursiv*, __subliniat__. Liniile goale sau --- separă slide-urile.",
-    "preview": "{{count}} slide-uri",
-    "preview_one": "{{count}} slide",
-    "preview_few": "{{count}} slide-uri",
-    "preview_other": "{{count}} de slide-uri"
   },
   "category": {
     "none": "Fără categorie",
@@ -282,18 +257,7 @@
     "noSlides": "Fără slide-uri",
     "slideNumber": "Slide {{number}}",
     "slideCounter": "Slide-ul {{current}} din {{total}}",
-    "editMode": "Editează",
-    "exitEditMode": "Salvează",
-    "saving": "Se salvează...",
-    "discardChanges": "Renunță",
-    "addSlide": "Adaugă slide",
-    "deleteSlide": "Șterge",
-    "moveUp": "Mută sus",
-    "moveDown": "Mută jos",
     "chorusRepeat": "Refren inserat automat",
-    "editAsText": "Editează ca text",
-    "slideAdded": "Slide adăugat",
-    "presentSlide": "Afișează acest slide",
     "previewMode": "Previzualizare",
     "previewModeHint": "Previzualizare: pregătește strofa aici, pentru cântăreți, înainte de a o afișa",
     "project": "Afișează",
@@ -352,9 +316,7 @@
     "saving": "Se salvează..."
   },
   "chords": {
-    "editChords": "Editează acordurile",
     "setLabel": "Setează tipul slide-ului",
-    "removeLabel": "Elimină eticheta",
     "searchChord": "Caută acord...",
     "removeChord": "Apasă ca să elimini acordul",
     "clearAll": "Șterge toate acordurile",
@@ -443,5 +405,31 @@
     "search": "Caută cântări de adăugat",
     "noResults": "Nicio cântare găsită.",
     "remove": "Scoate {{title}}"
+  },
+  "songEditor": {
+    "done": "Gata",
+    "details": "Detaliile cântării",
+    "noLabel": "Fără etichetă",
+    "mode": {
+      "label": "Editează cântarea ca",
+      "slides": "Slide-uri",
+      "text": "Text"
+    },
+    "chords": {
+      "title": "Acorduri",
+      "empty": "Scrie întâi versurile, apoi pune acordurile pe cuvinte."
+    }
+  },
+  "textEditor": {
+    "placeholder": "#V1\n[G]Primul vers din primul slide\nAl doilea vers\n\n#C1\nAici începe refrenul",
+    "slideCount_one": "{{count}} slide",
+    "slideCount_few": "{{count}} slide-uri",
+    "slideCount_other": "{{count}} de slide-uri",
+    "help": {
+      "newSlide": "Rând gol: slide nou",
+      "chord": "acord înaintea cuvântului",
+      "label": "eticheta slide-ului",
+      "bold": "îngroșat"
+    }
   }
 }

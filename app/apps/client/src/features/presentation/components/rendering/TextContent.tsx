@@ -275,7 +275,7 @@ export function TextContent({
   const lineSeparator = style.lineSeparator ?? 'space'
   const fitLineToWidth = style.fitLineToWidth ?? false
   const lineHeight = style.lineHeight ?? 1.3
-  const fontsLoadedVersion = useFontsLoadedVersion()
+  const fontsLoadedVersion = useFontsLoadedVersion(style.fontFamily)
   const fontKey = `${style.fontFamily}|${style.bold}|${style.italic}|${fontsLoadedVersion}`
 
   // Parse HTML to segments and apply compression synchronously during render

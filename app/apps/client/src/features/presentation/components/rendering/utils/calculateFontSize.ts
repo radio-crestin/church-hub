@@ -1,3 +1,4 @@
+import { largestFittingStep } from './largestFittingStep'
 import { measureTextHeight } from './measureTextHeight'
 
 /**
@@ -11,7 +12,7 @@ import { measureTextHeight } from './measureTextHeight'
 export const FIT_STEPS_PER_PX = 10
 
 /**
- * Calculate font size to fit text in a container using binary search.
+ * Calculate font size to fit text in a container (largestFittingStep).
  * Sets the element to the target width and finds the largest font that fits in
  * height. Shared by the read-only renderer (AnimatedText) and the in-place slide
  * editor (EditableMainText) so the editing caret text matches the projected size.
@@ -23,6 +24,12 @@ export function calculateFontSize(
   maxHeight: number,
   maxFontSize: number,
   minFontSize: number,
+  /**
+   * The size this text box was last fitted to. The browser has the words it
+   * keeps already shaped at that size, so a search that starts there measures
+   * a slide that changed a few words without laying any text out from scratch.
+   */
+  lastFit: number | null = null,
 ): number {
   if (!text || maxWidth <= 0 || maxHeight <= 0) {
     return maxFontSize
@@ -48,28 +55,31 @@ export function calculateFontSize(
   element.style.visibility = 'hidden'
   element.textContent = text
 
-  // Binary search, in fit steps, for the largest font size that fits
-  let low = Math.ceil(minFontSize * FIT_STEPS_PER_PX)
-  let high = Math.floor(maxFontSize * FIT_STEPS_PER_PX)
-  let bestFit = minFontSize
-
-  while (low <= high) {
-    const mid = Math.floor((low + high) / 2)
-    const size = mid / FIT_STEPS_PER_PX
-    element.style.fontSize = `${size}px`
-
-    // Measure height at this font size
-    const contentHeight = measureTextHeight(element)
-
-    if (contentHeight <= maxHeight) {
-      // This font size fits, try larger
-      bestFit = size
-      low = mid + 1
-    } else {
-      // Too big, try smaller
-      high = mid - 1
-    }
+  const low = Math.ceil(minFontSize * FIT_STEPS_PER_PX)
+  const high = Math.floor(maxFontSize * FIT_STEPS_PER_PX)
+  const heightAt = (step: number) => {
+    element.style.fontSize = `${step / FIT_STEPS_PER_PX}px`
+    return measureTextHeight(element)
   }
+  const fits = (step: number) => heightAt(step) <= maxHeight
+  let step: number
+  if (lastFit !== null) {
+    step = largestFittingStep(low, high, lastFit * FIT_STEPS_PER_PX, fits)
+  } else {
+    // The height at the largest size says which size the text would fill
+    // exactly if it kept its line breaks: the search starts there.
+    const highHeight = high >= low ? heightAt(high) : 0
+    step =
+      highHeight <= maxHeight
+        ? high
+        : largestFittingStep(
+            low,
+            high - 1,
+            (high * maxHeight) / highHeight,
+            fits,
+          )
+  }
+  const bestFit = step < low ? minFontSize : step / FIT_STEPS_PER_PX
 
   // Restore original styles
   element.style.fontSize = originalStyles.fontSize
