@@ -36,3 +36,19 @@ An unchanged run logs the checksum and skips the upload.
 1. Write a build script that writes `<id>.chsongs` (with `assembleBundle` and `zipBundleFiles`, as the Resurse Creștine one does) and `<id>.chsongs.sha256` holding the bundle's checksum.
 2. Give it a workflow like `resurse-crestine-archive.yml`, with the same permissions, uploading to the `song-sources` release.
 3. Add its config in `app/apps/server/src/service/song-sources/built-in/`, with the release file as its `url`, and list it in `builtInSongSources.ts`.
+
+## As a shared library, featured and shipped offline (CH-177)
+The sources Church Hub manages are also published in the shared library format (`app/packages/song-formats/src/library`: a manifest and gzipped shards of about 500 songs) under `libraries/<sourceId>/` in the sync bucket, so every app reads them the way it reads a church's shared songs.
+- **Publishing**: `bun scripts/publish-library.ts <file.chsongs> <sourceId> [name] [category]` (in `app/apps/server`, with `LIBRARY_PUBLISH_TOKEN` and `CHURCH_HUB_SYNC_URL`). It sends only the shards the bucket lacks, and nothing when the songs are unchanged. The sync service accepts writes to libraries that belong to no church from a signed-in curator or from that token (`LIBRARY_PUBLISH_TOKEN` on the service).
+- **The workflow step** (to add to `resurse-crestine-archive.yml` by a person: the agents' GitHub App cannot change workflows), after "Publish to the song-sources release", with a repository secret `LIBRARY_PUBLISH_TOKEN` equal to the service's:
+  ```yaml
+      - name: Publish as a shared library
+        if: steps.build.outputs.checksum != steps.release.outputs.checksum
+        working-directory: app/apps/server
+        env:
+          CHURCH_HUB_SYNC_URL: ${{ vars.BACKEND_PUBLIC_URL }}
+          LIBRARY_PUBLISH_TOKEN: ${{ secrets.LIBRARY_PUBLISH_TOKEN }}
+        run: bun scripts/publish-library.ts "$RUNNER_TEMP/archive/resurse-crestine.chsongs" resurse-crestine
+  ```
+- **Featured list**: curators choose, on Settings > Church Hub Library, which published libraries every app offers (`libraries/featured.json`). Apps read it at start and twice a day and keep the last copy next to their database. A source it names replaces the built-in source with the same id (`resurse-crestine` keeps its id, so songs imported from it stay linked); built-in sources it does not name stay.
+- **Offline**: the desktop build (`build:apps`) runs `scripts/bundle-song-libraries.ts`, which copies the featured list and each library's manifest and shards into `app/tauri/resources/song-libraries` (a Tauri resource). With no internet, the app takes the list and the libraries' files from that copy (`fetchLink` falls back to it), so their songs can be imported; online, they update from the bucket.
