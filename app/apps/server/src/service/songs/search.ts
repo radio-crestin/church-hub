@@ -136,12 +136,18 @@ export function updateSearchIndex(songId: number): void {
     const normalizedCategory = normalizeForIndex(song.category_name ?? '')
     const normalizedContent = normalizeForIndex(combinedContent)
 
-    // Update standard FTS index
-    db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
+    // Update standard FTS index: its row is the song's own rowid (T-218)
+    db.query('DELETE FROM songs_fts WHERE rowid = ?').run(songId)
     db.query(`
-      INSERT INTO songs_fts (song_id, title, category_name, content)
-      VALUES (?, ?, ?, ?)
-    `).run(songId, normalizedTitle, normalizedCategory, normalizedContent)
+      INSERT INTO songs_fts (rowid, song_id, title, category_name, content)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      songId,
+      songId,
+      normalizedTitle,
+      normalizedCategory,
+      normalizedContent,
+    )
 
     // A song saved a moment ago is found with a typo straight away.
     addVocabularyWords(
@@ -169,7 +175,7 @@ export function removeFromSearchIndex(songId: number): void {
     logger.debug(`Removing song from search index: ${songId}`)
 
     const db = getRawDatabase()
-    db.query('DELETE FROM songs_fts WHERE song_id = ?').run(songId)
+    db.query('DELETE FROM songs_fts WHERE rowid = ?').run(songId)
     removeLibrarySong(songId)
 
     // Otherwise a deleted song keeps showing up in cached result sets.
@@ -238,15 +244,15 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
     try {
       // Delete existing FTS entries for these songs
       const deleteStart = performance.now()
-      db.query(`DELETE FROM songs_fts WHERE song_id IN (${placeholders})`).run(
+      db.query(`DELETE FROM songs_fts WHERE rowid IN (${placeholders})`).run(
         ...songIds,
       )
       const deleteTime = performance.now() - deleteStart
 
       // Prepare insert statements
       const ftsInsert = db.prepare(`
-        INSERT INTO songs_fts (song_id, title, category_name, content)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO songs_fts (rowid, song_id, title, category_name, content)
+        VALUES (?, ?, ?, ?, ?)
       `)
 
       // Insert each song with normalized content
@@ -259,6 +265,7 @@ export function batchUpdateSearchIndex(songIds: number[]): void {
         const normalizedContent = normalizeForIndex(song.content)
 
         ftsInsert.run(
+          song.id,
           song.id,
           normalizedTitle,
           normalizedCategory,
@@ -340,8 +347,8 @@ export function rebuildSearchIndex(
 
       // Prepare insert statements
       const ftsInsert = db.prepare(`
-        INSERT INTO songs_fts (song_id, title, category_name, content)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO songs_fts (rowid, song_id, title, category_name, content)
+        VALUES (?, ?, ?, ?, ?)
       `)
 
       // Insert each song with normalized content
@@ -356,6 +363,7 @@ export function rebuildSearchIndex(
         const normalizedContent = normalizeForIndex(song.content)
 
         ftsInsert.run(
+          song.id,
           song.id,
           normalizedTitle,
           normalizedCategory,

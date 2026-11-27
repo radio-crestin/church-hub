@@ -5,6 +5,7 @@ import {
   updateCloudIdentity,
 } from './cloudIdentityStore'
 import { fetchRemoteChanges } from './fetchRemoteChanges'
+import { keysToMerge } from './keysToMerge'
 import { pushChanges } from './pushChanges'
 import { refreshReadUrl } from './refreshReadUrl'
 import { rollBackRejected } from './rollBackRejected'
@@ -77,7 +78,16 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
   }
 
   const state = getSyncState()
-  const local = serializeLibrary(state.deviceId, state.deviceName, dirtyKeys)
+  // A snapshot (a first join) is the whole church: everything is merged.
+  const keys = remote?.fromSnapshot
+    ? undefined
+    : keysToMerge(dirtyKeys, remote?.library ?? null)
+  const local = serializeLibrary(
+    state.deviceId,
+    state.deviceName,
+    dirtyKeys,
+    keys,
+  )
   const { merged, applyOps } = mergeLibraries(
     local,
     remote?.library ?? null,
@@ -97,7 +107,7 @@ async function syncRound(identity: CloudIdentity): Promise<RoundResult> {
     local,
     dirtyKeys,
     applyOps,
-    getSyncVersions(),
+    getSyncVersions(keys),
     getChangeAuthors(),
   )
   if (changes.length > 0) {
