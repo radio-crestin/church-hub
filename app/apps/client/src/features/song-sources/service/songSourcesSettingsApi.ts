@@ -67,24 +67,33 @@ export async function exportCategoryFile(
   return new Uint8Array(await response.arrayBuffer())
 }
 
-export async function getLibraryShare(): Promise<LibraryShareState> {
+export async function getLibraryShares(): Promise<LibraryShareState> {
   const response = await fetcher<{
-    data: LibraryShare | null
+    data: LibraryShare[]
     cloudSync: boolean
     error?: string
-  }>('/api/song-sources/share')
+  }>('/api/song-sources/shares')
   if (response.error) throw new Error(response.error)
-  return { share: response.data, cloudSync: response.cloudSync }
+  return { shares: response.data, cloudSync: response.cloudSync }
 }
 
-export const saveLibraryShare = (input: LibraryShareInput) =>
-  call<LibraryShare>('/api/song-sources/share', {
-    method: 'PUT',
-    body: JSON.stringify(input),
-  })
+/** Creates a share (no id) or changes one. */
+export const saveLibraryShare = ({
+  id,
+  ...input
+}: LibraryShareInput & { id?: number }) =>
+  call<LibraryShare>(
+    id === undefined
+      ? '/api/song-sources/shares'
+      : `/api/song-sources/shares/${id}`,
+    {
+      method: id === undefined ? 'POST' : 'PUT',
+      body: JSON.stringify(input),
+    },
+  )
 
-export const syncLibraryShare = () =>
-  call<LibraryShare>('/api/song-sources/share/sync', { method: 'POST' })
+export const syncLibraryShare = (id: number) =>
+  call<LibraryShare>(`/api/song-sources/shares/${id}/sync`, { method: 'POST' })
 
-export const stopLibraryShare = () =>
-  call<null>('/api/song-sources/share', { method: 'DELETE' })
+export const stopLibraryShare = (id: number) =>
+  call<null>(`/api/song-sources/shares/${id}`, { method: 'DELETE' })

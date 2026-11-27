@@ -39,6 +39,10 @@ export interface LibraryShare {
   publisher: string
   /** null: the whole library. */
   categoryIds: number[] | null
+  /** Songs picked one by one, besides the categories. */
+  songIds: number[]
+  /** The picked songs still in the library, with their titles. */
+  songs: Array<{ id: number; title: string }>
   listed: boolean
   /** The link others add as a song source; null until the first publish. */
   manifestUrl: string | null
@@ -50,12 +54,14 @@ export interface LibraryShare {
 
 export interface LibraryShareInput {
   name: string
+  /** null: the whole library (songIds then unused). */
   categoryIds: number[] | null
+  songIds: number[]
   listed: boolean
 }
 
-/** The share, and whether cloud sync (which sharing goes through) is on. */
+/** The shares, and whether cloud sync (which sharing goes through) is on. */
 export interface LibraryShareState {
-  share: LibraryShare | null
+  shares: LibraryShare[]
   cloudSync: boolean
 }

@@ -137,13 +137,13 @@
     },
     "share": {
       "title": "Share my songs",
-      "description": "Publish your songs through Church Hub's cloud sync, without S3 keys of your own. Other churches add them by link, or from the catalog if you list them. Kept in sync every 5 minutes.",
+      "description": "Publish groups of your songs through Church Hub's cloud sync, without S3 keys of your own: the whole library, or the categories and songs you pick. Each share has its own link; other churches add it by link, or from the catalog if you list it. Kept in sync every 5 minutes.",
       "needsCloudSync": "Turn on cloud sync first: sharing goes through it.",
       "name": "Name",
       "namePlaceholder": "e.g. Songs of our church",
       "scope": "What to share",
       "wholeLibrary": "The whole library",
-      "someCategories": "Chosen categories",
+      "chosenSongs": "Chosen categories and songs",
       "listed": "List it in the public catalog",
       "listedHint": "Unlisted, only people with the link can find it.",
       "button": "Share",
@@ -151,7 +151,11 @@
       "inCatalog": "in the catalog",
       "unlisted": "unlisted",
       "stop": "Stop sharing",
-      "failed": "Sharing failed: {{error}}"
+      "edit": "Edit",
+      "failed": "Sharing failed: {{error}}",
+      "newShare": "New share",
+      "empty": "Nothing shared yet.",
+      "cancel": "Cancel"
     }
   },
   "page": {

@@ -76,7 +76,6 @@ const idParameter = (type: 'string' | 'integer') => ({
 
 const share = {
   type: 'object',
-  nullable: true,
   properties: {
     id: { type: 'integer' },
     sourceId: {
@@ -90,6 +89,19 @@ const share = {
       nullable: true,
       items: { type: 'integer' },
       description: 'null: the whole library',
+    },
+    songIds: {
+      type: 'array',
+      items: { type: 'integer' },
+      description: 'Songs picked one by one, besides the categories',
+    },
+    songs: {
+      type: 'array',
+      description: 'The picked songs still in the library, with their titles',
+      items: {
+        type: 'object',
+        properties: { id: { type: 'integer' }, title: { type: 'string' } },
+      },
     },
     listed: { type: 'boolean' },
     manifestUrl: {
@@ -105,22 +117,50 @@ const share = {
   },
 }
 
+/** POST /shares and PUT /shares/{id}: what the share holds. */
+const shareBody = {
+  required: true,
+  content: {
+    'application/json': {
+      schema: {
+        type: 'object',
+        required: ['name', 'categoryIds', 'listed'],
+        properties: {
+          name: { type: 'string' },
+          publisher: { type: 'string' },
+          categoryIds: {
+            type: 'array',
+            nullable: true,
+            items: { type: 'integer' },
+            description: 'null: the whole library',
+          },
+          songIds: { type: 'array', items: { type: 'integer' } },
+          listed: { type: 'boolean' },
+        },
+      },
+    },
+  },
+}
+
 export const songSourcesPaths = {
-  '/api/song-sources/share': {
+  '/api/song-sources/shares': {
     get: {
       tags,
-      summary: '"Share my songs": the shared library',
+      summary: '"Share my songs": the shares',
       description:
-        'The church’s shared library (null while it shares nothing) and whether cloud sync is on, which sharing needs. Requires `settings.view`.',
+        'The church’s shares, each a group of songs with its own link (empty while it shares nothing), and whether cloud sync is on, which sharing needs. Requires `settings.view`.',
       security,
       responses: {
         '200': {
-          description: 'The share',
+          description: 'The shares',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
-                properties: { data: share, cloudSync: { type: 'boolean' } },
+                properties: {
+                  data: { type: 'array', items: share },
+                  cloudSync: { type: 'boolean' },
+                },
               },
             },
           },
@@ -128,36 +168,35 @@ export const songSourcesPaths = {
         ...errors,
       },
     },
+    post: {
+      tags,
+      summary: 'Share a group of songs',
+      description:
+        'Publishes the whole library (categoryIds null) or chosen categories and songs as a shared library through the sync service, in a new folder with its own link: hash-named gzipped shards of about 500 songs plus a manifest under libraries/<sourceId>/, unlisted by default or listed in the public catalog. Kept in sync every 5 minutes. Requires `settings.edit`.',
+      security,
+      requestBody: shareBody,
+      responses: {
+        '201': { description: 'The new share', content: dataOf(share) },
+        '400': { description: 'No category or song chosen' },
+        '409': { description: 'Cloud sync is off (cloud_sync_off)' },
+        '502': { description: 'The sync service failed' },
+        ...errors,
+      },
+    },
+  },
+  '/api/song-sources/shares/{id}': {
     put: {
       tags,
-      summary: 'Share the songs, or change what is shared',
+      summary: 'Change what a share shares',
       description:
-        'Publishes the whole library (categoryIds null) or chosen categories as a shared library through the sync service: hash-named gzipped shards of about 500 songs plus a manifest under libraries/<sourceId>/, unlisted by default or listed in the public catalog. Kept in sync every 5 minutes. Requires `settings.edit`.',
+        'Saves its name, contents and listing, then publishes it again at the same link. Requires `settings.edit`.',
       security,
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              required: ['name', 'categoryIds', 'listed'],
-              properties: {
-                name: { type: 'string' },
-                publisher: { type: 'string' },
-                categoryIds: {
-                  type: 'array',
-                  nullable: true,
-                  items: { type: 'integer' },
-                },
-                listed: { type: 'boolean' },
-              },
-            },
-          },
-        },
-      },
+      parameters: [idParameter('integer')],
+      requestBody: shareBody,
       responses: {
         '200': { description: 'The share', content: dataOf(share) },
-        '400': { description: 'No category chosen' },
+        '400': { description: 'No category or song chosen' },
+        '404': { description: 'Share not found' },
         '409': { description: 'Cloud sync is off (cloud_sync_off)' },
         '502': { description: 'The sync service failed' },
         ...errors,
@@ -165,10 +204,11 @@ export const songSourcesPaths = {
     },
     delete: {
       tags,
-      summary: 'Stop sharing',
+      summary: 'Stop a share',
       description:
-        'The service deletes the library from the catalog and the bucket. Requires `settings.edit`.',
+        'The service deletes its library from the catalog and the bucket, so its link stops working. Requires `settings.edit`.',
       security,
+      parameters: [idParameter('integer')],
       responses: {
         '200': { description: 'Stopped' },
         '502': { description: 'The sync service failed' },
@@ -176,16 +216,17 @@ export const songSourcesPaths = {
       },
     },
   },
-  '/api/song-sources/share/sync': {
+  '/api/song-sources/shares/{id}/sync': {
     post: {
       tags,
-      summary: 'Publish the shared library again now',
+      summary: 'Publish a share again now',
       description:
         'Uploads only the shards the bucket lacks, then the manifest. Requires `settings.edit`.',
       security,
+      parameters: [idParameter('integer')],
       responses: {
         '200': { description: 'The share', content: dataOf(share) },
-        '404': { description: 'Nothing is shared' },
+        '404': { description: 'Share not found' },
         '502': { description: 'The sync service failed' },
         ...errors,
       },

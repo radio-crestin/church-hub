@@ -14,6 +14,7 @@ import {
   getSongUpdatesState,
   type LibraryShareInput,
   listPublications,
+  listShares,
   listSongSources,
   publishShare,
   readCatalog,
@@ -56,6 +57,8 @@ const SOURCE_RECOUNT_PATH = /^\/api\/song-sources\/([\w-]+)\/recount$/
 const SOURCE_PATH = /^\/api\/song-sources\/([\w-]+)$/
 const PUBLICATION_SYNC_PATH = /^\/api\/song-sources\/publications\/(\d+)\/sync$/
 const PUBLICATION_PATH = /^\/api\/song-sources\/publications\/(\d+)$/
+const SHARE_SYNC_PATH = /^\/api\/song-sources\/shares\/(\d+)\/sync$/
+const SHARE_PATH = /^\/api\/song-sources\/shares\/(\d+)$/
 
 /** What a client may read of a failure: an Error's message, never a raw thrown value. */
 const errorMessage = (error: unknown) =>
@@ -93,10 +96,11 @@ function bundleFileName(categoryName: string, format: string | null): string {
  * - POST   /api/song-sources/publications        publish a category `{ categoryId }` (settings.edit)
  * - POST   /api/song-sources/publications/:id/sync   upload its changes now (settings.edit)
  * - DELETE /api/song-sources/publications/:id    stop publishing, delete its files (settings.edit)
- * - GET    /api/song-sources/share               "Share my songs": the share, and whether cloud sync is on (settings.view)
- * - PUT    /api/song-sources/share               share `{ name, publisher?, categoryIds: number[]|null, listed }` and publish (settings.edit)
- * - POST   /api/song-sources/share/sync          publish it again now (settings.edit)
- * - DELETE /api/song-sources/share               stop sharing: out of the catalog and the bucket (settings.edit)
+ * - GET    /api/song-sources/shares              "Share my songs": the shares, and whether cloud sync is on (settings.view)
+ * - POST   /api/song-sources/shares              new share `{ name, publisher?, categoryIds: number[]|null, songIds, listed }`, published (settings.edit)
+ * - PUT    /api/song-sources/shares/:id          change what a share shares, and publish it (settings.edit)
+ * - POST   /api/song-sources/shares/:id/sync     publish it again now (settings.edit)
+ * - DELETE /api/song-sources/shares/:id          stop a share: out of the catalog and the bucket (settings.edit)
  * - GET    /api/song-sources/catalog             the shared libraries listed in the public catalog (songs.view)
  */
 export async function handleSongSourceRoutes(
@@ -126,6 +130,40 @@ export async function handleSongSourceRoutes(
   const publicationsView = () => {
     const storage = getS3Storage()
     return listPublications().map((p) => toPublicationView(p, storage))
+  }
+  /** Creates a share (no id) or changes one; it must share something. */
+  const saveShareRoute = async (
+    input: Partial<LibraryShareInput>,
+    id?: number,
+  ): Promise<Response> => {
+    const ids = (value: unknown) =>
+      Array.isArray(value) ? value.filter((v) => Number.isInteger(v)) : []
+    const categoryIds = Array.isArray(input.categoryIds)
+      ? ids(input.categoryIds)
+      : null
+    const songIds = categoryIds ? ids(input.songIds) : []
+    if (categoryIds?.length === 0 && songIds.length === 0) {
+      return respond(400, { error: 'Choose at least one category or song' })
+    }
+    try {
+      const share = await saveShare(
+        {
+          name: String(input.name ?? ''),
+          publisher:
+            typeof input.publisher === 'string' ? input.publisher : undefined,
+          categoryIds,
+          songIds,
+          listed: input.listed === true,
+        },
+        id,
+      )
+      if (!share) return respond(404, { error: 'Share not found' })
+      return respond(id === undefined ? 201 : 200, { data: share })
+    } catch (error) {
+      return respond(errorMessage(error) === 'cloud_sync_off' ? 409 : 502, {
+        error: errorMessage(error),
+      })
+    }
   }
 
   if (req.method === 'GET' && pathname === '/api/song-sources') {
@@ -290,64 +328,56 @@ export async function handleSongSourceRoutes(
     }
   }
 
-  if (pathname === '/api/song-sources/share') {
+  if (pathname === '/api/song-sources/shares') {
     if (req.method === 'GET') {
       const denied = deny('settings.view')
       if (denied) return denied
       return respond(200, {
-        data: getShare(),
+        data: listShares(),
         cloudSync: (await getCloudIdentity()) !== null,
       })
     }
-    if (req.method === 'PUT') {
+    if (req.method === 'POST') {
       const denied = deny('settings.edit')
       if (denied) return denied
-      const input = await readJson<LibraryShareInput>()
-      const categoryIds = Array.isArray(input.categoryIds)
-        ? input.categoryIds.filter((id) => Number.isInteger(id))
-        : null
-      if (categoryIds?.length === 0) {
-        return respond(400, { error: 'Choose at least one category' })
-      }
-      try {
-        const share = await saveShare({
-          name: String(input.name ?? ''),
-          publisher:
-            typeof input.publisher === 'string' ? input.publisher : undefined,
-          categoryIds,
-          listed: input.listed === true,
-        })
-        return respond(200, { data: share })
-      } catch (error) {
-        return respond(errorMessage(error) === 'cloud_sync_off' ? 409 : 502, {
-          error: errorMessage(error),
-        })
-      }
-    }
-    if (req.method === 'DELETE') {
-      const denied = deny('settings.edit')
-      if (denied) return denied
-      try {
-        await deleteShare()
-      } catch (error) {
-        logger.warning(`Stopping the share failed: ${error}`)
-        return respond(502, { error: errorMessage(error) })
-      }
-      return respond(200, { data: null })
+      return saveShareRoute(await readJson<LibraryShareInput>())
     }
   }
 
-  if (req.method === 'POST' && pathname === '/api/song-sources/share/sync') {
+  const shareSyncMatch = pathname.match(SHARE_SYNC_PATH)
+  if (req.method === 'POST' && shareSyncMatch) {
     const denied = deny('settings.edit')
     if (denied) return denied
-    if (!getShare()) return respond(404, { error: 'Nothing is shared' })
+    const id = Number(shareSyncMatch[1])
+    if (!getShare(id)) return respond(404, { error: 'Share not found' })
     try {
-      await publishShare({ force: true })
+      await publishShare(id, { force: true })
     } catch (error) {
       logger.warning(`Sharing the songs failed: ${error}`)
-      return respond(502, { error: errorMessage(error), data: getShare() })
+      return respond(502, { error: errorMessage(error), data: getShare(id) })
     }
-    return respond(200, { data: getShare() })
+    return respond(200, { data: getShare(id) })
+  }
+
+  const shareMatch = pathname.match(SHARE_PATH)
+  if (shareMatch && req.method === 'PUT') {
+    const denied = deny('settings.edit')
+    if (denied) return denied
+    return saveShareRoute(
+      await readJson<LibraryShareInput>(),
+      Number(shareMatch[1]),
+    )
+  }
+  if (shareMatch && req.method === 'DELETE') {
+    const denied = deny('settings.edit')
+    if (denied) return denied
+    try {
+      await deleteShare(Number(shareMatch[1]))
+    } catch (error) {
+      logger.warning(`Stopping the share failed: ${error}`)
+      return respond(502, { error: errorMessage(error) })
+    }
+    return respond(200, { data: null })
   }
 
   if (req.method === 'GET' && pathname === '/api/song-sources/catalog') {

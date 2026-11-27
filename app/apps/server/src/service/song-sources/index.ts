@@ -2,6 +2,7 @@ export { BUILT_IN_SONG_SOURCES } from './builtInSongSources'
 export { buildBundleFiles } from './bundle/buildBundleFiles'
 export { SONG_BUNDLE_EXTENSION } from './bundle/types'
 export { zipBundleFiles } from './bundle/zipBundleFiles'
+export { startFeaturedSourcesRefresh } from './featured'
 export { isProxyAllowedUrl } from './isProxyAllowedUrl'
 export { deleteLinkSource } from './links/deleteLinkSource'
 export { upsertLinkSource } from './links/upsertLinkSource'
@@ -64,4 +65,3 @@ export type {
   SongUpdatesState,
   SourceUpdate,
 } from './updates/types'
-export { startFeaturedSourcesRefresh } from './featured'

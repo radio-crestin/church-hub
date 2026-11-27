@@ -274,6 +274,13 @@ export const EMBEDDED_JOURNAL = {
       tag: '0036_add_songs_source_link',
       breakpoints: true,
     },
+    {
+      idx: 37,
+      version: '6',
+      when: 1769600000000,
+      tag: '0037_add_share_song_ids',
+      breakpoints: true,
+    },
   ],
 } as const
 
@@ -462,5 +469,10 @@ export const EMBEDDED_MIGRATIONS: EmbeddedMigration[] = [
     tag: '0036_add_songs_source_link',
     sql: '-- Where a song came from (a song source and its id there) and its lyrics fingerprint, for dedup and safe updates (T-176)\nALTER TABLE `songs` ADD `source_id` text;\n--> statement-breakpoint\nALTER TABLE `songs` ADD `source_song_id` text;\n--> statement-breakpoint\n-- The song\'s content hash when the source last gave it its lyrics: equal to content_hash while nobody changed them here\nALTER TABLE `songs` ADD `source_hash` text;\n--> statement-breakpoint\n-- SHA-256 of the normalized lyrics (lyricsFingerprint); NULL until computed, and again whenever a slide changes\nALTER TABLE `songs` ADD `content_hash` text;\n--> statement-breakpoint\nCREATE INDEX `idx_songs_source_song` ON `songs` (`source_id`, `source_song_id`);\n--> statement-breakpoint\nCREATE INDEX `idx_songs_content_hash` ON `songs` (`content_hash`);\n--> statement-breakpoint\nCREATE TRIGGER `songs_content_hash_slide_ai` AFTER INSERT ON `song_slides` BEGIN UPDATE `songs` SET `content_hash` = NULL WHERE `id` = NEW.`song_id` AND `content_hash` IS NOT NULL; END;\n--> statement-breakpoint\nCREATE TRIGGER `songs_content_hash_slide_au` AFTER UPDATE OF `content`, `sort_order`, `song_id` ON `song_slides` BEGIN UPDATE `songs` SET `content_hash` = NULL WHERE `id` IN (NEW.`song_id`, OLD.`song_id`) AND `content_hash` IS NOT NULL; END;\n--> statement-breakpoint\nCREATE TRIGGER `songs_content_hash_slide_ad` AFTER DELETE ON `song_slides` BEGIN UPDATE `songs` SET `content_hash` = NULL WHERE `id` = OLD.`song_id` AND `content_hash` IS NOT NULL; END;\n--> statement-breakpoint\n-- "Share my songs": the church\'s songs published as a shared library through the sync service (T-176)\nCREATE TABLE `song_library_shares` (\n\t`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n\t`source_id` text NOT NULL,\n\t`name` text NOT NULL,\n\t`publisher` text NOT NULL,\n\t`category_ids` text,\n\t`listed` integer DEFAULT 0 NOT NULL,\n\t`manifest_url` text,\n\t`published_checksum` text,\n\t`published_shards` text,\n\t`song_count` integer DEFAULT 0 NOT NULL,\n\t`last_synced_at` integer,\n\t`last_error` text,\n\t`created_at` integer DEFAULT (unixepoch()) NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX `song_library_shares_source_id_unique` ON `song_library_shares` (`source_id`);\n',
     when: 1769500000000,
+  },
+  {
+    tag: '0037_add_share_song_ids',
+    sql: '-- A share holds hand-picked songs as well as categories: a JSON array of song ids (T-177)\nALTER TABLE `song_library_shares` ADD `song_ids` text;\n',
+    when: 1769600000000,
   },
 ]
