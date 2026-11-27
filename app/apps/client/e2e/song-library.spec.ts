@@ -30,9 +30,10 @@ async function createSong(
   request: APIRequestContext,
   title: string,
   lyrics: string,
+  categoryId?: number,
 ) {
   const response = await request.post('/api/songs', {
-    data: { title, slides: [{ content: lyrics, sortOrder: 0 }] },
+    data: { title, categoryId, slides: [{ content: lyrics, sortOrder: 0 }] },
   })
   expect(response.status()).toBe(201)
   return (await response.json()).data as { id: number; title: string }
@@ -45,8 +46,10 @@ async function submitFromSongPage(page: Page, songId: number, note: string) {
   const dialog = page.getByTestId('submit-to-library-dialog')
   await expect(dialog).toBeVisible()
   await dialog.getByTestId('submit-to-library-note').fill(note)
-  await dialog.getByRole('button', { name: 'Submit', exact: true }).click()
-  await expect(page.getByText('Song sent. Thank you!')).toBeVisible()
+  await dialog
+    .getByRole('button', { name: 'Submit 1 song', exact: true })
+    .click()
+  await expect(page.getByText('1 song sent. Thank you!')).toBeVisible()
 }
 
 async function openCuratorPage(page: Page) {
@@ -199,5 +202,64 @@ test.describe
       expect((await readCuratedLibrary(s3)).manifest?.checksum).toBe(
         before?.checksum,
       )
+    })
+
+    test('a whole category and a picked song are sent at once', async ({
+      page,
+      request,
+    }) => {
+      const uniq = Date.now()
+      const category = (
+        await (
+          await request.post('/api/categories', {
+            data: { name: `Library Batch ${uniq}` },
+          })
+        ).json()
+      ).data as { id: number }
+      await createSong(
+        request,
+        `Batch One ${uniq}`,
+        'First batch song',
+        category.id,
+      )
+      await createSong(
+        request,
+        `Batch Two ${uniq}`,
+        'Second batch song',
+        category.id,
+      )
+      await createSong(request, `Picked Alone ${uniq}`, 'A song picked by hand')
+
+      await page.goto('/settings/songs')
+      await page
+        .getByTestId(`category-submit-to-library-${category.id}`)
+        .click()
+      const dialog = page.getByTestId('submit-to-library-dialog')
+      await expect(dialog).toBeVisible()
+      await dialog
+        .getByTestId('submit-to-library-search')
+        .fill(`Picked Alone ${uniq}`)
+      await dialog
+        .getByTestId('submit-to-library-results')
+        .getByRole('checkbox')
+        .first()
+        .check()
+      await dialog.getByTestId('submit-to-library-note').fill('Our youth songs')
+      await dialog
+        .getByRole('button', { name: 'Submit 3 songs', exact: true })
+        .click()
+      await expect(page.getByText('3 songs sent. Thank you!')).toBeVisible()
+
+      await openCuratorPage(page)
+      const cards = page.getByTestId('library-submission')
+      await expect(cards).toHaveCount(3, { timeout: 15_000 })
+      for (const title of [
+        `Batch One ${uniq}`,
+        `Batch Two ${uniq}`,
+        `Picked Alone ${uniq}`,
+      ]) {
+        await expect(cards.filter({ hasText: title })).toHaveCount(1)
+      }
+      await expect(cards.first()).toContainText('Our youth songs')
     })
   })

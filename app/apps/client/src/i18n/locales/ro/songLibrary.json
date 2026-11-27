@@ -3,13 +3,19 @@
     "menuLabel": "Trimite în Biblioteca Church Hub",
     "menuDescription": "Trimite cântarea în biblioteca comună pe care o pot folosi toate bisericile",
     "title": "Trimite în Biblioteca Church Hub",
-    "message": "„{{title}}” va fi trimisă echipei Church Hub. După ce o aprobă, orice biserică o poate adăuga la cântările ei.",
+    "message": "Cântările vor fi trimise echipei Church Hub. După ce le aprobă, orice biserică le poate adăuga la cântările ei. Poți adăuga și alte cântări sau categorii întregi.",
     "noteLabel": "Mesaj pentru echipă (opțional)",
     "notePlaceholder": "de ex. autorul sau ce ai corectat",
-    "confirm": "Trimite",
-    "sent": "Cântarea a fost trimisă. Mulțumim!",
     "rateLimited": "Prea multe cântări trimise deodată. Încearcă din nou peste un minut.",
-    "failed": "Cântarea nu a putut fi trimisă. Verifică conexiunea la internet și încearcă din nou."
+    "failed": "Cântarea nu a putut fi trimisă. Verifică conexiunea la internet și încearcă din nou.",
+    "confirm_one": "Trimite {{count}} cântare",
+    "confirm_few": "Trimite {{count}} cântări",
+    "confirm_other": "Trimite {{count}} de cântări",
+    "sent_one": "{{count}} cântare trimisă. Mulțumim!",
+    "sent_few": "{{count}} cântări trimise. Mulțumim!",
+    "sent_other": "{{count}} de cântări trimise. Mulțumim!",
+    "tooMany": "Se pot trimite cel mult {{max}} de cântări deodată.",
+    "categoryAction": "Trimite în Biblioteca Church Hub"
   },
   "curator": {
     "title": "Biblioteca Church Hub",

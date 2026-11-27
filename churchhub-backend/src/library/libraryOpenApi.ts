@@ -41,6 +41,8 @@ const submission = {
     sourceSongId: { type: ['string', 'null'] },
     churchName: { type: ['string', 'null'] },
     note: { type: ['string', 'null'] },
+    batchId: { type: 'string', description: 'Shared by the songs sent together' },
+    batchSize: { type: 'integer' },
   },
 }
 
@@ -136,26 +138,37 @@ export const libraryOpenApiPaths = {
   },
   '/sync/libraries/church-hub/submissions': {
     post: {
-      summary: 'Submit a song to the Church Hub Library',
+      summary: 'Submit songs to the Church Hub Library',
       description:
-        'Any church sends one song (its OpenSong file) for the curators to review. It is kept privately until decided. Rate-limited per IP (LIBRARY_RATE_LIMITER).',
+        'A church sends one song or many (a category, a selection: up to 500), each as its OpenSong file, for the curators to review. Each song becomes its own submission, decided on its own; they share a batchId. Kept privately until decided. Rate-limited per IP (LIBRARY_RATE_LIMITER), one request whatever its size.',
       requestBody: json(
         {
-          title: { type: 'string', maxLength: 200 },
-          xml: { type: 'string', description: 'OpenSong XML, under 200 KB' },
-          sourceSongId: { type: 'string' },
+          songs: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 500,
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string', maxLength: 200 },
+                xml: { type: 'string', description: 'OpenSong XML, under 200 KB' },
+                sourceSongId: { type: 'string' },
+              },
+              required: ['title', 'xml'],
+            },
+          },
           churchName: { type: 'string' },
           note: { type: 'string', maxLength: 1000 },
         },
-        ['title', 'xml']
+        ['songs']
       ),
       responses: {
         '201': ok('Received', {
-          id: { type: 'string' },
-          submittedAt: { type: 'number' },
+          batchId: { type: 'string' },
+          submitted: { type: 'integer' },
         }),
-        '400': error('No title, or not an OpenSong song (invalid_request)'),
-        '413': error('Body over 256 KB (too_large)'),
+        '400': error('No songs, too many, or one is not an OpenSong song (invalid_request)'),
+        '413': error('Body over 16 MB (too_large)'),
         '429': error('Too many submissions (rate_limited)'),
       },
     },

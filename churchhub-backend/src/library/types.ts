@@ -24,6 +24,9 @@ export interface Submission extends SubmittedSong {
   sourceSongId: string | null
   churchName: string | null
   note: string | null
+  /** The songs sent together (a category, a selection) share it. */
+  batchId: string
+  batchSize: number
 }
 
 export type Decision = 'approved' | 'merged' | 'rejected'

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, LibraryBig, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import type { SongCategory } from '../../types'
@@ -8,6 +8,8 @@ interface CategoryCardProps {
   onEdit: () => void
   onDelete: () => void
   onToggleHidden: () => void
+  /** Sends the category's songs to the Church Hub Library (when allowed). */
+  onSubmitToLibrary?: () => void
 }
 
 export function CategoryCard({
@@ -15,6 +17,7 @@ export function CategoryCard({
   onEdit,
   onDelete,
   onToggleHidden,
+  onSubmitToLibrary,
 }: CategoryCardProps) {
   const { t } = useTranslation('settings')
   const isHidden = category.isHidden === 1
@@ -44,6 +47,18 @@ export function CategoryCard({
       </div>
 
       <div className="flex items-center gap-1">
+        {onSubmitToLibrary && (
+          <button
+            type="button"
+            onClick={onSubmitToLibrary}
+            className="p-2 text-fg-hint hover:text-fg transition-colors"
+            title={t('songLibrary:submit.categoryAction')}
+            aria-label={t('songLibrary:submit.categoryAction')}
+            data-testid={`category-submit-to-library-${category.id}`}
+          >
+            <LibraryBig size={16} />
+          </button>
+        )}
         <button
           type="button"
           onClick={onToggleHidden}

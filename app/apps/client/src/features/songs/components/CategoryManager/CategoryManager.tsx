@@ -2,6 +2,8 @@ import { FolderOpen, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { SubmitToLibraryDialog } from '~/features/song-library/components/SubmitToLibraryDialog'
+import { usePermissions } from '~/provider/permissions-provider'
 import { ConfirmModal } from '~/ui/modal'
 import { SectionHeader } from '~/ui/page'
 import { useToast } from '~/ui/toast'
@@ -14,12 +16,14 @@ import {
   useUpsertCategory,
 } from '../../hooks'
 import type { SongCategory } from '../../types'
+import type { SongSelection } from '../SongSelectionPicker'
 
 type ModalState =
   | { type: 'none' }
   | { type: 'create' }
   | { type: 'edit'; category: SongCategory }
   | { type: 'delete'; category: SongCategory }
+  | { type: 'submit'; initial: SongSelection }
 
 export function CategoryManager() {
   const { t } = useTranslation('settings')
@@ -27,6 +31,7 @@ export function CategoryManager() {
   const { data: categories, isLoading, error } = useCategories()
   const upsertCategory = useUpsertCategory()
   const deleteCategory = useDeleteCategory()
+  const canSubmit = usePermissions().hasPermission('songs.edit')
 
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
 
@@ -131,6 +136,15 @@ export function CategoryManager() {
               onEdit={() => setModal({ type: 'edit', category })}
               onDelete={() => setModal({ type: 'delete', category })}
               onToggleHidden={() => handleToggleHidden(category)}
+              onSubmitToLibrary={
+                canSubmit
+                  ? () =>
+                      setModal({
+                        type: 'submit',
+                        initial: { categoryIds: [category.id], songs: [] },
+                      })
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -170,6 +184,14 @@ export function CategoryManager() {
           onConfirm={handleDelete}
           onCancel={() => setModal({ type: 'none' })}
           variant="danger"
+        />
+      )}
+
+      {modal.type === 'submit' && (
+        <SubmitToLibraryDialog
+          isOpen={true}
+          initial={modal.initial}
+          onClose={() => setModal({ type: 'none' })}
         />
       )}
     </div>

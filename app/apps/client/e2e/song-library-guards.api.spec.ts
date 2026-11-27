@@ -42,7 +42,7 @@ test.describe
       await service.start(s3.endpoint, {
         ...google.serviceEnv,
         LIBRARY_CURATORS: CURATOR.email,
-        LIBRARY_RATE_LIMIT_PER_MINUTE: '3',
+        LIBRARY_RATE_LIMIT_PER_MINUTE: '4',
       })
     })
 
@@ -54,12 +54,21 @@ test.describe
     })
 
     test('a submission must be an OpenSong song, and is rate-limited', async () => {
-      expect((await submit({ title: 'No song', xml: 'hello' })).status).toBe(
-        400,
-      )
-      expect((await submit({ title: 'Guarded', xml: SONG })).status).toBe(201)
-      expect((await submit({ title: 'Guarded', xml: SONG })).status).toBe(201)
-      const limited = await submit({ title: 'Guarded', xml: SONG })
+      expect(
+        (await submit({ songs: [{ title: 'No song', xml: 'hello' }] })).status,
+      ).toBe(400)
+      const tooMany = Array.from({ length: 501 }, () => ({
+        title: 'Guarded',
+        xml: SONG,
+      }))
+      expect((await submit({ songs: tooMany })).status).toBe(400)
+      expect(
+        (await submit({ songs: [{ title: 'Guarded', xml: SONG }] })).status,
+      ).toBe(201)
+      expect(
+        (await submit({ songs: [{ title: 'Guarded', xml: SONG }] })).status,
+      ).toBe(201)
+      const limited = await submit({ songs: [{ title: 'Guarded', xml: SONG }] })
       expect(limited.status).toBe(429)
       expect((await limited.json()).code).toBe('rate_limited')
     })

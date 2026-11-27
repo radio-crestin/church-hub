@@ -433,5 +433,12 @@
     "hideBackgroundDescription": "Plain black behind the lyrics here; the screens keep the background",
     "toggleLayoutDescription": "Switch between the classic and PowerPoint editor",
     "editDescription": "Open the editor to change lyrics and slides"
+  },
+  "selection": {
+    "categories": "Whole categories",
+    "songs": "Songs one by one",
+    "search": "Search songs to add",
+    "noResults": "No song found.",
+    "remove": "Remove {{title}}"
   }
 }

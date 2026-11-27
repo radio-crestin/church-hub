@@ -25,8 +25,8 @@ import { clientIp } from '../utils/clientIp'
 
 type LibraryContext = Context<{ Bindings: Bindings }>
 
-/** One song's OpenSong file, with room for the JSON around it. */
-const SUBMISSION_MAX_BYTES = 256 * 1024
+/** Up to MAX_SONGS songs' OpenSong files (a few KB each, 200 KB at most). */
+const SUBMISSION_MAX_BYTES = 16 * 1024 * 1024
 /** A gzipped shard: up to about 500 songs. */
 const SHARD_MAX_BYTES = 4 * 1024 * 1024
 /** A whole manifest: about 250 bytes a song. */
@@ -64,7 +64,7 @@ const libraries = new Hono<{ Bindings: Bindings }>()
 
 libraries.onError(handleSyncError)
 
-/** POST /sync/libraries/church-hub/submissions: a church sends a song. */
+/** POST /sync/libraries/church-hub/submissions: a church sends songs. */
 libraries.post(
   `${CURATED}/submissions`,
   limit(SUBMISSION_MAX_BYTES),
@@ -79,8 +79,8 @@ libraries.post(
     }
     const input = parseSubmission(await readJsonBody(c))
     const { states } = createSyncStore(c.env)
-    const { id, submittedAt } = await createSubmission(states, input)
-    return c.json({ id, submittedAt }, 201)
+    const { batchId, submissions } = await createSubmission(states, input)
+    return c.json({ batchId, submitted: submissions.length }, 201)
   }
 )
 

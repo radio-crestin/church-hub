@@ -4,7 +4,7 @@ import {
   getCuratorStatus,
   listLibrarySubmissions,
   searchLibrarySongs,
-  submitSongToLibrary,
+  submitSongsToLibrary,
 } from '../service/song-library'
 import type { Permission } from '../service/users/types'
 import { createLogger } from '../utils/logger'
@@ -12,7 +12,7 @@ import { toErrorMessage } from '../utils/toErrorMessage'
 
 const logger = createLogger('song-library')
 
-const SUBMIT_PATH = /^\/api\/songs\/(\d+)\/library-submission$/
+const SUBMIT_PATH = '/api/song-library-submissions'
 const DECISION_PATH =
   /^\/api\/song-library\/submissions\/([A-Za-z0-9_-]{1,64})\/decision$/
 
@@ -22,6 +22,7 @@ const STATUS_BY_ERROR: Record<string, number> = {
   song_not_found: 404,
   submission_not_found: 404,
   library_song_not_found: 404,
+  too_many_songs: 413,
 }
 
 /**
@@ -48,6 +49,13 @@ async function answer(work: () => Promise<unknown>): Promise<Response> {
   }
 }
 
+/** The whole numbers of a list from the body (none when it is not one). */
+function integers(value: unknown): number[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is number => Number.isInteger(item))
+    : []
+}
+
 function parseDecision(body: Record<string, unknown>): CuratorDecision | null {
   if (body.decision === 'approved') return { decision: 'approved' }
   if (body.decision === 'merged' && typeof body.librarySongId === 'string') {
@@ -65,7 +73,7 @@ function parseDecision(body: Record<string, unknown>): CuratorDecision | null {
 
 /**
  * The curated Church Hub Library (T-177), through the sync service:
- * POST /api/songs/:id/library-submission           { note? } → submitted (songs.edit)
+ * POST /api/song-library-submissions              { songIds?, categoryIds?, note? } → submitted (songs.edit)
  * GET  /api/song-library/curator                   → who curates on this PC
  * GET  /api/song-library/submissions               → the queue, with slides and likely duplicates
  * GET  /api/song-library/songs?q=                  → library songs to merge into
@@ -80,16 +88,23 @@ export async function handleSongLibraryRoutes(
   checkPermission: (permission: Permission) => Response | null,
 ): Promise<Response | null> {
   const { pathname } = url
-  const submit = pathname.match(SUBMIT_PATH)
-  if (submit && req.method === 'POST') {
+  if (pathname === SUBMIT_PATH && req.method === 'POST') {
     const denied = checkPermission('songs.edit')
     if (denied) return denied
-    const body = (await req.json().catch(() => ({}))) as { note?: unknown }
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
+    const songIds = integers(body.songIds)
+    const categoryIds = integers(body.categoryIds)
+    if (songIds.length === 0 && categoryIds.length === 0) {
+      return Response.json(
+        { error: 'songIds or categoryIds is required' },
+        { status: 400 },
+      )
+    }
     const note =
       typeof body.note === 'string' && body.note.trim()
         ? body.note.trim().slice(0, 1000)
         : null
-    return answer(() => submitSongToLibrary(Number(submit[1]), note))
+    return answer(() => submitSongsToLibrary({ songIds, categoryIds }, note))
   }
 
   if (!pathname.startsWith('/api/song-library/')) return null

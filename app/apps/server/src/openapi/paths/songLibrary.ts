@@ -67,21 +67,23 @@ const submission = {
  * account signs in through the owner sign-in with intent `curate`.
  */
 export const songLibraryPaths: Record<string, Record<string, unknown>> = {
-  '/api/songs/{id}/library-submission': {
+  '/api/song-library-submissions': {
     post: {
       tags: ['Songs'],
-      summary: 'Submit a song to the Church Hub Library',
+      summary: 'Submit songs to the Church Hub Library',
       description:
-        'Sends the song, as its OpenSong file, to the Church Hub Library’s curators through the sync service. Rate-limited by the service.',
-      parameters: [
-        { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
-      ],
+        'Sends the chosen songs and every song of the chosen categories (500 at most), each as its OpenSong file, to the Church Hub Library’s curators through the sync service, in one request. Each song is reviewed on its own. Rate-limited by the service.',
       requestBody: {
+        required: true,
         content: {
           'application/json': {
             schema: {
               type: 'object',
-              properties: { note: { type: 'string', maxLength: 1000 } },
+              properties: {
+                songIds: { type: 'array', items: { type: 'integer' } },
+                categoryIds: { type: 'array', items: { type: 'integer' } },
+                note: { type: 'string', maxLength: 1000 },
+              },
             },
           },
         },
@@ -90,12 +92,14 @@ export const songLibraryPaths: Record<string, Record<string, unknown>> = {
         '200': json('Submitted', {
           type: 'object',
           properties: {
-            id: { type: 'string' },
-            submittedAt: { type: 'integer' },
+            batchId: { type: 'string' },
+            submitted: { type: 'integer' },
           },
         }),
+        '400': error('Neither songIds nor categoryIds'),
         '403': error('No songs.edit'),
-        '404': error('No such song (song_not_found)'),
+        '404': error('None of the songs exist (song_not_found)'),
+        '413': error('More than 500 songs (too_many_songs)'),
         '429': error('Too many submissions (rate_limited)'),
         '502': error('The sync service failed'),
       },

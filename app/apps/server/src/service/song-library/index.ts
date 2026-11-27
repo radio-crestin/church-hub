@@ -2,7 +2,10 @@ export { decideLibrarySubmission } from './decideLibrarySubmission'
 export { getCuratorStatus } from './getCuratorStatus'
 export { listLibrarySubmissions } from './listLibrarySubmissions'
 export { searchLibrarySongs } from './searchLibrarySongs'
-export { submitSongToLibrary } from './submitSongToLibrary'
+export {
+  type SongSelection,
+  submitSongsToLibrary,
+} from './submitSongsToLibrary'
 export type {
   CuratorDecision,
   CuratorStatus,

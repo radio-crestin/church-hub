@@ -1,5 +1,5 @@
 import { LibraryBig } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { usePermissions } from '~/provider/permissions-provider'
@@ -21,6 +21,10 @@ export function useSubmitToLibraryAction(
   const { t } = useTranslation('songLibrary')
   const { hasPermission } = usePermissions()
   const [isOpen, setIsOpen] = useState(false)
+  const initial = useMemo(
+    () => ({ categoryIds: [], songs: [{ id: songId, title: songTitle }] }),
+    [songId, songTitle],
+  )
 
   if (!hasPermission('songs.edit')) return { menuItem: null, dialog: null }
 
@@ -37,8 +41,7 @@ export function useSubmitToLibraryAction(
       <SubmitToLibraryDialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        songId={songId}
-        songTitle={songTitle}
+        initial={initial}
       />
     ),
   }

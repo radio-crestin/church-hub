@@ -1,3 +1,4 @@
+import type { SongSelection } from '~/features/songs/components/SongSelectionPicker'
 import { fetchJsonWithStatus } from '~/utils/fetcher'
 import type {
   CuratorDecision,
@@ -47,12 +48,16 @@ async function call<T>(
   return json.data
 }
 
-/** Sends a song to the Church Hub Library's curators. */
-export function submitSongToLibrary(
-  songId: number,
+/** Sends the chosen songs and categories to the Church Hub Library's curators. */
+export function submitSongsToLibrary(
+  selection: SongSelection,
   note: string,
-): Promise<{ id: string }> {
-  return call(`/api/songs/${songId}/library-submission`, 'POST', { note })
+): Promise<{ batchId: string; submitted: number }> {
+  return call('/api/song-library-submissions', 'POST', {
+    songIds: selection.songs.map((song) => song.id),
+    categoryIds: selection.categoryIds,
+    note,
+  })
 }
 
 export function getCuratorStatus(): Promise<CuratorStatus> {

@@ -3,13 +3,17 @@
     "menuLabel": "Submit to the Church Hub Library",
     "menuDescription": "Send this song to the shared library every church can use",
     "title": "Submit to the Church Hub Library",
-    "message": "“{{title}}” will be sent to the Church Hub team. Once they approve it, every church can add it to their songs.",
+    "message": "These songs will be sent to the Church Hub team. Once they approve them, every church can add them to their songs. Add other songs or whole categories if you like.",
     "noteLabel": "Note for the team (optional)",
     "notePlaceholder": "e.g. the author, or what you corrected",
-    "confirm": "Submit",
-    "sent": "Song sent. Thank you!",
     "rateLimited": "Too many songs sent at once. Try again in a minute.",
-    "failed": "The song could not be sent. Check the internet connection and try again."
+    "failed": "The song could not be sent. Check the internet connection and try again.",
+    "confirm_one": "Submit {{count}} song",
+    "confirm_other": "Submit {{count}} songs",
+    "sent_one": "{{count}} song sent. Thank you!",
+    "sent_other": "{{count}} songs sent. Thank you!",
+    "tooMany": "At most {{max}} songs can be sent at once.",
+    "categoryAction": "Submit to the Church Hub Library"
   },
   "curator": {
     "title": "Church Hub Library",
