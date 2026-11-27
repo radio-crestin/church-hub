@@ -11,4 +11,11 @@ export const securitySchemes = {
     name: 'device_auth',
     description: 'Cookie-based authentication for external devices',
   },
+  userAuthHeader: {
+    type: 'apiKey',
+    in: 'header',
+    name: 'X-User-Auth',
+    description:
+      'A session token in a header: a WebRTC tunnel carries no cookies (device sessions, screen links)',
+  },
 }

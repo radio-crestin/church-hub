@@ -1,6 +1,7 @@
 import { WEB_APP_API_ORIGIN } from '~/config'
 import {
   type BootStep,
+  type BrowserServer,
   connectToOpener,
   OtherTabError,
   type StartMessage,
@@ -8,6 +9,11 @@ import {
   startBrowserServer,
 } from '~/features/browser-server'
 import { installTunnel, type Tunnel } from '~/features/remote-access'
+import {
+  parseScreenLinkUrl,
+  startScreenDisplay,
+  startScreenHost,
+} from '~/features/screen-links'
 import {
   setLoadingError,
   updateLoadingMessage,
@@ -66,6 +72,7 @@ function failed(message: string, hint: string, error?: unknown): void {
 async function runBrowserServer(
   start: StartMessage,
   onRevoked: () => void = () => {},
+  onStarted: (server: BrowserServer) => void = () => {},
 ): Promise<void> {
   const opener = await connectToOpener()
   if (opener) return runApp(opener.tunnel, opener.userToken)
@@ -76,6 +83,7 @@ async function runBrowserServer(
       onRevoked,
     )
     shareServer(server)
+    onStarted(server)
     await runApp(server.tunnel, server.userToken)
   } catch (error) {
     if (error instanceof OtherTabError) {
@@ -114,6 +122,15 @@ async function startChurch(binding: ChurchBinding): Promise<void> {
       },
     },
     () => void reloadIfRemoved(binding),
+    // Other devices show its screens through it while the PC is off (T-214).
+    (server) =>
+      void startScreenHost(server, {
+        relay: binding.relayUrl,
+        churchId: binding.churchId,
+        pcRoom: binding.pcSignalId,
+      }).catch((error) =>
+        captureError(error, { source: 'startup', component: 'screen-links' }),
+      ),
   )
 }
 
@@ -125,6 +142,12 @@ async function startChurch(binding: ChurchBinding): Promise<void> {
  */
 export async function startWebApp(): Promise<WebAppNotice | null> {
   updateLoadingMessage(startupText('starting'))
+  // A screen link another device opened (T-214): that screen, nothing else.
+  const screenLink = parseScreenLinkUrl(new URL(window.location.href))
+  if (screenLink) {
+    await startScreenDisplay(screenLink)
+    return null
+  }
   const session = await openChurchSession()
   if (session.kind === 'joined') await startChurch(session.binding)
   else if (session.kind === 'notJoined') await startGuest()

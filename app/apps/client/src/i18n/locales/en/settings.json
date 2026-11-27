@@ -1411,6 +1411,29 @@
       },
       "slides": {
         "description": "Every kind of slide, as this screen shows it. Click one to edit it."
+      },
+      "link": {
+        "title": "Show “{{name}}” on another device",
+        "description": "Open this link on a TV, laptop or tablet to show this screen there.",
+        "making": "Making the link…",
+        "error": "The link couldn't be made. Check the internet connection and try again.",
+        "qrAlt": "QR code of the screen link",
+        "urlLabel": "Screen link",
+        "copy": "Copy",
+        "copied": "Link copied",
+        "until": "Works until {{time}}.",
+        "revoke": "Revoke link",
+        "revoked": "Link revoked: that device no longer shows the screen",
+        "revokeError": "The link couldn't be revoked",
+        "action": "Show on another device",
+        "phoneNote": "While the church computer is off, this phone sends it the screen, so keep Church Hub open here.",
+        "advanced": "Advanced",
+        "internet": "Over the internet",
+        "internetHint": "Works from any network; the device connects through Church Hub's servers.",
+        "network": "Only on this network",
+        "networkHint": "Recommended. The device opens this computer directly; it must be on the same Wi-Fi or network.",
+        "address": "Address of this computer",
+        "internetOff": "Remote access is off. Turn it on in Settings › Phones to share the screen over the internet."
       }
     },
     "developer": {

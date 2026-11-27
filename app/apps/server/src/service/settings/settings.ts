@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 
-import { isServerSecretKey } from './isServerSecretKey'
+import { isServerOwnedSettingKey } from './isServerOwnedSettingKey'
 import type { Setting, SettingsTable, UpsertSettingInput } from './types'
 import { getDatabase } from '../../db'
 import { appSettings, cacheMetadata, userPreferences } from '../../db/schema'
@@ -215,7 +215,7 @@ export function getAllSettings(table: SettingsTable): Setting[] {
 
     log('debug', `Retrieved ${results.length} settings`)
     return results
-      .filter((r) => !isServerSecretKey(r.key))
+      .filter((r) => !isServerOwnedSettingKey(r.key))
       .map((r) => ({
         id: r.id,
         key: r.key,

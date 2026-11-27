@@ -27,6 +27,7 @@ import {
   remoteAccessPaths,
   scheduleItemsPaths,
   schedulesPaths,
+  screenLinkPaths,
   screenSharePaths,
   screensPaths,
   secretStorePaths,
@@ -127,6 +128,11 @@ export const openApiSpec = {
         'Phones reaching this computer from anywhere: a WebRTC tunnel through the signaling relay',
     },
     {
+      name: 'Screen Links',
+      description:
+        "Another device showing one of the church's screens over WebRTC, through the phone or PC that made the link",
+    },
+    {
       name: 'Screen Share',
       description:
         'Native screen sharing: start/stop, frame ingest, MJPEG stream for the screens',
@@ -180,6 +186,7 @@ export const openApiSpec = {
     ...devicesPaths,
     ...authPaths,
     ...remoteAccessPaths,
+    ...screenLinkPaths,
     ...liveTranslationPaths,
     ...usersPaths,
     ...songsPaths,

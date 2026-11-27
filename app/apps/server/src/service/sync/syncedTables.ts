@@ -10,6 +10,8 @@ export const SYNCED_SETTING_KEYS = [
   'search_synonyms',
   'sidebar_configuration',
   'bible_reading_speed',
+  // Screen links (hashes only): the PC honours a phone's when it is back.
+  'screen_links',
 ] as const
 
 const SETTING_KEYS_SQL = SYNCED_SETTING_KEYS.map((key) => `'${key}'`).join(', ')

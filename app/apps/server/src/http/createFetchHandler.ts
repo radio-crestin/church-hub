@@ -40,6 +40,8 @@ import { handleRemoteAccessRoutes } from '../routes/remote-access'
 import { handleScheduleItemRoutes } from '../routes/schedule-items'
 import { handleScheduleMidiRoutes } from '../routes/schedule-midi'
 import { handleScheduleTemplateRoutes } from '../routes/schedule-templates'
+import { handleScreenLinkSignIn } from '../routes/screen-link-sign-in'
+import { handleScreenLinkRoutes } from '../routes/screen-links'
 import { handleScreenShareRoutes } from '../routes/screen-share'
 import { handleSecretStoreRoutes } from '../routes/secret-store'
 import { handleSlideTemplateRoutes } from '../routes/slide-templates'
@@ -61,7 +63,7 @@ import {
   getPublicSetting,
   getUserById,
   getUserUuid,
-  isServerSecretKey,
+  isServerOwnedSettingKey,
   type Permission,
   regenerateUserToken,
   type SettingsTable,
@@ -380,8 +382,8 @@ export function createFetchHandler(): (
 
   const logger = createLogger('BibleAPI')
 
-  /** The settings API never touches a server secret key (isServerSecretKey). */
-  function serverSecretRefused(req: Request) {
+  /** The settings API never touches a key the server owns (isServerOwnedSettingKey). */
+  function serverOwnedRefused(req: Request) {
     return handleCors(
       req,
       new Response(
@@ -496,6 +498,11 @@ export function createFetchHandler(): (
           headers: { 'Content-Type': 'application/json' },
         }),
       )
+    }
+
+    // POST /api/screen-links/sign-in - a direct screen link's device (T-214)
+    if (req.method === 'POST' && url.pathname === '/api/screen-links/sign-in') {
+      return handleCors(req, await handleScreenLinkSignIn(req))
     }
 
     // POST /api/auth/device-login - a joined phone over WebRTC (T-174)
@@ -825,7 +832,7 @@ export function createFetchHandler(): (
     if (req.method === 'GET' && getSettingMatch?.[1] && getSettingMatch[2]) {
       const table = getSettingMatch[1] as SettingsTable
       const key = getSettingMatch[2]
-      if (isServerSecretKey(key)) return serverSecretRefused(req)
+      if (isServerOwnedSettingKey(key)) return serverOwnedRefused(req)
 
       // Per-key permission: some app settings belong to a feature (or to the
       // shared navigation shell) rather than to general Settings, so gating
@@ -909,7 +916,7 @@ export function createFetchHandler(): (
             }),
           )
         }
-        if (isServerSecretKey(body.key)) return serverSecretRefused(req)
+        if (isServerOwnedSettingKey(body.key)) return serverOwnedRefused(req)
 
         // Choosing which Bible translation to read is part of viewing the
         // Bible, so it's gated by `bible.view` rather than `settings.edit`.
@@ -1013,7 +1020,7 @@ export function createFetchHandler(): (
 
       const table = deleteSettingMatch[1] as SettingsTable
       const key = deleteSettingMatch[2]
-      if (isServerSecretKey(key)) return serverSecretRefused(req)
+      if (isServerOwnedSettingKey(key)) return serverOwnedRefused(req)
 
       const result = deleteSetting(table, key)
       if (table === 'app_settings' && key === READING_SPEED_SETTING_KEY) {
@@ -7694,6 +7701,17 @@ export function createFetchHandler(): (
       checkPermission,
     )
     if (screenShareResponse) return screenShareResponse
+
+    // Screen links: another device shows a screen over WebRTC (T-214)
+    if (url.pathname.startsWith('/api/screen-links')) {
+      const screenLinkResponse = await handleScreenLinkRoutes(
+        req,
+        url,
+        _context,
+        checkPermission,
+      )
+      if (screenLinkResponse) return handleCors(req, screenLinkResponse)
+    }
 
     // Remote access (phones reaching this computer over WebRTC)
     if (url.pathname.startsWith('/api/remote-access')) {
